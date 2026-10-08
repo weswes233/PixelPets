@@ -1,0 +1,11 @@
+#pet-wallet-dialog{max-width:380px;width:calc(100% - 64px);box-sizing:border-box;border:2px solid #38382f;border-radius:20px;padding:28px;background:#fff9e9;color:#33372f;box-shadow:8px 8px 0 #38382f22;font-family:system-ui,sans-serif}
+#pet-wallet-dialog::backdrop{background:#232b32aa;backdrop-filter:blur(4px)}
+#pet-wallet-dialog h2{margin:0 0 10px;font-size:25px}
+#pet-wallet-dialog p{line-height:1.7;font-size:14px;color:#67675b}
+#pet-wallet-dialog button{display:block;width:100%;padding:13px 18px;margin:12px 0 0;border:1px solid #34392e;border-radius:12px;background:#d6e8c9;color:#303a2c;font:600 15px system-ui;cursor:pointer;text-align:left}
+#pet-wallet-dialog button:focus-visible{outline:3px solid #df835f;outline-offset:3px}
+#pet-wallet-dialog .wallet-cancel{background:transparent;text-align:center;border-color:#d3cbbd;font-weight:400}
+ #pet-wallet-dialog dl { display: grid; gap: .3rem; margin: 1rem 0; }
+ #pet-wallet-dialog dt { font-weight: bold; font-size: .8rem; opacity: .7; }
+ #pet-wallet-dialog dd { margin: 0 0 .5rem; overflow-wrap: anywhere; font-size: .9rem; }
+ #pet-wallet-dialog > button { display: block; width: 100%; margin-top: .7rem; }

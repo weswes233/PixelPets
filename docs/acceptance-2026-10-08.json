@@ -1,0 +1,65 @@
+{
+  "verifiedAt": "2026-10-08T09:13:55.007Z",
+  "javascriptTests": {
+    "passed": 77,
+    "failed": 0
+  },
+  "godotClient": {
+    "passed": 31,
+    "failed": 0
+  },
+  "godotHttp": {
+    "passed": 11,
+    "failed": 0
+  },
+  "typechecks": [
+    "server",
+    "chain-client",
+    "wallet-web"
+  ],
+  "chainEvidence": [
+    {
+      "path": "chain/evidence/local-validator-e2e.json",
+      "result": "passed",
+      "checks": 16,
+      "transactions": 36,
+      "genesis": "8M7v4mAevKxxossUfJ7HJT6eU3k2AbDSKmF23LbADvw5"
+    },
+    {
+      "path": "chain/evidence/service-e2e.json",
+      "result": "passed",
+      "checks": 5,
+      "transactions": 3,
+      "genesis": "3v2DJJuppmRzRhdkLbYLmQD4NwPBoNp9NE6KTRqVYqUp"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "dist/web/index.html",
+      "bytes": 5491,
+      "sha256": "eb96f6caf96261a3b936b69166c33f68331c67fe16a4f375656df2f7a487a9e3"
+    },
+    {
+      "path": "dist/web/index.pck",
+      "bytes": 7706208,
+      "sha256": "f719579f522792bd7eb6cf923e74cdc787707e6122c3c4ad5175f845b8599bca"
+    },
+    {
+      "path": "dist/web/bridge.js",
+      "bytes": 899752,
+      "sha256": "04e7e7c5c973c3b8beb98c0da295da3889e5183901e946940d2d33a317c9c443"
+    },
+    {
+      "path": "dist/windows/PixelPets.exe",
+      "bytes": 104190576,
+      "sha256": "b669291f7f9e0a2ea5aa458d8d5b09aae4d58702aa4e3a2661887a6d72927353"
+    },
+    {
+      "path": "chain/target/deploy/pixel_pets.so",
+      "bytes": 569888,
+      "sha256": "f7808c45699515789d2b02c62d86c0fddaffb2fb6bff71236ac27ff08b186f82"
+    }
+  ],
+  "publicDeployment": false,
+  "browserWalletExtensionVerified": false
+}

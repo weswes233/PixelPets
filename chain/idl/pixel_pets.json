@@ -1,0 +1,1930 @@
+{
+  "address": "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR",
+  "metadata": {
+    "name": "pixel_pets",
+    "version": "0.1.0",
+    "spec": "0.1.0"
+  },
+  "instructions": [
+    {
+      "name": "accept_swap",
+      "discriminator": [
+        166,
+        173,
+        240,
+        207,
+        167,
+        11,
+        3,
+        20
+      ],
+      "accounts": [
+        {
+          "name": "taker",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "maker",
+          "writable": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "collection",
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "asset",
+          "writable": true,
+          "relations": [
+            "pet_record"
+          ]
+        },
+        {
+          "name": "pet_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "desired_asset",
+          "writable": true
+        },
+        {
+          "name": "desired_record",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "desired_asset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "offer",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "offer.asset",
+                "account": "Offer"
+              },
+              {
+                "kind": "account",
+                "path": "offer.nonce",
+                "account": "Offer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "core_program",
+          "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "buy",
+      "discriminator": [
+        102,
+        6,
+        61,
+        18,
+        1,
+        218,
+        235,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "buyer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "maker",
+          "writable": true
+        },
+        {
+          "name": "fee_recipient",
+          "writable": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "collection",
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "asset",
+          "writable": true,
+          "relations": [
+            "pet_record"
+          ]
+        },
+        {
+          "name": "pet_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "offer",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "offer.asset",
+                "account": "Offer"
+              },
+              {
+                "kind": "account",
+                "path": "offer.nonce",
+                "account": "Offer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "core_program",
+          "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "expected_price_lamports",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "cancel_offer",
+      "discriminator": [
+        92,
+        203,
+        223,
+        40,
+        92,
+        89,
+        53,
+        119
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "maker",
+          "writable": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "collection",
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "asset",
+          "writable": true,
+          "relations": [
+            "pet_record"
+          ]
+        },
+        {
+          "name": "pet_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "offer",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "offer.asset",
+                "account": "Offer"
+              },
+              {
+                "kind": "account",
+                "path": "offer.nonce",
+                "account": "Offer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "core_program",
+          "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "checkpoint",
+      "discriminator": [
+        213,
+        200,
+        19,
+        204,
+        240,
+        143,
+        184,
+        252
+      ],
+      "accounts": [
+        {
+          "name": "owner",
+          "signer": true
+        },
+        {
+          "name": "issuer",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "collection",
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "asset",
+          "relations": [
+            "pet_record"
+          ]
+        },
+        {
+          "name": "pet_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": {
+              "name": "CheckpointArgs"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "claim_pet",
+      "discriminator": [
+        252,
+        72,
+        52,
+        203,
+        49,
+        81,
+        178,
+        176
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "recipient",
+          "signer": true
+        },
+        {
+          "name": "issuer",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "edition",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  100,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "edition.edition_id",
+                "account": "Edition"
+              }
+            ]
+          }
+        },
+        {
+          "name": "collection",
+          "writable": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "asset",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pet_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "receipt",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  108,
+                  97,
+                  105,
+                  109
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "claim_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "core_program",
+          "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "claim_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "configure",
+      "discriminator": [
+        245,
+        7,
+        108,
+        117,
+        95,
+        196,
+        54,
+        217
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "issuer",
+          "type": "pubkey"
+        },
+        {
+          "name": "fee_recipient",
+          "type": "pubkey"
+        },
+        {
+          "name": "fee_bps",
+          "type": "u16"
+        },
+        {
+          "name": "paused",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "create_edition",
+      "discriminator": [
+        135,
+        127,
+        186,
+        53,
+        236,
+        181,
+        38,
+        199
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "edition",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  100,
+                  105,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "args.edition_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": {
+              "name": "EditionArgs"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "create_sale",
+      "discriminator": [
+        137,
+        197,
+        124,
+        245,
+        254,
+        35,
+        17,
+        12
+      ],
+      "accounts": [
+        {
+          "name": "maker",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "collection",
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "asset",
+          "writable": true,
+          "relations": [
+            "pet_record"
+          ]
+        },
+        {
+          "name": "pet_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "offer",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset"
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "core_program",
+          "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        },
+        {
+          "name": "price_lamports",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "create_swap",
+      "discriminator": [
+        176,
+        207,
+        238,
+        60,
+        195,
+        2,
+        203,
+        91
+      ],
+      "accounts": [
+        {
+          "name": "maker",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "collection",
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "asset",
+          "writable": true,
+          "relations": [
+            "pet_record"
+          ]
+        },
+        {
+          "name": "pet_record",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "desired_asset"
+        },
+        {
+          "name": "desired_record",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "desired_asset"
+              }
+            ]
+          }
+        },
+        {
+          "name": "offer",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "asset"
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "core_program",
+          "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "expires_at",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "collection",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "program",
+          "address": "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR"
+        },
+        {
+          "name": "program_data"
+        },
+        {
+          "name": "core_program",
+          "address": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "args",
+          "type": {
+            "defined": {
+              "name": "InitializeArgs"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "BaseAssetV1",
+      "discriminator": [
+        1
+      ]
+    },
+    {
+      "name": "BaseCollectionV1",
+      "discriminator": [
+        5
+      ]
+    },
+    {
+      "name": "ClaimReceipt",
+      "discriminator": [
+        223,
+        233,
+        11,
+        229,
+        124,
+        165,
+        207,
+        28
+      ]
+    },
+    {
+      "name": "Config",
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
+    },
+    {
+      "name": "Edition",
+      "discriminator": [
+        234,
+        117,
+        249,
+        74,
+        7,
+        99,
+        235,
+        167
+      ]
+    },
+    {
+      "name": "Offer",
+      "discriminator": [
+        215,
+        88,
+        60,
+        71,
+        170,
+        162,
+        73,
+        229
+      ]
+    },
+    {
+      "name": "PetRecord",
+      "discriminator": [
+        180,
+        224,
+        209,
+        218,
+        144,
+        104,
+        195,
+        179
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "CheckpointRecorded",
+      "discriminator": [
+        157,
+        192,
+        91,
+        196,
+        149,
+        33,
+        47,
+        247
+      ]
+    },
+    {
+      "name": "OfferCancelled",
+      "discriminator": [
+        45,
+        42,
+        175,
+        214,
+        51,
+        192,
+        154,
+        9
+      ]
+    },
+    {
+      "name": "OfferOpened",
+      "discriminator": [
+        51,
+        235,
+        45,
+        64,
+        193,
+        14,
+        119,
+        113
+      ]
+    },
+    {
+      "name": "OfferSettled",
+      "discriminator": [
+        28,
+        72,
+        212,
+        133,
+        229,
+        156,
+        62,
+        254
+      ]
+    },
+    {
+      "name": "PetClaimed",
+      "discriminator": [
+        92,
+        104,
+        18,
+        143,
+        48,
+        95,
+        1,
+        227
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Paused",
+      "msg": "Protocol is paused; cancellation remains available"
+    },
+    {
+      "code": 6001,
+      "name": "Unauthorized",
+      "msg": "Signer is not authorized"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidMetadata",
+      "msg": "Metadata must have a nonempty short name and content-addressed URI"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidConfig",
+      "msg": "Invalid config or fee exceeds 5 percent"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidSupply",
+      "msg": "Invalid edition supply"
+    },
+    {
+      "code": 6005,
+      "name": "InvalidTraits",
+      "msg": "Invalid species, growth transition, bond or rules version"
+    },
+    {
+      "code": 6006,
+      "name": "InvalidClaim",
+      "msg": "Invalid claim or event hash"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidExpiry",
+      "msg": "Claim or offer expiration is outside the allowed window"
+    },
+    {
+      "code": 6008,
+      "name": "SoldOut",
+      "msg": "Edition supply is exhausted"
+    },
+    {
+      "code": 6009,
+      "name": "Overflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidCollection",
+      "msg": "Wrong canonical collection or update authority"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidAsset",
+      "msg": "Invalid official asset identity"
+    },
+    {
+      "code": 6012,
+      "name": "InvalidPlugins",
+      "msg": "Unsupported plugin, external adapter, or mutable plugin authority"
+    },
+    {
+      "code": 6013,
+      "name": "WrongOwner",
+      "msg": "Wallet is not the current Core asset owner"
+    },
+    {
+      "code": 6014,
+      "name": "AlreadyListed",
+      "msg": "Pet is already in escrow"
+    },
+    {
+      "code": 6015,
+      "name": "CheckpointChanged",
+      "msg": "Checkpoint changed; refresh the quote"
+    },
+    {
+      "code": 6016,
+      "name": "InvalidNonce",
+      "msg": "Offer nonce is stale"
+    },
+    {
+      "code": 6017,
+      "name": "InvalidOffer",
+      "msg": "Offer is not the active matching offer"
+    },
+    {
+      "code": 6018,
+      "name": "OfferExpired",
+      "msg": "Offer expired"
+    },
+    {
+      "code": 6019,
+      "name": "SelfTrade",
+      "msg": "Cannot trade with yourself"
+    },
+    {
+      "code": 6020,
+      "name": "InvalidPrice",
+      "msg": "Price must match and be greater than zero"
+    }
+  ],
+  "types": [
+    {
+      "name": "BaseAssetV1",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "defined": {
+                "name": "Key"
+              }
+            }
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "update_authority",
+            "type": {
+              "defined": {
+                "name": "UpdateAuthority"
+              }
+            }
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "seq",
+            "type": {
+              "option": "u64"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "BaseCollectionV1",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "key",
+            "type": {
+              "defined": {
+                "name": "Key"
+              }
+            }
+          },
+          {
+            "name": "update_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "num_minted",
+            "type": "u32"
+          },
+          {
+            "name": "current_size",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CheckpointArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "expected_checkpoint",
+            "type": "u64"
+          },
+          {
+            "name": "form",
+            "type": "u8"
+          },
+          {
+            "name": "bond",
+            "type": "u32"
+          },
+          {
+            "name": "event_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "CheckpointRecorded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "checkpoint",
+            "type": "u64"
+          },
+          {
+            "name": "form",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClaimReceipt",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "claim_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "edition",
+            "type": "pubkey"
+          },
+          {
+            "name": "origin_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "rules_version",
+            "type": "u16"
+          },
+          {
+            "name": "expires_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Config",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "issuer",
+            "type": "pubkey"
+          },
+          {
+            "name": "collection",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "paused",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Edition",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "edition_id",
+            "type": "u64"
+          },
+          {
+            "name": "max_supply",
+            "type": "u32"
+          },
+          {
+            "name": "issued",
+            "type": "u32"
+          },
+          {
+            "name": "origin_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "rules_version",
+            "type": "u16"
+          },
+          {
+            "name": "species",
+            "type": "u8"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EditionArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "edition_id",
+            "type": "u64"
+          },
+          {
+            "name": "max_supply",
+            "type": "u32"
+          },
+          {
+            "name": "origin_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "rules_version",
+            "type": "u16"
+          },
+          {
+            "name": "species",
+            "type": "u8"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitializeArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "issuer",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_bps",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Key",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Uninitialized"
+          },
+          {
+            "name": "AssetV1"
+          },
+          {
+            "name": "HashedAssetV1"
+          },
+          {
+            "name": "PluginHeaderV1"
+          },
+          {
+            "name": "PluginRegistryV1"
+          },
+          {
+            "name": "CollectionV1"
+          },
+          {
+            "name": "GroupV1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Offer",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "maker",
+            "type": "pubkey"
+          },
+          {
+            "name": "asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "desired_asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "expires_at",
+            "type": "i64"
+          },
+          {
+            "name": "offered_checkpoint",
+            "type": "u64"
+          },
+          {
+            "name": "desired_checkpoint",
+            "type": "u64"
+          },
+          {
+            "name": "price_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "fee_bps",
+            "type": "u16"
+          },
+          {
+            "name": "kind",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferCancelled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "offer",
+            "type": "pubkey"
+          },
+          {
+            "name": "maker",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferOpened",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "offer",
+            "type": "pubkey"
+          },
+          {
+            "name": "asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "maker",
+            "type": "pubkey"
+          },
+          {
+            "name": "kind",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferSettled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "offer",
+            "type": "pubkey"
+          },
+          {
+            "name": "taker",
+            "type": "pubkey"
+          },
+          {
+            "name": "kind",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PetClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "recipient",
+            "type": "pubkey"
+          },
+          {
+            "name": "edition",
+            "type": "pubkey"
+          },
+          {
+            "name": "serial",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PetRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "asset",
+            "type": "pubkey"
+          },
+          {
+            "name": "edition",
+            "type": "pubkey"
+          },
+          {
+            "name": "serial",
+            "type": "u32"
+          },
+          {
+            "name": "origin_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "rules_version",
+            "type": "u16"
+          },
+          {
+            "name": "species",
+            "type": "u8"
+          },
+          {
+            "name": "form",
+            "type": "u8"
+          },
+          {
+            "name": "checkpoint",
+            "type": "u64"
+          },
+          {
+            "name": "bond",
+            "type": "u32"
+          },
+          {
+            "name": "event_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "checkpoint_slot",
+            "type": "u64"
+          },
+          {
+            "name": "active_offer",
+            "type": "pubkey"
+          },
+          {
+            "name": "next_offer_nonce",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpdateAuthority",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "None"
+          },
+          {
+            "name": "Address",
+            "fields": [
+              "pubkey"
+            ]
+          },
+          {
+            "name": "Collection",
+            "fields": [
+              "pubkey"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

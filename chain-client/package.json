@@ -1,0 +1,11 @@
+{
+  "name": "@pixel-pets/chain-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "scripts": {
+    "test": "node --test tests/*.test.ts",
+    "typecheck": "node ../node_modules/typescript/bin/tsc -p tsconfig.json"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "runId": "c75d6793-ec8a-4e5c-9710-fa8f68c62aee",
+  "startedAt": "2026-10-08T09:09:56.697Z",
+  "rpc": "http://127.0.0.1:8899",
+  "genesis": "GzZNjAPoH5YQuWi56TQJ1sKQEouzi423wVAfDHoRtSNK",
+  "program": "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR",
+  "actualSbf": true,
+  "actualHttp": true,
+  "simulatedBrowserWallet": true,
+  "localFundsHaveNoValue": true,
+  "checks": [],
+  "transactions": [],
+  "reviewEstimates": [],
+  "result": "failed",
+  "error": "Error: Simulation failed. \nMessage: Transaction simulation failed: Error processing Instruction 0: Unsupported program id. \nLogs: \n[\n  \"Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]\",\n  \"Program is not deployed\",\n  \"Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: Unsupported program id\"\n]. \nCatch the `SendTransactionError` and call `getLogs()` on it for full details.",
+  "completedAt": "2026-10-08T09:09:56.745Z"
+}

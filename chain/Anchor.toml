@@ -1,0 +1,19 @@
+[toolchain]
+anchor_version = "0.32.1"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+pixel_pets = "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR"
+
+[programs.devnet]
+pixel_pets = "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR"
+
+[provider]
+cluster = "Localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "cargo test --workspace --locked"

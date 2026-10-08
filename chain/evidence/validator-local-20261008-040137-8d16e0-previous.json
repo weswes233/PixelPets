@@ -1,0 +1,1846 @@
+{
+  "schema": 1,
+  "startedAt": "2026-10-07T15:30:52.267Z",
+  "rpc": "http://127.0.0.1:8899",
+  "genesis": "DTr1irCBWuaowFuzeVHh2XSqhvkngHQb8kawRfyzYZAw",
+  "program": "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR",
+  "core": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+  "actualSbf": true,
+  "localFundsHaveNoValue": true,
+  "checks": [
+    {
+      "name": "Initialization requires the deployed program upgrade authority; failed initialization leaves no Config or collection",
+      "status": "passed"
+    },
+    {
+      "name": "Collection created by real Core CPI and update authority is the Config PDA",
+      "status": "passed"
+    },
+    {
+      "name": "Edition cap is fixed at creation",
+      "status": "passed"
+    },
+    {
+      "name": "Issuer and recipient signed claims mint actual Core assets with only immutable ImmutableMetadata and AddBlocker plugins",
+      "status": "passed"
+    },
+    {
+      "name": "Sold-out claim rolls back asset, record and receipt creation, preserving issued count",
+      "status": "passed"
+    },
+    {
+      "name": "Claim receipt prevents replay across wallets and editions",
+      "status": "passed"
+    },
+    {
+      "name": "Checkpoint requires current owner and enforces sequence and irreversible growth branch",
+      "status": "passed"
+    },
+    {
+      "name": "Swap listing transfers actual Core ownership from maker to Offer PDA escrow",
+      "status": "passed"
+    },
+    {
+      "name": "Two completed Core swap CPIs roll back together after a later instruction fails",
+      "status": "passed",
+      "signature": "3pbMnj2s6kvQkL6wsL4BgkmeuZvar1ZnvGWVJUXgzaUjfMhs9LZGyLrjZVH9F8nDqoTrre6dA7g392kFN3mbQ75C",
+      "scope": "transaction atomicity after both CPIs; does not claim a forced second-CPI failure"
+    },
+    {
+      "name": "Two-wallet swap changes both actual owners and closes escrow; maker signature not needed at acceptance",
+      "status": "passed"
+    },
+    {
+      "name": "Changed desired-pet checkpoint invalidates swap quote and maker can recover escrow",
+      "status": "passed"
+    },
+    {
+      "name": "Insufficient fee funds roll back prior seller payment and preserve asset escrow and offer",
+      "status": "passed",
+      "signature": "2AkQJAWYAiz5MLo7kp9x2BFyiqzEtrSZMZfeQKcktSpK3YacYL49xN54KHCKBUoSsDVJ3y2DxB2bmPDUVwRJnRqr"
+    },
+    {
+      "name": "Sale settles atomically with floor-rounded fee deducted from gross; listing retains its fee snapshot",
+      "status": "passed",
+      "price": 100000003,
+      "feeBpsSnapshot": 250,
+      "expectedFee": 2500000,
+      "sellerNet": 97500003,
+      "offerRent": 2143680,
+      "feePayer": "7DeL64aBrDDF5viVnUD8Zw2jtUzoyhVrSy9o47F9eR3c",
+      "before": {
+        "seller": 9989994880,
+        "buyer": 9984277120,
+        "fee": 0,
+        "newFee": 0
+      },
+      "after": {
+        "seller": 10089638563,
+        "buyer": 9884277117,
+        "fee": 2500000,
+        "newFee": 0
+      }
+    },
+    {
+      "name": "Maker can recover actual escrowed asset while paused; no platform cancellation fee",
+      "status": "passed"
+    },
+    {
+      "name": "Closed offer addresses cannot be replayed because nonce increases monotonically",
+      "status": "passed"
+    }
+  ],
+  "transactions": [
+    {
+      "label": "fund_disposable_wallets",
+      "signature": "5eYmtZ5mJR3Nkv51Mqs1mnpKm3RSp9HtnnK3VcFbRAEgJVbFsLj1bjpwTaRS8DzKvqhNf5Xmch2uji5vi7uJbDLb",
+      "slot": 82,
+      "error": null,
+      "feeLamports": 5000,
+      "computeUnitsConsumed": 600,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Program 11111111111111111111111111111111 success"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "initialize_front_run_rejected",
+      "signature": "EvZoGuvM5wBRDNjTAsVfxYWNruit7ibJxKPVCFLsqugxGbxaXx2cjVLjLkC7h75rbHq5izyMiTobMwq7N7WC4Y8",
+      "slot": 83,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 6001
+          }
+        ]
+      },
+      "feeLamports": 15000,
+      "computeUnitsConsumed": 11391,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Initialize",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program log: AnchorError caused by account: program_data. Error Code: Unauthorized. Error Number: 6001. Error Message: Signer is not authorized.",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 11241 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x1771"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                2,
+                3
+              ],
+              "data": "11113N9XULRQz1ReKtf2qvX5grWcAkZpN3TD3yeJfhFn84njXwFhXSa7MKB8XjiQYmQTay",
+              "programIdIndex": 4,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "initialize_authorized",
+      "signature": "3YYbcL92jYbWcKCyEXdEgtbE6sANedY4kzX39URGDCUdbWE9EHKfLaiBZdUWspTqTS4NxXninNkpE9ZSTcg65awT",
+      "slot": 84,
+      "error": null,
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 18850,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Initialize",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: CreateCollectionV2",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 5527 of 687570 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 18700 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                0,
+                2
+              ],
+              "data": "11113N9XULRQz1ReKtf2qvX5grWcAkZpN3TD3yeJfhFn84njXwFhXSa7MKB8XjiQYmQTay",
+              "programIdIndex": 3,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                1,
+                2,
+                0,
+                3
+              ],
+              "data": "3X72mgKjRxNmTDoqxSGDssmCETib5ZSuNsodxx3e1xqR1rKZBQ3fAEMPo8utP7Bor721ktTEaiC3jD",
+              "programIdIndex": 7,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                0,
+                1
+              ],
+              "data": "11118ez6T31agJRth5PZ5xf8MSsPDWjHTsejjtTd5dW5eVJLzCnH3JFK2vFPWykPGXMg2s",
+              "programIdIndex": 3,
+              "stackHeight": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "create_editions",
+      "signature": "3Mpvt1DBVSYprJygaShZGp5sGozSZjYVCkSoXnTybHawxDChVGSBxftQBzDBitagzYxympUooWjZiA69shW25FFQ",
+      "slot": 85,
+      "error": null,
+      "feeLamports": 5000,
+      "computeUnitsConsumed": 22530,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: CreateEdition",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 10440 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: CreateEdition",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 11940 of 689410 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                0,
+                2
+              ],
+              "data": "11113N8bQuw6PZt56nUYDKSYUoHrFWKqWqXi8NGTg85rpzpXwErXsJX39nrHijE7ZjLwr9",
+              "programIdIndex": 3,
+              "stackHeight": 2
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "instructions": [
+            {
+              "accounts": [
+                0,
+                1
+              ],
+              "data": "11113N8bQuw6PZt56nUYDKSYUoHrFWKqWqXi8NGTg85rpzpXwErXsJX39nrHijE7ZjLwr9",
+              "programIdIndex": 3,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "edition_cap_cannot_be_recreated",
+      "signature": "3PPzaewgPiAhqpj7v4QRTywuvDWzNBs4BikVWpqYr68r11pjqhg2ujRwmQFWrhq7nioctfPWW8n9PWkMH8ptoGBa",
+      "slot": 86,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 0
+          }
+        ]
+      },
+      "feeLamports": 5000,
+      "computeUnitsConsumed": 6629,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: CreateEdition",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Allocate: account Address { address: GmLUrZHd3NFHhtSj78jntGXnz8PizzSs547rEatkZoYM, base: None } already in use",
+        "Program 11111111111111111111111111111111 failed: custom program error: 0x0",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 6479 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x0"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                1
+              ],
+              "data": "9krTD7nXnzdsTFGs",
+              "programIdIndex": 2,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "unauthorized_issuer_rejected",
+      "signature": "4SrDYxRsgmkp4hwwAMANBP6CtQat8TmrXtZUW9EbJKkH4ZVooPU5egRvtTB4HMM18s4TpNzrwLZHs7AzFCbyKGtE",
+      "slot": 87,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 2001
+          }
+        ]
+      },
+      "feeLamports": 20000,
+      "computeUnitsConsumed": 18744,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: ClaimPet",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program log: AnchorError caused by account: config. Error Code: ConstraintHasOne. Error Number: 2001. Error Message: A has one constraint was violated.",
+        "Program log: Left:",
+        "Program log: 78ytj3D1iiT7QcBuE4sAsvsvJwmqnSn5G96umRNVwbiP",
+        "Program log: Right:",
+        "Program log: CfnuGX3kTHPHMtYjCQTJ9RUiEiHF3MgwVnmnw3RsDdxw",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 18594 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x7d1"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                1,
+                5
+              ],
+              "data": "1111584gb3MfprYHBPgpTZRfsVdWfpsUtbuzRMxxQcSYBwPHcnh1Exdma54dC9niF7mV8D",
+              "programIdIndex": 8,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                1,
+                4
+              ],
+              "data": "11116Jest8ZCQoJ1XdoNCrchghFvPjTBNVAKu35cnTcqQ3unKMPN7YJtCSwj949AHW5KEh",
+              "programIdIndex": 8,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "claim_pet_wallet_A",
+      "signature": "32C8W4SxmSFGnZZJUd7FLRSXXcVWW8eHgfKomx4wpWNEHHg2DJvHvVo1TdTbjyhnNPf5F8W9NfPDBWDZZnC5YFNG",
+      "slot": 88,
+      "error": null,
+      "feeLamports": 20000,
+      "computeUnitsConsumed": 51575,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: ClaimPet",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: CreateV2",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program log: programs/mpl-core/src/state/collection.rs:139:Approve",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 22114 of 673486 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program data: XGgSjzBfAeMuqEZD+dPIL3Nx7kkZ7YQOcXC2LRaA2P7Cwz0ACd6VNxTntZLOzJHzj3lv5GAxcHPVzKX9FCT2x08gMyN7Wz+N6jriySocsO+oiejLsolY0sb+mflXMe1pf8qqEiAyuOIBAAAA",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 51425 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                1,
+                4
+              ],
+              "data": "1111584gb3MfprYHBPgpTZRfsVdWfpsUtbuzRMxxQcSYBwPHcnh1Exdma54dC9niF7mV8D",
+              "programIdIndex": 8,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                1,
+                5
+              ],
+              "data": "11116Jest8ZCQoJ1XdoNCrchghFvPjTBNVAKu35cnTcqQ3unKMPN7YJtCSwj949AHW5KEh",
+              "programIdIndex": 8,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                2,
+                7,
+                10,
+                1,
+                1,
+                12,
+                8,
+                12
+              ],
+              "data": "NBzxYMFasCYqHKq6HNy6vpHDnqpAMEb6jefkS3iXZK4rL1e4QD4hDWf7SDeEqiecBnMa6oTD",
+              "programIdIndex": 12,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                1,
+                2
+              ],
+              "data": "11113NjnYrYxPM7KHQXbA2gcSkQSMns2gCubL33okGXDdQ5eZynPmzSFgTHNx673b8mjrw",
+              "programIdIndex": 8,
+              "stackHeight": 3
+            },
+            {
+              "accounts": [
+                1,
+                2
+              ],
+              "data": "3Bxs4H4oxGjA9nnj",
+              "programIdIndex": 8,
+              "stackHeight": 3
+            },
+            {
+              "accounts": [
+                1,
+                2
+              ],
+              "data": "3Bxs43ZWXrnVj2F1",
+              "programIdIndex": 8,
+              "stackHeight": 3
+            },
+            {
+              "accounts": [
+                1,
+                2
+              ],
+              "data": "3Bxs43ZWXrnVj2F1",
+              "programIdIndex": 8,
+              "stackHeight": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "claim_pet_wallet_B",
+      "signature": "2tgN8Lt5o3RvX6do4jre76pFJkJkdjG2ebenRCaFveaNNTpipPbDa84cQK2t5MYeXJa23KKzMkDeCoWoiqRfpiA4",
+      "slot": 89,
+      "error": null,
+      "feeLamports": 20000,
+      "computeUnitsConsumed": 53075,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: ClaimPet",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: CreateV2",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program log: programs/mpl-core/src/state/collection.rs:139:Approve",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 22114 of 671986 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program data: XGgSjzBfAeOLDuR0gDl/5z54NBVHM8uENdjuWrpnVSEZsxnVCgBV1fP7IBpulCnwPrtqJ5X5gJecTPfLpEaDfe3N+Ps6HRNg6jriySocsO+oiejLsolY0sb+mflXMe1pf8qqEiAyuOICAAAA",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 52925 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                2,
+                4
+              ],
+              "data": "1111584gb3MfprYHBPgpTZRfsVdWfpsUtbuzRMxxQcSYBwPHcnh1Exdma54dC9niF7mV8D",
+              "programIdIndex": 8,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                2,
+                5
+              ],
+              "data": "11116Jest8ZCQoJ1XdoNCrchghFvPjTBNVAKu35cnTcqQ3unKMPN7YJtCSwj949AHW5KEh",
+              "programIdIndex": 8,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                1,
+                7,
+                10,
+                2,
+                2,
+                12,
+                8,
+                12
+              ],
+              "data": "NBzxYMFasCYqHKq6HNy6vpHDnqpAMEb6jefkS3iXZK4rL1e4QD4hDWf7SDeEqiecBnMa6oTD",
+              "programIdIndex": 12,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                2,
+                1
+              ],
+              "data": "11113NjnYrYxPM7KHQXbA2gcSkQSMns2gCubL33okGXDdQ5eZynPmzSFgTHNx673b8mjrw",
+              "programIdIndex": 8,
+              "stackHeight": 3
+            },
+            {
+              "accounts": [
+                2,
+                1
+              ],
+              "data": "3Bxs4H4oxGjA9nnj",
+              "programIdIndex": 8,
+              "stackHeight": 3
+            },
+            {
+              "accounts": [
+                2,
+                1
+              ],
+              "data": "3Bxs43ZWXrnVj2F1",
+              "programIdIndex": 8,
+              "stackHeight": 3
+            },
+            {
+              "accounts": [
+                2,
+                1
+              ],
+              "data": "3Bxs43ZWXrnVj2F1",
+              "programIdIndex": 8,
+              "stackHeight": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "claim_one_of_one_edition",
+      "signature": "sNrw5ggKddfw7S9bbzNyz1vgwKRz2AHzPVFPNa13j8efWCnEs5hZQVnC2z7dQfD59sgUDGsThQkfk1hdmazUBUP",
+      "slot": 90,
+      "error": null,
+      "feeLamports": 20000,
+      "computeUnitsConsumed": 53075,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: ClaimPet",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: CreateV2",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program log: programs/mpl-core/src/state/collection.rs:139:Approve",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [3]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 22114 of 671986 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program data: XGgSjzBfAeMyyTrUAfwKDGfpWh86EDo2Gw8UW6QFV6WvreQwYvhKYhTntZLOzJHzj3lv5GAxcHPVzKX9FCT2x08gMyN7Wz+NJgadYGKqHtbTfOA5bGGLVUYTkjNigWcHzyZzp71bOgwBAAAA",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 52925 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                1,
+                6
+              ],
+              "data": "1111584gb3MfprYHBPgpTZRfsVdWfpsUtbuzRMxxQcSYBwPHcnh1Exdma54dC9niF7mV8D",
+              "programIdIndex": 8,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                1,
+                5
+              ],
+              "data": "11116Jest8ZCQoJ1XdoNCrchghFvPjTBNVAKu35cnTcqQ3unKMPN7YJtCSwj949AHW5KEh",
+              "programIdIndex": 8,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                2,
+                7,
+                10,
+                1,
+                1,
+                12,
+                8,
+                12
+              ],
+              "data": "NBzxYMFasCYqHKq6HNy7agieAA4TAb8JC84Q1Sm9MsHY3F547LUntc8ZWhcw9uBEDMCf9KcB",
+              "programIdIndex": 12,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                1,
+                2
+              ],
+              "data": "11113NjnYrYxPM7KHQXbA2gcSkQSMns2gCubL33okGXDdQ5eZynPmzSFgTHNx673b8mjrw",
+              "programIdIndex": 8,
+              "stackHeight": 3
+            },
+            {
+              "accounts": [
+                1,
+                2
+              ],
+              "data": "3Bxs4H4oxGjA9nnj",
+              "programIdIndex": 8,
+              "stackHeight": 3
+            },
+            {
+              "accounts": [
+                1,
+                2
+              ],
+              "data": "3Bxs43ZWXrnVj2F1",
+              "programIdIndex": 8,
+              "stackHeight": 3
+            },
+            {
+              "accounts": [
+                1,
+                2
+              ],
+              "data": "3Bxs43ZWXrnVj2F1",
+              "programIdIndex": 8,
+              "stackHeight": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "edition_cap_rejected",
+      "signature": "3PMDrgfx5Cobbf3dZZbqMfKtfMVN9F6bV6Fhcm3z4FdxREPsJdoLW1D6fkHyMs5LfK7pY6AXQbSkUoxxuLY8HHyF",
+      "slot": 91,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 6008
+          }
+        ]
+      },
+      "feeLamports": 20000,
+      "computeUnitsConsumed": 22145,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: ClaimPet",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program log: AnchorError thrown in programs\\pixel-pets\\src\\lib.rs:413. Error Code: SoldOut. Error Number: 6008. Error Message: Edition supply is exhausted.",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 21995 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x1778"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                2,
+                6
+              ],
+              "data": "1111584gb3MfprYHBPgpTZRfsVdWfpsUtbuzRMxxQcSYBwPHcnh1Exdma54dC9niF7mV8D",
+              "programIdIndex": 8,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                2,
+                4
+              ],
+              "data": "11116Jest8ZCQoJ1XdoNCrchghFvPjTBNVAKu35cnTcqQ3unKMPN7YJtCSwj949AHW5KEh",
+              "programIdIndex": 8,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "claim_replay_rejected_across_wallet_and_edition",
+      "signature": "3wsvvTuUj7BACuKYf8YycmYvLhqH3UsWgD3JdWQamCicaBc4paix1ZibqZSCAd7ubLhvDPgtBKby8XxW7Jx6Gjpj",
+      "slot": 92,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 0
+          }
+        ]
+      },
+      "feeLamports": 20000,
+      "computeUnitsConsumed": 17842,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: ClaimPet",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Allocate: account Address { address: BWvyrJrXnvzgCZ1eg84K6HSnJznVTH84LbuQo8moAxzi, base: None } already in use",
+        "Program 11111111111111111111111111111111 failed: custom program error: 0x0",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 17692 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x0"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                2,
+                5
+              ],
+              "data": "1111584gb3MfprYHBPgpTZRfsVdWfpsUtbuzRMxxQcSYBwPHcnh1Exdma54dC9niF7mV8D",
+              "programIdIndex": 8,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                6
+              ],
+              "data": "9krTDWNAQPjwDREo",
+              "programIdIndex": 8,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "checkpoint_wrong_owner_rejected",
+      "signature": "3d1QfdCJxsADMbMrZ1sBqk5Z3AbMa1gqShNs8bHH6yEiXFATB69AYJzuZnhfT6pFR2rawBAAQvuntiGRKY92f5jw",
+      "slot": 93,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 6013
+          }
+        ]
+      },
+      "feeLamports": 15000,
+      "computeUnitsConsumed": 10940,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Checkpoint",
+        "Program log: AnchorError thrown in programs\\pixel-pets\\src\\lib.rs:463. Error Code: WrongOwner. Error Number: 6013. Error Message: Wallet is not the current Core asset owner.",
+        "Program log: Left:",
+        "Program log: 2Qc5a7fghmRUmhuGHAUAMRYm1GtScg5Cd3qQEqLPatLk",
+        "Program log: Right:",
+        "Program log: HRQAhFBp225BKPg6xx9Zd4XPyF9KEvRp4UrKeW4yAEXy",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 10790 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x177d"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "checkpoint_growth",
+      "signature": "TXYo4WVfhiMq6Jv9WPQpE3VDyYkNC784WFic2npCZ1kT4uQEPxF7LFct7ixUAL3FiX4i7opce351NZKn3YYYhAo",
+      "slot": 94,
+      "error": null,
+      "feeLamports": 15000,
+      "computeUnitsConsumed": 9837,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Checkpoint",
+        "Program data: ncBbxJUhL/cuqEZD+dPIL3Nx7kkZ7YQOcXC2LRaA2P7Cwz0ACd6VNwEAAAAAAAAAAQ==",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 9687 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "checkpoint_stale_sequence_rejected",
+      "signature": "4Aa3YpUsPhWCuwpHozvuMZEPXECo3k1J9raBANfbPCpcWA2Aa7gHhCoqNyuLvfVm5kZ6PTYgFY8RgwyshPUufksU",
+      "slot": 95,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 6015
+          }
+        ]
+      },
+      "feeLamports": 15000,
+      "computeUnitsConsumed": 10501,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Checkpoint",
+        "Program log: AnchorError thrown in programs\\pixel-pets\\src\\lib.rs:422. Error Code: CheckpointChanged. Error Number: 6015. Error Message: Checkpoint changed; refresh the quote.",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 10351 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x177f"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "checkpoint_illegal_branch_rejected",
+      "signature": "5oQkn9nAcZ4Gg4UBx2txb5kcbrVxvbZEZVzZ8P1YhGW7nRJBQvmka5zG3GNa4c36mo8cHuSjKrxTi1SGKgUt9ff3",
+      "slot": 96,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 6005
+          }
+        ]
+      },
+      "feeLamports": 15000,
+      "computeUnitsConsumed": 10521,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Checkpoint",
+        "Program log: AnchorError thrown in programs\\pixel-pets\\src\\lib.rs:423. Error Code: InvalidTraits. Error Number: 6005. Error Message: Invalid species, growth transition, bond or rules version.",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 10371 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x1775"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "create_swap_A_for_B",
+      "signature": "c3R5kqGcKaZUQ8t6eVcp4SeNH5kGTBKfWxzU11PXifWU5Wsfsjr77nD5w2S2qVbhaJj1Z9PVWyKV8Lvex9rQUdt",
+      "slot": 97,
+      "error": null,
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 32653,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: CreateSwap",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: Transfer",
+        "Program log: programs/mpl-core/src/state/asset.rs:293:Approve",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 7831 of 677527 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program data: M+stQMEOd3GDz1KaLki9/8teXhayT6rmPtTfHqkmqaCc+yAjsaUvJy6oRkP508gvc3HuSRnthA5xcLYtFoDY/sLDPQAJ3pU3FOe1ks7MkfOPeW/kYDFwc9XMpf0UJPbHTyAzI3tbP40A",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 32503 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                1,
+                4
+              ],
+              "data": "111185163Bhx14N7QLXuATQTkcsZ5zDacv7pNtJN3ir2FhGEd37P6qaPiR9RhrVH43vbQD",
+              "programIdIndex": 5,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                2,
+                12,
+                1,
+                1,
+                4,
+                5,
+                11
+              ],
+              "data": "24o",
+              "programIdIndex": 11,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "swap_then_later_instruction_failure_rolls_back",
+      "signature": "3pbMnj2s6kvQkL6wsL4BgkmeuZvar1ZnvGWVJUXgzaUjfMhs9LZGyLrjZVH9F8nDqoTrre6dA7g392kFN3mbQ75C",
+      "slot": 98,
+      "error": {
+        "InstructionError": [
+          2,
+          {
+            "Custom": 2001
+          }
+        ]
+      },
+      "feeLamports": 15000,
+      "computeUnitsConsumed": 43702,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: AcceptSwap",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: Transfer",
+        "Program log: programs/mpl-core/src/state/asset.rs:293:Approve",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 7831 of 681774 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: Transfer",
+        "Program log: programs/mpl-core/src/state/asset.rs:293:Approve",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 7830 of 670901 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program data: HEjUheWcPv6Dz1KaLki9/8teXhayT6rmPtTfHqkmqaCc+yAjsaUvJ/P7IBpulCnwPrtqJ5X5gJecTPfLpEaDfe3N+Ps6HRNgAA==",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 38767 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Configure",
+        "Program log: AnchorError caused by account: config. Error Code: ConstraintHasOne. Error Number: 2001. Error Message: A has one constraint was violated.",
+        "Program log: Left:",
+        "Program log: 7DeL64aBrDDF5viVnUD8Zw2jtUzoyhVrSy9o47F9eR3c",
+        "Program log: Right:",
+        "Program log: CfnuGX3kTHPHMtYjCQTJ9RUiEiHF3MgwVnmnw3RsDdxw",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 4785 of 661083 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x7d1"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                8,
+                14,
+                1,
+                1,
+                3,
+                9,
+                13
+              ],
+              "data": "24o",
+              "programIdIndex": 13,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                4,
+                14,
+                1,
+                7,
+                1,
+                9,
+                13
+              ],
+              "data": "24o",
+              "programIdIndex": 13,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "accept_swap_two_wallets",
+      "signature": "2Cjr8mx7uAmXpQGjbvf3f9JV3Bv4NQaXGD1BN2EZj7VGYXDhiHXtm4ZPjQHMUVK2B4y9y3rmVLcti6EQQKUipG69",
+      "slot": 99,
+      "error": null,
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 38917,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: AcceptSwap",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: Transfer",
+        "Program log: programs/mpl-core/src/state/asset.rs:293:Approve",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 7831 of 681774 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: Transfer",
+        "Program log: programs/mpl-core/src/state/asset.rs:293:Approve",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 7830 of 670901 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program data: HEjUheWcPv6Dz1KaLki9/8teXhayT6rmPtTfHqkmqaCc+yAjsaUvJ/P7IBpulCnwPrtqJ5X5gJecTPfLpEaDfe3N+Ps6HRNgAA==",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 38767 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                6,
+                13,
+                1,
+                1,
+                2,
+                7,
+                12
+              ],
+              "data": "24o",
+              "programIdIndex": 12,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                3,
+                13,
+                1,
+                5,
+                1,
+                7,
+                12
+              ],
+              "data": "24o",
+              "programIdIndex": 12,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "create_swap_with_checkpoint_snapshot",
+      "signature": "34nzATqNhzSf4gjeURXNhUb4Gyq1db2gxxNvZa1L9RAhmGcaDRAnVMfB2ABKNZYURp4iCtZnEcXHnL5QGFRK99xP",
+      "slot": 100,
+      "error": null,
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 31153,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: CreateSwap",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: Transfer",
+        "Program log: programs/mpl-core/src/state/asset.rs:293:Approve",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 7831 of 679027 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program data: M+stQMEOd3GYlsgu/tke4hGQh4ig1top5vnCCYcQhcpuau/RZrf0tTLJOtQB/AoMZ+laHzoQOjYbDxRbpAVXpa+t5DBi+EpiFOe1ks7MkfOPeW/kYDFwc9XMpf0UJPbHTyAzI3tbP40A",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 31003 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                1,
+                3
+              ],
+              "data": "111185163Bhx14N7QLXuATQTkcsZ5zDacv7pNtJN3ir2FhGEd37P6qaPiR9RhrVH43vbQD",
+              "programIdIndex": 5,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                2,
+                12,
+                1,
+                1,
+                3,
+                5,
+                11
+              ],
+              "data": "24o",
+              "programIdIndex": 11,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "advance_desired_checkpoint",
+      "signature": "33HmM9fsgmVwuL94Rfv155SJTPSSgL8LD4jdahPtzXTTjVNN3mSpteSBd6MgaWFAoF7QXdY8BzYDfQE1Go3xWvnd",
+      "slot": 101,
+      "error": null,
+      "feeLamports": 15000,
+      "computeUnitsConsumed": 9838,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Checkpoint",
+        "Program data: ncBbxJUhL/cuqEZD+dPIL3Nx7kkZ7YQOcXC2LRaA2P7Cwz0ACd6VNwIAAAAAAAAAAQ==",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 9688 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "changed_desired_checkpoint_rejects_swap",
+      "signature": "4sDnR6gThaGzn7JysQJ9e6sUkvsB9CysqkXsQ4EDq7N9bvyTj1ZJrGXfKF6CnXG8ZDDGajGHWS7dcR5nUjyYvPpP",
+      "slot": 102,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 6015
+          }
+        ]
+      },
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 17798,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: AcceptSwap",
+        "Program log: AnchorError thrown in programs\\pixel-pets\\src\\lib.rs:178. Error Code: CheckpointChanged. Error Number: 6015. Error Message: Checkpoint changed; refresh the quote.",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 17648 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x177f"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "cancel_stale_swap",
+      "signature": "57BKfTnqoTq4Y3CN8vCoXcFdwpxh5tZjQVCCybutRbYcvYWneZcyskSefbhehR1VHqjJvKaTtxokaqQ9Bfr3n8bK",
+      "slot": 103,
+      "error": null,
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 22869,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: CancelOffer",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: Transfer",
+        "Program log: programs/mpl-core/src/state/asset.rs:293:Approve",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 7830 of 686815 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program data: LSqv1jPAmgmYlsgu/tke4hGQh4ig1top5vnCCYcQhcpuau/RZrf0tRTntZLOzJHzj3lv5GAxcHPVzKX9FCT2x08gMyN7Wz+N",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 22719 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                2,
+                10,
+                1,
+                3,
+                1,
+                5,
+                9
+              ],
+              "data": "24o",
+              "programIdIndex": 9,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "create_sale",
+      "signature": "5SS1R5W6KZ8ooB9fsSQE6vvxdTnwU1LyMF1tyoiJ8Y1z6kdcGmvZF2Cg1pUh6s6b5ssyEiPVsnSwiGE2kGgYw71x",
+      "slot": 104,
+      "error": null,
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 31458,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: CreateSale",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: Transfer",
+        "Program log: programs/mpl-core/src/state/asset.rs:293:Approve",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 7831 of 678646 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program data: M+stQMEOd3Fz/PUEcUZ/Tp8YEgcVazsgAp0HQpWV57xbaGFigSRnkS6oRkP508gvc3HuSRnthA5xcLYtFoDY/sLDPQAJ3pU38/sgGm6UKfA+u2onlfmAl5xM98ukRoN97c34+zodE2AB",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 31308 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                1,
+                4
+              ],
+              "data": "111185163Bhx14N7QLXuATQTkcsZ5zDacv7pNtJN3ir2FhGEd37P6qaPiR9RhrVH43vbQD",
+              "programIdIndex": 5,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                2,
+                10,
+                1,
+                1,
+                4,
+                5,
+                9
+              ],
+              "data": "24o",
+              "programIdIndex": 9,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "change_config_after_listing",
+      "signature": "3mNum1X7g8VydQZFRK2a72wJyNUSa8G1YZnBFp7tqahA7URuCKxkNeoSfFPutUtzpNPjyUv2qaH7UQ1MtfZK7cPE",
+      "slot": 105,
+      "error": null,
+      "feeLamports": 5000,
+      "computeUnitsConsumed": 3372,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Configure",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 3222 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "buy_changed_price_rejected",
+      "signature": "2dkDCbpxzS2i2MfDKp4hsKznwN26jLefLBFDHXrttAz2XEPeZuCk2fmr4MgfkBFawpQSJkyKHJtiSrYC7W1E5mKQ",
+      "slot": 106,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 6020
+          }
+        ]
+      },
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 13137,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Buy",
+        "Program log: AnchorError thrown in programs\\pixel-pets\\src\\lib.rs:200. Error Code: InvalidPrice. Error Number: 6020. Error Message: Price must match and be greater than zero.",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 12987 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x1784"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "buy_wrong_fee_recipient_rejected",
+      "signature": "2WpH6ZpSjsJP1YfXcvjHm26idX64QWbpXQR3XV1qzJxjZmkdD3gkucCjTvAjNqtkPBk6cTY22Cbo2kF3GXmiGsRh",
+      "slot": 107,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 2012
+          }
+        ]
+      },
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 7816,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Buy",
+        "Program log: AnchorError caused by account: fee_recipient. Error Code: ConstraintAddress. Error Number: 2012. Error Message: An address constraint was violated.",
+        "Program log: Left:",
+        "Program log: 5GNnTS3FS8JACdN5YyrdEjiKcZYnJqRfUE9a3H2xrXjj",
+        "Program log: Right:",
+        "Program log: Gco4MYLE5FRyx2qFdejxWmriMX6RDqVRbgZ7BmB67uEp",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 7666 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x7dc"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "fund_underfunded_buyer",
+      "signature": "3GULat8mtoSFoHWkdqmX6JKbNCET3pqSdPzFTy1vE9u24Np1W89yZ93dMUKeX2p71rRkv8Z3gY1fChYQia3t7utC",
+      "slot": 108,
+      "error": null,
+      "feeLamports": 5000,
+      "computeUnitsConsumed": 300,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Program 11111111111111111111111111111111 success"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "buy_second_payment_failure_rolls_back_first_payment",
+      "signature": "2AkQJAWYAiz5MLo7kp9x2BFyiqzEtrSZMZfeQKcktSpK3YacYL49xN54KHCKBUoSsDVJ3y2DxB2bmPDUVwRJnRqr",
+      "slot": 109,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 1
+          }
+        ]
+      },
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 15023,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Buy",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Transfer: insufficient lamports 1250000, need 2500000",
+        "Program 11111111111111111111111111111111 failed: custom program error: 0x1",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 14873 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x1"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                1,
+                6
+              ],
+              "data": "3Bxs4HYCdoS4Ew1H",
+              "programIdIndex": 7,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                1,
+                5
+              ],
+              "data": "3Bxs4TeGXQSxfHP5",
+              "programIdIndex": 7,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "buy_sale",
+      "signature": "2KzAQNtkMjGuXXq9LWeF7Dwfiq3fraUB2v1dh2NBhaBXTQT9tFLiyBQeJbmh1x4gbytfVS5TVnPFov5LpXPPzxwB",
+      "slot": 110,
+      "error": null,
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 27623,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Buy",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: Transfer",
+        "Program log: programs/mpl-core/src/state/asset.rs:293:Approve",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 7830 of 682129 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program data: HEjUheWcPv5z/PUEcUZ/Tp8YEgcVazsgAp0HQpWV57xbaGFigSRnkRTntZLOzJHzj3lv5GAxcHPVzKX9FCT2x08gMyN7Wz+NAQ==",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 27473 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                1,
+                6
+              ],
+              "data": "3Bxs4HYCdoS4Ew1H",
+              "programIdIndex": 7,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                1,
+                5
+              ],
+              "data": "3Bxs4TeGXQSxfHP5",
+              "programIdIndex": 7,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                2,
+                12,
+                1,
+                4,
+                1,
+                7,
+                11
+              ],
+              "data": "24o",
+              "programIdIndex": 11,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "create_sale_to_cancel",
+      "signature": "2XisRVNuEjmfsjT1UfAbax2U2sD6iuMxaKVbi42hiULqPeqh96WdqKjEpmXVxaPno7FiH8oXTxQVaiGJbvVPbqJ3",
+      "slot": 111,
+      "error": null,
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 31458,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: CreateSale",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: Transfer",
+        "Program log: programs/mpl-core/src/state/asset.rs:293:Approve",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 7831 of 678646 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program data: M+stQMEOd3EBi1QBc7+3pdBTqXByqBMhpdmrXyRmJHfGC674YvYb/4sO5HSAOX/nPng0FUczy4Q12O5aumdVIRmzGdUKAFXVFOe1ks7MkfOPeW/kYDFwc9XMpf0UJPbHTyAzI3tbP40B",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 31308 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                1,
+                3
+              ],
+              "data": "111185163Bhx14N7QLXuATQTkcsZ5zDacv7pNtJN3ir2FhGEd37P6qaPiR9RhrVH43vbQD",
+              "programIdIndex": 5,
+              "stackHeight": 2
+            },
+            {
+              "accounts": [
+                4,
+                10,
+                1,
+                1,
+                3,
+                5,
+                9
+              ],
+              "data": "24o",
+              "programIdIndex": 9,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "unauthorized_early_cancel_rejected",
+      "signature": "3cheJB19Emhi9TgsVzPFdKzT9868wUQxfqTmYLw15cnk3546vwzEJsKnzMw88SocyUp2AqtyqZFpbMdc9gQphru7",
+      "slot": 112,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 6001
+          }
+        ]
+      },
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 12723,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: CancelOffer",
+        "Program log: AnchorError thrown in programs\\pixel-pets\\src\\lib.rs:226. Error Code: Unauthorized. Error Number: 6001. Error Message: Signer is not authorized.",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 12573 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x1771"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "pause_protocol",
+      "signature": "5iKHFaNuyQJWDfTqTGXCHFGgdFGQxmpQ8Uns3rPP5psz3gXvV97zWnTYSoNbetfzxTebDipfpcBnyQLNspGu2eKy",
+      "slot": 113,
+      "error": null,
+      "feeLamports": 5000,
+      "computeUnitsConsumed": 3372,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Configure",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 3222 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "paused_buy_rejected",
+      "signature": "5iJm7Y378xQSQcoHbCQTVE33nwnBGd7NNJU15j8URY2JRBXYYnq4yJ29wXqnLCYT5RcwYMZmYvW2pGmjradRh7Yr",
+      "slot": 114,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 6000
+          }
+        ]
+      },
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 12792,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Buy",
+        "Program log: AnchorError thrown in programs\\pixel-pets\\src\\lib.rs:196. Error Code: Paused. Error Number: 6000. Error Message: Protocol is paused; cancellation remains available.",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 12642 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x1770"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "maker_cancel_while_paused",
+      "signature": "3VivSmoPh9teAfquJcswtSWvadukJFoUhPLCggkWr8TPwYXprrzg91mLQVkcimmdaqpoaz1PxpBoRTCMcohrA2wt",
+      "slot": 115,
+      "error": null,
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 22869,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: CancelOffer",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d invoke [2]",
+        "Program log: Instruction: Transfer",
+        "Program log: programs/mpl-core/src/state/asset.rs:293:Approve",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d consumed 7830 of 686815 compute units",
+        "Program CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d success",
+        "Program data: LSqv1jPAmgkBi1QBc7+3pdBTqXByqBMhpdmrXyRmJHfGC674YvYb/xTntZLOzJHzj3lv5GAxcHPVzKX9FCT2x08gMyN7Wz+N",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 22719 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                4,
+                10,
+                1,
+                3,
+                1,
+                5,
+                9
+              ],
+              "data": "24o",
+              "programIdIndex": 9,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "resume_protocol",
+      "signature": "4AgQdecvKTMsuzY5BoaYj3WsAwSdPWMjwLWJ44G6jMNoakPYKxrMnzK7YNhYJ9hqX4MSN6iNUPvzQCjZpunYon9X",
+      "slot": 116,
+      "error": null,
+      "feeLamports": 5000,
+      "computeUnitsConsumed": 3372,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: Configure",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 3222 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR success"
+      ],
+      "innerInstructions": []
+    },
+    {
+      "label": "stale_offer_nonce_rejected",
+      "signature": "3Px7mDk98K24hQnBsWAXM7kD2XjXyqD5ZNvSY336oVXA5s1WrZorn8NBDBonk4wNi82ujRkvzKvDU5GZBn3eE3gR",
+      "slot": 117,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 6016
+          }
+        ]
+      },
+      "feeLamports": 10000,
+      "computeUnitsConsumed": 20435,
+      "logs": [
+        "Program ComputeBudget111111111111111111111111111111 invoke [1]",
+        "Program ComputeBudget111111111111111111111111111111 success",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR invoke [1]",
+        "Program log: Instruction: CreateSale",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program log: AnchorError thrown in programs\\pixel-pets\\src\\lib.rs:470. Error Code: InvalidNonce. Error Number: 6016. Error Message: Offer nonce is stale.",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR consumed 20285 of 699850 compute units",
+        "Program 2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR failed: custom program error: 0x1780"
+      ],
+      "innerInstructions": [
+        {
+          "index": 1,
+          "instructions": [
+            {
+              "accounts": [
+                1,
+                3
+              ],
+              "data": "111185163Bhx14N7QLXuATQTkcsZ5zDacv7pNtJN3ir2FhGEd37P6qaPiR9RhrVH43vbQD",
+              "programIdIndex": 5,
+              "stackHeight": 2
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "snapshots": {
+    "initialAssets": [
+      {
+        "address": "498aTgEo7YtEi9M8SHxW5b4oXqKsN9FHF7Ncbsj6Ya3x",
+        "accountOwner": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+        "owner": "2Qc5a7fghmRUmhuGHAUAMRYm1GtScg5Cd3qQEqLPatLk",
+        "name": "E2E Pet 1",
+        "uri": "ipfs://local-e2e-pet-1",
+        "collection": "HRpfBAyq1piQsFiNz378uK4fKg7JUKbb5rAKMB29Cqw8",
+        "plugins": [
+          {
+            "pluginType": 12,
+            "authority": {
+              "__kind": "None"
+            },
+            "offset": "115",
+            "isUnknown": false
+          },
+          {
+            "pluginType": 11,
+            "authority": {
+              "__kind": "None"
+            },
+            "offset": "116",
+            "isUnknown": false
+          }
+        ],
+        "externalPluginCount": 0,
+        "lamports": 3407040,
+        "bytes": 146
+      },
+      {
+        "address": "AMpqmohbZV3z6nwSAjBWjNpEuLaFm6rj53S2NQQCCzfn",
+        "accountOwner": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+        "owner": "HRQAhFBp225BKPg6xx9Zd4XPyF9KEvRp4UrKeW4yAEXy",
+        "name": "E2E Pet 1",
+        "uri": "ipfs://local-e2e-pet-1",
+        "collection": "HRpfBAyq1piQsFiNz378uK4fKg7JUKbb5rAKMB29Cqw8",
+        "plugins": [
+          {
+            "pluginType": 12,
+            "authority": {
+              "__kind": "None"
+            },
+            "offset": "115",
+            "isUnknown": false
+          },
+          {
+            "pluginType": 11,
+            "authority": {
+              "__kind": "None"
+            },
+            "offset": "116",
+            "isUnknown": false
+          }
+        ],
+        "externalPluginCount": 0,
+        "lamports": 3407040,
+        "bytes": 146
+      },
+      {
+        "address": "4RFMWK743FyzWDKzxLk4ZC2uJqazogtZsX3h34AhcD2Z",
+        "accountOwner": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+        "owner": "2Qc5a7fghmRUmhuGHAUAMRYm1GtScg5Cd3qQEqLPatLk",
+        "name": "E2E Pet 2",
+        "uri": "ipfs://local-e2e-pet-2",
+        "collection": "HRpfBAyq1piQsFiNz378uK4fKg7JUKbb5rAKMB29Cqw8",
+        "plugins": [
+          {
+            "pluginType": 12,
+            "authority": {
+              "__kind": "None"
+            },
+            "offset": "115",
+            "isUnknown": false
+          },
+          {
+            "pluginType": 11,
+            "authority": {
+              "__kind": "None"
+            },
+            "offset": "116",
+            "isUnknown": false
+          }
+        ],
+        "externalPluginCount": 0,
+        "lamports": 3407040,
+        "bytes": 146
+      }
+    ],
+    "saleBalances": {
+      "price": 100000003,
+      "feeBpsSnapshot": 250,
+      "expectedFee": 2500000,
+      "sellerNet": 97500003,
+      "offerRent": 2143680,
+      "feePayer": "7DeL64aBrDDF5viVnUD8Zw2jtUzoyhVrSy9o47F9eR3c",
+      "before": {
+        "seller": 9989994880,
+        "buyer": 9984277120,
+        "fee": 0,
+        "newFee": 0
+      },
+      "after": {
+        "seller": 10089638563,
+        "buyer": 9884277117,
+        "fee": 2500000,
+        "newFee": 0
+      }
+    }
+  },
+  "wallets": {
+    "admin": "7DeL64aBrDDF5viVnUD8Zw2jtUzoyhVrSy9o47F9eR3c",
+    "issuer": "78ytj3D1iiT7QcBuE4sAsvsvJwmqnSn5G96umRNVwbiP",
+    "walletA": "2Qc5a7fghmRUmhuGHAUAMRYm1GtScg5Cd3qQEqLPatLk",
+    "walletB": "HRQAhFBp225BKPg6xx9Zd4XPyF9KEvRp4UrKeW4yAEXy",
+    "outsider": "CfnuGX3kTHPHMtYjCQTJ9RUiEiHF3MgwVnmnw3RsDdxw",
+    "feeRecipient": "Gco4MYLE5FRyx2qFdejxWmriMX6RDqVRbgZ7BmB67uEp",
+    "nextFeeRecipient": "5GNnTS3FS8JACdN5YyrdEjiKcZYnJqRfUE9a3H2xrXjj",
+    "poorBuyer": "DPP4zGPS7zNTi74y6UY29j7gdu18QAyRuXEZT9utNNyT",
+    "collection": "HRpfBAyq1piQsFiNz378uK4fKg7JUKbb5rAKMB29Cqw8"
+  },
+  "binary": {
+    "pixelPetsSha256": "f7808c45699515789d2b02c62d86c0fddaffb2fb6bff71236ac27ff08b186f82",
+    "coreFixtureSha256": "5680d2371204033f55cdcf0c08d393ed737d99cfe35d83f65befe80f7537484a",
+    "programAccountOwner": "BPFLoaderUpgradeab1e11111111111111111111111",
+    "programData": "5n5Hk71X5usmcLiGSnyAy16Ks9qHMSsQmtX5LWQ88Wot"
+  },
+  "result": "failed",
+  "error": "TypeError: fetch failed",
+  "completedAt": "2026-10-07T15:31:17.495Z"
+}

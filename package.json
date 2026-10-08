@@ -1,0 +1,36 @@
+{
+  "name": "pixel-pets",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
+  "scripts": {
+    "test": "node --test wallet-web/tests/*.test.ts chain-client/tests/*.test.ts server/tests/*.test.ts",
+    "build:web": "node tools/build-web.mjs",
+    "dev:web": "node tools/serve.ts",
+    "test:wallet": "node --test wallet-web/tests/*.test.ts",
+    "test:server": "node --test server/tests/*.test.ts",
+    "test:sdk": "node --test chain-client/tests/*.test.ts",
+    "test:local-chain": "node chain/tests/local-validator-e2e.mjs",
+    "test:chain-service-e2e": "node chain/tests/service-e2e.mjs",
+    "typecheck:server": "tsc -p server/tsconfig.json",
+    "typecheck:sdk": "tsc -p chain-client/tsconfig.json",
+    "typecheck:wallet": "tsc -p wallet-web/tsconfig.json"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "0.32.1",
+    "@metaplex-foundation/mpl-core": "1.10.0",
+    "@solana/wallet-standard-features": "1.5.0",
+    "@solana/web3.js": "1.98.4",
+    "@wallet-standard/app": "1.1.1",
+    "@wallet-standard/base": "1.1.1",
+    "@wallet-standard/features": "1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "esbuild": "0.28.2",
+    "typescript": "7.0.2"
+  }
+}

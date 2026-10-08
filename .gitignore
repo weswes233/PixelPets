@@ -1,0 +1,24 @@
+node_modules/
+.godot/
+.env
+.env.*
+!.env.example
+data/
+dist/
+runtime/
+target/
+*.keypair.json
+*-keypair.json
+*.log
+*.sqlite*
+.tmp/
+qa/tmp/
+# Local test output and credentials (never commit private key material).
+game/tests/*.err
+*.pem
+*.p12
+*.pfx
+*.private-key.json
+id.json
+.DS_Store
+Thumbs.db

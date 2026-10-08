@@ -1,0 +1,26 @@
+; PixelPets original Godot client
+config_version=5
+
+[application]
+config/name="PixelPets · 掌心伙伴"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.5", "GL Compatibility")
+
+[display]
+window/size/viewport_width=360
+window/size/viewport_height=640
+window/size/window_width_override=1100
+window/size/window_height_override=780
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+textures/canvas_textures/default_texture_filter=0
+environment/defaults/default_clear_color=Color(0.957, 0.945, 0.91, 1)
+
+[pixelpets]
+api_url="http://127.0.0.1:9782"
+wallet_url="http://127.0.0.1:9783"
