@@ -1,0 +1,159 @@
+{
+  "schema": 1,
+  "reviewedAtUtc": "2026-10-08T14:37:24.5320245Z",
+  "sourceCommit": "5746ebd54b6b5b28a99f96c8f11d4753ce194ede",
+  "sourceTree": "d63bcb430001bba55e3c1d30cecefc7fc86ac834",
+  "purpose": "Current-state product, chain, onboarding, language and platform review; not a public deployment or independent security audit.",
+  "freshChecks": {
+    "javascript": {
+      "passed": 77,
+      "failed": 0,
+      "command": "./tools/npm.ps1 test",
+      "log": "runtime/review-2026-10-08-tests.log"
+    },
+    "typechecks": [
+      "server",
+      "chain-client",
+      "wallet-web"
+    ],
+    "godotClient": {
+      "log": "runtime/review-2026-10-08-godot.log",
+      "passed": 31,
+      "failed": 0,
+      "command": "Godot_v4.5.2-stable_win64_console.exe --headless --path game --script tests/client_test.gd -- --client-test",
+      "isolatedSession": true
+    },
+    "liveHealth": {
+      "service": "pixel-pets",
+      "storage": "sqlite",
+      "chain": {
+        "network": "devnet",
+        "configured": false,
+        "program_id": null
+      },
+      "ai": {
+        "configured": false
+      }
+    },
+    "liveChainConfig": {
+      "network": "devnet",
+      "program_id": null,
+      "collection_address": null,
+      "issuer_address": null,
+      "enabled": false,
+      "rpc_url": null,
+      "genesis_hash": null,
+      "reason": "CHAIN_DISABLED",
+      "market_enabled": false
+    },
+    "browser": {
+      "basicLayoutObserved": true,
+      "walletExtensionTested": false,
+      "pages": [
+        "companion",
+        "trade"
+      ],
+      "realMobileDevicesTested": false,
+      "returnedWarnErrorEntries": 0,
+      "engine": "Codex in-app browser",
+      "viewportRestored": true,
+      "viewports": [
+        {
+          "height": 640,
+          "width": 360
+        },
+        {
+          "height": 740,
+          "width": 1000
+        }
+      ]
+    },
+    "isolatedReproductions": [
+      {
+        "result": "409 WALLET_ALREADY_LINKED",
+        "existingPlayerDataAccessed": false,
+        "signature": "temporary Ed25519 key; real signature verification",
+        "storage": "in-memory SQLite",
+        "name": "new_guest_same_existing_wallet"
+      },
+      {
+        "result": "12 guest creations returned 201; 13th returned 429 despite distinct forwarding headers",
+        "existingPlayerDataAccessed": false,
+        "network": "temporary local HTTP server",
+        "storage": "in-memory SQLite",
+        "name": "reverse_proxy_shared_ip_rate_limit"
+      }
+    ]
+  },
+  "priorEvidenceNotRerun": {
+    "manifest": "docs/acceptance-2026-10-08.json",
+    "godotHttp": {
+      "failed": 0,
+      "passed": 11
+    },
+    "chain": [
+      {
+        "path": "chain/evidence/local-validator-e2e.json",
+        "result": "passed",
+        "checks": 16,
+        "transactions": 36,
+        "genesis": "8M7v4mAevKxxossUfJ7HJT6eU3k2AbDSKmF23LbADvw5"
+      },
+      {
+        "path": "chain/evidence/service-e2e.json",
+        "result": "passed",
+        "checks": 5,
+        "transactions": 3,
+        "genesis": "3v2DJJuppmRzRhdkLbYLmQD4NwPBoNp9NE6KTRqVYqUp"
+      }
+    ],
+    "browserWalletExtensionVerified": false,
+    "publicDeployment": false
+  },
+  "matchingPriorArtifactHashes": [
+    {
+      "path": "dist/web/index.html",
+      "sha256": "eb96f6caf96261a3b936b69166c33f68331c67fe16a4f375656df2f7a487a9e3"
+    },
+    {
+      "path": "dist/web/index.pck",
+      "sha256": "f719579f522792bd7eb6cf923e74cdc787707e6122c3c4ad5175f845b8599bca"
+    },
+    {
+      "path": "dist/web/bridge.js",
+      "sha256": "04e7e7c5c973c3b8beb98c0da295da3889e5183901e946940d2d33a317c9c443"
+    },
+    {
+      "path": "dist/windows/PixelPets.exe",
+      "sha256": "b669291f7f9e0a2ea5aa458d8d5b09aae4d58702aa4e3a2661887a6d72927353"
+    },
+    {
+      "path": "chain/target/deploy/pixel_pets.so",
+      "sha256": "f7808c45699515789d2b02c62d86c0fddaffb2fb6bff71236ac27ff08b186f82"
+    }
+  ],
+  "staticDelivery": {
+    "wasmBytes": 38047590,
+    "webDirectoryRawBytes": 47014762,
+    "cacheControl": "no-cache",
+    "walletBridgeBytes": 899752,
+    "httpStatus": 200,
+    "pckBytes": 7706208,
+    "headRequests": [
+      "index.html",
+      "index.wasm",
+      "index.pck",
+      "bridge.js",
+      "wallet.css"
+    ],
+    "measuredTransferTrace": false,
+    "contentEncoding": null
+  },
+  "limits": [
+    "No new public chain transactions or deployments.",
+    "No real smartphone, wallet extension, hardware wallet or payment acceptance test.",
+    "No performance/load or independent security audit.",
+    "Review reproductions expose known incomplete flows; no production user data was accessed.",
+    "Existing artifact hashes were checked against the prior acceptance manifest; no fresh rebuild was performed."
+  ]
+}
