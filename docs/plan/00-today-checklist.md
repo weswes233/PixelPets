@@ -10,13 +10,13 @@
 | P0 | 原有三宠（moss/puddle/wisp）保持兼容 | ✅ | 基线测试全绿（见 H0–H2） |
 | P0 | 一次免费、服务端权威、标注加速（45 s）的旅行 | ✅ | 服务端 CSPRNG + 补给账本；`npm test` 146/146；Godot travel 26/26 |
 | P0 | 故事与收藏反馈（2 地点、8 纪念物） | ✅ | 明信片 + 纪念物；Album 优先显示；截图 `docs/evidence/ui-smoke/` |
-| P0 | 真实 Solana Devnet 领取宠物 | 🟡 部分 | localnet 上浏览器内 claim 已确认（资产 `2bL2TGgg…BHvTA`）；Devnet 未部署：deployer 仍 0 SOL（airdrop 限流），`tools/devnet-deploy.ts --network devnet --execute` 已就绪 |
+| P0 | 真实 Solana Devnet 领取宠物 | 🟡 部分（10-10 03:30 仍 0 SOL；devnet-pow 所有水龙头余额为 0） | localnet 上浏览器内 claim 已确认（资产 `2bL2TGgg…BHvTA`）；Devnet 未部署：deployer 仍 0 SOL（airdrop 限流），`tools/devnet-deploy.ts --network devnet --execute` 已就绪 |
 | P0 | 旅行结果摘要 checkpoint v2 存证 | ✅ localnet | 浏览器中钱包签名并确认（截图 37）；`chain/tests/deployed-stack-smoke.mjs` 4 PASS |
-| P0 | 刷新及服务重启后恢复 | 🟡 部分 | 行程存于 SQLite，按服务器时钟恢复，有测试覆盖；未单独录制重启演练 |
+| P0 | 刷新及服务重启后恢复 | ✅ localnet | `chain/tests/restart-recovery-localnet.mjs` 4 PASS：旅行中 SIGKILL 重启，ready_at 不变；重启后揭晓；未签名旅程收据意图跨重启保留并确认（`chain/evidence/restart-recovery-localnet.json`） |
 | P0 | 真实浏览器钱包演练（扩展钱包弹窗） | 🟡 部分 | 在无头 Chrome 中用 Wallet Standard 测试钱包走通（SIWS、claim、receipt）；真实 Phantom/Backpack 弹窗需 Wes |
 | P0 | 可复核的交易与结果证据 | ✅ localnet | 公开证明 `jr_…` 经独立验证器 10 项检查；`chain/evidence/*.json` |
-| P1 | 两钱包赠送 + 接收后继续养成（UI） | ❌ | 转移合约/SDK 已有，游戏赠送 UI 本轮未完成 |
-| P2 | 中文全量校对、120 剪影目录、商店预览、更多动作 | ❌ | 不承诺 |
+| P1 | 两钱包赠送 + 接收后继续养成（UI） | ✅ localnet | Wallet 页「Send as a gift」：prepareGift 本地构建、审阅显示网络/资产/接收者/费用、旅行中禁用；finalized 后同步归属。`chain/tests/gift-two-wallet-localnet.mjs` 6 PASS（A 不能再照顾，B 同步后继续照顾）。未在真实扩展钱包中演练 |
+| P2 | 中文全量校对、120 剪影目录、商店预览、更多动作 | 🟡 部分 | 旅行/收据/赠送中文切换有测试；120 图鉴剪影浏览（按家族分页，未发行仅剪影）已完成；全量校对、商店预览、更多动作未做 |
 
 ## H0–H24 时间盒与止损点
 

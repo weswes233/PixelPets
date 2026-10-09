@@ -96,7 +96,7 @@
   "tests": {
     "npm": "146/146",
     "godot_client": "52/52",
-    "godot_travel": "35/35",
+    "godot_travel": "43/43",
     "godot_session_storage": "26/26",
     "godot_http": "11/11",
     "deployed_stack_smoke": "4 PASS",
