@@ -27,6 +27,22 @@ export interface PetIntent {
   transaction_base64: string; expected_message_base64: string; blockhash: string;
   last_valid_block_height: number; instruction_inputs: ClaimInput | CheckpointInput;
   signature?: string; signed_transaction_base64?: string; pet?: any;
+  journey?: { schema: string; trip_id: string; public_receipt_id: string; result_hash: string; canonical_checkpoint: string; event_hash: string } | null;
+}
+async function sha256Hex(text: string): Promise<string> {
+  return Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))).toString('hex');
+}
+/** Journey receipt (checkpoint v2): the wallet side recomputes the commitment it is about to sign. */
+export async function validateJourneyCommitment(intent: PetIntent, config: DeploymentConfig, tripId: string, resultHash?: string): Promise<void> {
+  const journey = intent.journey; const input = intent.instruction_inputs as CheckpointInput;
+  check(journey && journey.schema === 'pixel-pets:checkpoint:v2' && journey.trip_id === tripId, 'JOURNEY_MISMATCH', 'This receipt does not belong to the selected trip.');
+  check(await sha256Hex(journey.canonical_checkpoint) === journey.event_hash && String(input.eventHash) === journey.event_hash,
+    'JOURNEY_MISMATCH', 'The journey commitment does not match the transaction.');
+  const c = JSON.parse(journey.canonical_checkpoint) as unknown[];
+  check(Array.isArray(c) && c.length === 14 && c[0] === 'pixel-pets:checkpoint:v2' && c[1] === config.genesis_hash && c[2] === config.program_id
+    && c[3] === intent.asset_address && c[4] === intent.intent_id && c[5] === String(input.expectedCheckpoint)
+    && c[7] === input.form && c[8] === input.bond && c[12] === journey.public_receipt_id && c[13] === journey.result_hash
+    && (!resultHash || resultHash === journey.result_hash), 'JOURNEY_MISMATCH', 'The journey commitment fields do not match this pet and trip.');
 }
 export type FlowApi = (path: string, method: string, token?: string, body?: unknown) => Promise<any>;
 export function rawNetwork(value: string): SupportedNetwork {
@@ -83,7 +99,7 @@ export const boundedRpcFetch: typeof fetch = (input, init = {}) => {
     : AbortSignal.timeout(15000);
   return fetch(input, { ...init, signal });
 };
-export async function runPetTransaction(context: FlowContext, petId: string, kind: IntentKind): Promise<any> {
+export async function runPetTransaction(context: FlowContext, petId: string, kind: IntentKind, options: { tripId?: string; resultHash?: string } = {}): Promise<any> {
   const { api, token, wallet, account, config } = context;
   check(config.enabled && config.rpc_url && config.program_id && config.collection_address, 'CHAIN_NOT_DEPLOYED', '链上服务尚未开放。');
   const feature = wallet.features['solana:signTransaction'] as SolanaSignTransactionFeature['solana:signTransaction'] | undefined;
@@ -97,7 +113,9 @@ export async function runPetTransaction(context: FlowContext, petId: string, kin
   const pets = await api('/pets', 'GET', token);
   const pet = pets.pets?.find((item: any) => item.id === petId);
   check(pet, 'PET_NOT_FOUND', '找不到这只宠物，请刷新档案。');
-  let intent: PetIntent = await api(`/pets/${encodeURIComponent(petId)}/${kind}-intent`, 'POST', token, {});
+  check(!options.tripId || kind === 'checkpoint', 'INTENT_MISMATCH', 'Only a checkpoint can carry a journey receipt.');
+  let intent: PetIntent = await api(options.tripId ? `/trips/${encodeURIComponent(options.tripId)}/checkpoint-intent`
+    : `/pets/${encodeURIComponent(petId)}/${kind}-intent`, 'POST', token, {});
   context.assertCurrent();
   if (intent.state === 'confirmed') return { ...intent, message: '链上记录已经确认。' };
   if (intent.signature) {
@@ -118,6 +136,7 @@ export async function runPetTransaction(context: FlowContext, petId: string, kin
     return { ...intent, message: '上一笔交易正在核对，请稍后再次查看。' };
   }
   const transaction = await validatePetIntent(intent, config, account.address, petId, kind);
+  if (options.tripId) await validateJourneyCommitment(intent, config, options.tripId, options.resultHash);
   const onchainConfig = await client.fetchConfig();
   check(onchainConfig.issuer.toBase58() === config.issuer_address, 'ISSUER_CHANGED', '发行签名者已变化，请刷新后重试。');
   if (kind === 'checkpoint') {
@@ -140,7 +159,7 @@ export async function runPetTransaction(context: FlowContext, petId: string, kin
   // Simulation post-balance includes the network fee. Clamp only a net credit, never conceal a debit.
   const debit = Math.max(fee.value!, before - after!);
   context.assertCurrent();
-  const approved = await context.review({ title: kind === 'claim' ? '给伙伴一份链上身份' : '保存这段成长', petName: pet.nickname, network: rawNetwork(config.network), address: account.address, asset: intent.asset_address,
+  const approved = await context.review({ title: kind === 'claim' ? 'Claim on Devnet · 给伙伴一份链上身份' : options.tripId ? 'Save journey receipt · 保存旅程凭证' : 'Save growth · 保存这段成长', petName: pet.nickname, network: rawNetwork(config.network), address: account.address, asset: intent.asset_address,
     estimatedDebitSol: lamportsToSol(String(debit)), networkFeeSol: lamportsToSol(String(fee.value)), message: kind === 'claim' ? '预计支出包括网络费、账户租金和 Core 协议费用。资产将归当前钱包所有。' : '本次只登记成长记录，宠物所有权保持在当前钱包。' });
   check(approved, 'USER_CANCELLED', '已取消，本次没有提交交易。');
   context.assertCurrent(); await client.assertNetwork();

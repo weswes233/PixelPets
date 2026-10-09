@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "runId": "0b7a7536-e86d-44f2-884e-fd1dfe38497c",
+  "startedAt": "2026-10-09T17:01:54.997Z",
+  "rpc": "http://127.0.0.1:8999",
+  "genesis": "EKygz4JkCbErr8ZE2PA9V9Pj7ndFTYFTTn8kZAmTAr5Y",
+  "scenario": "journey",
+  "program": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT",
+  "actualSbf": true,
+  "actualHttp": true,
+  "simulatedBrowserWallet": true,
+  "localFundsHaveNoValue": true,
+  "checks": [
+    {
+      "name": "HTTP guest adoption and real SIWS authenticate a funded disposable wallet against the deployed local program",
+      "status": "passed"
+    },
+    {
+      "name": "Interrupted submission survives HTTP service and SQLite restart, reuses one wallet signature, and finalizes a real Core asset",
+      "status": "passed"
+    },
+    {
+      "name": "Repeated claim returns the same confirmed intent and asset",
+      "status": "passed"
+    },
+    {
+      "name": "Journey 1: server-settled trip result is committed by a real finalized checkpoint v2 and exposed as a public proof",
+      "status": "passed"
+    },
+    {
+      "name": "Journey 2: server-settled trip result is committed by a real finalized checkpoint v2 and exposed as a public proof",
+      "status": "passed"
+    },
+    {
+      "name": "After a restart, an independent verifier recomputes R and C for both receipts and matches each finalized transaction; the older receipt still verifies after the PetRecord moved on",
+      "status": "passed"
+    }
+  ],
+  "transactions": [
+    {
+      "label": "configure_disposable_service_issuer_and_fund_test_player",
+      "signature": "57qjSgy6nkNFGtQv93PVcTwWJDsPVRtMBbupBb9qmXdTqai9zJbyvpMPTPVjKyZX3SmXdjyk1QUBGwfDU8MGvotG"
+    },
+    {
+      "label": "claim_after_restart",
+      "signature": "k6HmBYCAQXF45XDhJFihuAQY8xsbzFvAcvynvCmX39iyH2Ge5uQgbsvGjVw8JWcs9XidfcYzXuLSSR3kMoXbY2A",
+      "slot": 68,
+      "computeUnitsConsumed": 48825,
+      "wireSha256": "5ddac2a600b0ff19c834a088c8d1b86a7886d0ad582a2a99bd5a947edcff0e0f",
+      "asset": "ANipZ2qbdJZZesaKHhghJNVnUXXVf3V9mh499a5fHBKC"
+    },
+    {
+      "label": "journey_receipt_1",
+      "signature": "3DiDnizqFwdfBQ613GjqGF2GTJ9r8jkUvLYrAWMqQFoBQEQpN89p7PuQrFYfzVHD3q91SYA3N7EPsLLvTheRYKY3",
+      "asset": "ANipZ2qbdJZZesaKHhghJNVnUXXVf3V9mh499a5fHBKC",
+      "public_receipt_id": "jr_BoDDocnfbfJomkH4n1eP7w",
+      "result_hash": "7870f905ed6a6aa1c9a8871b73409061237fa12d86b2a6dc559674a0f86b2162",
+      "event_hash": "49db1ff79b9b058c76cc7edb16c2a2ac2305d820fea0acedb5076801198ee1bf"
+    },
+    {
+      "label": "journey_receipt_2",
+      "signature": "4MmS4Qgce2PV4T95fGbyKUTD4M5rSwGrnTAaprcSsh293hiQiarKx6T6DUujjLxi5NcCxxuPxcKnTYYjXnngTW5e",
+      "asset": "ANipZ2qbdJZZesaKHhghJNVnUXXVf3V9mh499a5fHBKC",
+      "public_receipt_id": "jr_VuonN8k2Wf9ZQTmqDzJtlg",
+      "result_hash": "0aa42675186752a5aa092a65599c94b6c5c1542f099701f9bd1e0c551a2d6540",
+      "event_hash": "c929b05f6261cdd1b8cdf4493fd2611654f53d33063640cc5aa9b4b1327d1cb5"
+    }
+  ],
+  "reviewEstimates": [
+    {
+      "title": "Claim on Devnet · 给伙伴一份链上身份",
+      "petName": "链上验收苔苔",
+      "network": "localnet",
+      "address": "EmP5FtCB3VRrpEnemDPtmjCKawFRphQaHEK3kAG8YY4V",
+      "asset": "ANipZ2qbdJZZesaKHhghJNVnUXXVf3V9mh499a5fHBKC",
+      "estimatedDebitSol": "0.00818964",
+      "networkFeeSol": "0.000015",
+      "message": "预计支出包括网络费、账户租金和 Core 协议费用。资产将归当前钱包所有。"
+    },
+    {
+      "title": "Save journey receipt · 保存旅程凭证",
+      "petName": "链上验收苔苔",
+      "network": "localnet",
+      "address": "EmP5FtCB3VRrpEnemDPtmjCKawFRphQaHEK3kAG8YY4V",
+      "asset": "ANipZ2qbdJZZesaKHhghJNVnUXXVf3V9mh499a5fHBKC",
+      "estimatedDebitSol": "0.00001",
+      "networkFeeSol": "0.00001",
+      "message": "本次只登记成长记录，宠物所有权保持在当前钱包。"
+    },
+    {
+      "title": "Save journey receipt · 保存旅程凭证",
+      "petName": "链上验收苔苔",
+      "network": "localnet",
+      "address": "EmP5FtCB3VRrpEnemDPtmjCKawFRphQaHEK3kAG8YY4V",
+      "asset": "ANipZ2qbdJZZesaKHhghJNVnUXXVf3V9mh499a5fHBKC",
+      "estimatedDebitSol": "0.00001",
+      "networkFeeSol": "0.00001",
+      "message": "本次只登记成长记录，宠物所有权保持在当前钱包。"
+    }
+  ],
+  "result": "passed",
+  "completedAt": "2026-10-09T17:02:54.560Z"
+}

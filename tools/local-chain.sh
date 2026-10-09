@@ -46,6 +46,7 @@ case "${1:-}" in
       contract) node "$ROOT/chain/tests/local-validator-e2e.mjs" ;;
       service) PIXELPETS_SERVICE_SCENARIO=checkpoint node "$ROOT/chain/tests/service-e2e.mjs" ;;
       ownership) PIXELPETS_SERVICE_SCENARIO=ownership node "$ROOT/chain/tests/service-e2e.mjs" ;;
+      journey) PIXELPETS_SERVICE_SCENARIO=journey node "$ROOT/chain/tests/service-e2e.mjs" ;;
       *) echo "test contract|service|ownership"; exit 2 ;;
     esac ;;
   *) echo "usage: $0 start|test <kind>|stop|status"; exit 2 ;;

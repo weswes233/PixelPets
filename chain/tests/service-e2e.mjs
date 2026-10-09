@@ -5,6 +5,8 @@
 import assert from 'node:assert/strict';
 import { createHash, createPrivateKey, randomUUID, sign } from 'node:crypto';
 import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Connection, Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
@@ -35,8 +37,8 @@ assert(oldConfig.admin.equals(admin.publicKey), 'Local test admin must own this 
 const runId = randomUUID(), directory = path.join(runtime, `service-e2e-${runId}`);
 await mkdir(directory, { recursive: false });
 const scenario = process.env.PIXELPETS_SERVICE_SCENARIO ?? 'checkpoint';
-assert(['checkpoint', 'ownership'].includes(scenario), 'Unknown local service scenario');
-const evidenceFile = path.join(root, `chain/evidence/${scenario === 'ownership' ? 'ownership-service-e2e' : 'service-e2e'}.json`);
+assert(['checkpoint', 'ownership', 'journey'].includes(scenario), 'Unknown local service scenario');
+const evidenceFile = path.join(root, `chain/evidence/${scenario === 'ownership' ? 'ownership-service-e2e' : scenario === 'journey' ? 'journey-service-e2e' : 'service-e2e'}.json`);
 const evidence = { schema: 1, runId, startedAt: new Date().toISOString(), rpc: rpcUrl, genesis,
   scenario,
   program: PROGRAM_ID.toBase58(), actualSbf: true, actualHttp: true, simulatedBrowserWallet: true,
@@ -62,7 +64,7 @@ async function openService() {
   repository = new Repository(path.join(directory, 'pets.sqlite'), { network: 'localnet', publicOrigin: 'http://127.0.0.1:9783' });
   service = new ChainService(repository, { network: 'localnet', rpc, programId: PROGRAM_ID.toBase58(), issuer,
     collectionAddress: oldConfig.collection.toBase58(), editions, publicRpcUrl: rpcUrl, expectedGenesisHash: genesis });
-  server = await start({ repository, chainService: service, port: 0 });
+  server = await start({ repository, chainService: service, port: 0, travelDurationMs: 2000 });
   baseUrl = `http://127.0.0.1:${server.address().port}/api/v1`;
 }
 async function closeService() {
@@ -194,6 +196,36 @@ try {
     assert.equal(persisted.chain.asset_address, registered.asset_address); assert.equal(persisted.bond, 1);
     assert.equal(persisted.chain.received, true); assert.equal((await recoveredController.syncAssets()).pets.length, 4);
     await check('New owner daily care requires no transaction signature and survives a real HTTP/SQLite restart with recovered credentials');
+  } else if (scenario === 'journey') {
+    const proofs = [];
+    for (const [index, route] of ['moonlit_lane', 'sunny_market'].entries()) {
+      const started = await api(`/pets/${pet.id}/trips`, 'POST', session.token, { event_id: randomUUID(), route_id: route, packing_id: 'tiny_lantern' });
+      assert.equal(started.trip.state, 'travelling'); assert.equal(started.trip.duration_ms, 2000);
+      await new Promise(resolve => setTimeout(resolve, 2300));
+      const revealed = await api(`/trips/${started.trip.id}/reveal`, 'POST', session.token, { event_id: randomUUID() });
+      assert.equal(revealed.trip.state, 'revealed');
+      const before = signatures;
+      const saved = await runPetTransaction(context, pet.id, 'checkpoint', { tripId: started.trip.id, resultHash: revealed.trip.result.result_hash });
+      const receipt = await finalizedIntent(saved.intent_id, session.token);
+      assert.equal(signatures, before + 1); assert.equal(receipt.journey.trip_id, started.trip.id);
+      const onChain = await client.verifyOfficialPet(registered.asset_address, player.publicKey, 'finalized');
+      assert.equal(Buffer.from(onChain.record.event_hash).toString('hex'), receipt.journey.event_hash);
+      assert.equal(onChain.record.checkpoint.toString(), String(index + 1));
+      const proof = await api(`/trips/${revealed.trip.public_receipt_id}/proof`);
+      assert.equal(proof.checkpoints.length, 1); assert.equal(proof.checkpoints[0].signature, receipt.signature);
+      assert(!JSON.stringify(proof).includes('链上验收苔苔'), 'Public proof never includes the nickname');
+      const file = path.join(root, `chain/evidence/journey-proof-local-${index + 1}.json`);
+      await writeFile(file, JSON.stringify(proof, null, 2) + '\n'); proofs.push(file);
+      evidence.transactions.push({ label: `journey_receipt_${index + 1}`, signature: receipt.signature, asset: receipt.asset_address,
+        public_receipt_id: revealed.trip.public_receipt_id, result_hash: revealed.trip.result.result_hash, event_hash: receipt.journey.event_hash });
+      await check(`Journey ${index + 1}: server-settled trip result is committed by a real finalized checkpoint v2 and exposed as a public proof`);
+    }
+    await closeService(); await openService();
+    for (const file of proofs) {
+      const { stdout } = await promisify(execFile)(process.execPath, [path.join(root, 'tools/verify-journey-proof.ts'), '--proof', file, '--rpc', rpcUrl]);
+      assert.match(stdout, /^VERIFIED \d+ checks$/m, stdout);
+    }
+    await check('After a restart, an independent verifier recomputes R and C for both receipts and matches each finalized transaction; the older receipt still verifies after the PetRecord moved on');
   } else {
   const checkpoint = await runPetTransaction(context, pet.id, 'checkpoint');
   const grown = await finalizedIntent(checkpoint.intent_id, session.token);
