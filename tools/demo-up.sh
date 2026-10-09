@@ -20,7 +20,7 @@ URL=""
 for _ in $(seq 1 60); do URL="$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$RUN/cloudflared.log" | head -1 || true)"; [ -n "$URL" ] && break; sleep 1; done
 [ -n "$URL" ] || { echo "quick tunnel did not start; see $RUN/cloudflared.log"; stop; exit 1; }
 fi
-CHAIN_ENV="$ROOT/runtime/devnet-chain.env"
+CHAIN_ENV="${CHAIN_ENV:-$ROOT/runtime/devnet-chain.env}"
 (
   set -a; [ -f "$CHAIN_ENV" ] && . "$CHAIN_ENV"; set +a
   export PIXELPETS_DB="${DEMO_DB:-$RUN/pets-demo-devnet.sqlite}" PUBLIC_ORIGIN="$URL" CHAIN_NETWORK="${CHAIN_NETWORK:-devnet}" \
@@ -34,4 +34,4 @@ if [ "$MODE" = "local" ]; then echo "local demo: $URL"; else
   for _ in $(seq 1 30); do grep -q "Registered tunnel connection" "$RUN/cloudflared.log" && break; sleep 1; done
   grep -q "Registered tunnel connection" "$RUN/cloudflared.log" || echo "WARNING: tunnel URL assigned but no edge connection registered (outbound 7844 blocked?) — URL will return 530"
   echo "TEMPORARY demo URL (Cloudflare quick tunnel, changes on restart): $URL"; fi
-echo "chain: $([ -f "$CHAIN_ENV" ] && echo "enabled from runtime/devnet-chain.env" || echo "disabled (Devnet not deployed yet)")"
+echo "chain: $([ -f "$CHAIN_ENV" ] && echo "enabled from $CHAIN_ENV" || echo "disabled (Devnet not deployed yet)")"

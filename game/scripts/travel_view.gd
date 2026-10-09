@@ -236,6 +236,9 @@ func _render_receipt(card: VBoxContainer, pet: Dictionary, trip: Dictionary) -> 
 	card.add_child(host._label(_t("Journey receipt", "旅程收据"), 17))
 	card.add_child(host._label("%s · %s" % [str(trip.get("public_receipt_id", "")), str(trip.get("result", {}).get("result_hash", "")).left(16) + "…"], 12, host.MUTED))
 	var receipt: Variant = trip.get("receipt")
+	# A prepared intent that was never signed is not a submission; show the plain Save action again.
+	if receipt is Dictionary and str(receipt.get("status", "")) == "prepared" and receipt.get("signature") == null:
+		receipt = null
 	var registered: bool = host._requires_wallet(pet)
 	var devnet: bool = str(host.chain_config.get("network", "")).contains("devnet")
 	if receipt is Dictionary and str(receipt.get("status", "")) == "confirmed":

@@ -100,7 +100,10 @@ func run() -> void:
 	client.chain_config = {"enabled": true, "network": "solana:devnet"}
 	client._render()
 	check(has_text(client, "Save journey receipt"), "Registered pet can save a journey receipt")
-	revealed["receipt"] = {"status": "submitted", "signature": null}
+	revealed["receipt"] = {"status": "prepared", "signature": null}
+	client._render()
+	check(has_text(client, "Save journey receipt") and not has_text(client, "Submitted"), "An unsigned prepared intent is not shown as submitted")
+	revealed["receipt"] = {"status": "submitted", "signature": "5".repeat(88)}
 	client._render()
 	check(has_text(client, "Submitted · checking confirmation") and has_text(client, "Check confirmation"), "Pending receipts never claim confirmation")
 	revealed["receipt"] = {"status": "confirmed", "signature": "5".repeat(88), "finalized_slot": 1}

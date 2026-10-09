@@ -11,7 +11,7 @@
     "wisp": "1003"
   },
   "localFundsHaveNoValue": true,
-  "startedAt": "2026-10-09T17:14:08.551Z",
+  "startedAt": "2026-10-09T18:06:59.486Z",
   "checks": [
     "Real server entrypoint boots from the deploy-script env file with chain enabled",
     "Wallet-signed claim mints a real Core asset in the deploy-script collection/edition",
@@ -21,15 +21,15 @@
   "transactions": [
     {
       "label": "claim",
-      "signature": "4sPRk2UDCfTzmWiR6zAm2o3eV7sm37JsfTNSdLqsovMmoFEgz2DEKbtsJ4LjmkMXAeByEFK1mkiDYAWEwBVmDroX",
-      "asset": "8EHahrhWXCKb7CxRPwBHezFB4kq6aLByyvKs4MK7GoFp"
+      "signature": "5QrbD2LjRFQqHq5oNVtLZYR1w2sRbg3YQcFYtixtZpcnbiGH2hbaRAfXSWwPpwQSyujiwQgeAURfqKWkfrz6gfZZ",
+      "asset": "Aww3qCdXyFHpySRXSZiSCQcGb1CLfwQLWgb34iKh3wtA"
     },
     {
       "label": "journey_receipt",
-      "signature": "LDZLXxh8t2eYVNqxxrZwzq1LxLBPN4cse4BXtacydXZaFYryzWaDGRWUA9wrBmtqwsxNfiTLJVrvKg8zpKjNDDx",
-      "public_receipt_id": "jr_mchzLg4N51TcyJ_DYYncyA",
-      "event_hash": "843bb18353af67fa9696f5a02a6e162bc6d4dd1e0de10277196cb1aaa75ea880"
+      "signature": "QCvFT4fpFkyGYHkxNTFGyt8JoSCYm7iYWfFTzJFQzEw6nYDP33ZFsgSDxX6cPaiyF1PvVGyNBLpofTi9D1Stfvi",
+      "public_receipt_id": "jr_mXgVBNg8OiY_HVieluHhEA",
+      "event_hash": "c5d51aeddf0b19572da9ea584ec3a523b9f46b8bec32ca42604a22230e762dac"
     }
   ],
-  "finishedAt": "2026-10-09T17:14:39.617Z"
+  "finishedAt": "2026-10-09T18:07:30.792Z"
 }

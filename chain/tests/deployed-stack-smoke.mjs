@@ -17,7 +17,7 @@ import { runPetTransaction } from '../../wallet-web/src/transactions.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const env = Object.fromEntries((await readFile(path.join(root, 'runtime/localnet-chain.env'), 'utf8')).split('\n')
-  .map(l => /^([A-Z0-9_]+)=(.*)$/.exec(l)).filter(Boolean).map(m => [m[1], m[2]]));
+  .map(l => /^([A-Z0-9_]+)=(.*)$/.exec(l)).filter(Boolean).map(m => [m[1], m[2].replace(/^'(.*)'$/, '$1')]));
 assert.equal(env.CHAIN_NETWORK, 'localnet'); assert.equal(env.CHAIN_RPC_URL, 'http://127.0.0.1:8999');
 const rpc = new Connection(env.CHAIN_RPC_URL, 'confirmed');
 const genesis = await rpc.getGenesisHash();

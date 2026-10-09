@@ -1,3 +1,4 @@
+import './polyfills.ts';
 import { getWallets } from '@wallet-standard/app';
 import type { Wallet } from '@wallet-standard/base';
 import { BridgeError, WalletController, isSolanaWallet } from './controller.ts';

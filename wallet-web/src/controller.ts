@@ -249,6 +249,8 @@ export class WalletController {
     } catch (error) {
       if (error instanceof TransactionFlowError) throw new BridgeError(error.code, error.message);
       if (error instanceof BridgeError) throw error;
+      // Diagnostic only: the error class and message (no keys, tokens or transaction bytes).
+      console.warn('[PixelPets] transaction flow stopped:', (error as Error)?.name, String((error as Error)?.message ?? error).slice(0, 300));
       throw new BridgeError('TRANSACTION_NOT_COMPLETED', '交易尚未完成，请核对钱包提示与网络状态后重试。');
     } finally { this.busy = false; }
   }

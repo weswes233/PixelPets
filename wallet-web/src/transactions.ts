@@ -182,7 +182,8 @@ export async function runPetTransaction(context: FlowContext, petId: string, kin
   } catch {
     return { intent_id: intent.intent_id, signature, state: 'pending', message: '提交结果尚未确定，记录已保存。请稍后核对这笔交易，避免重复操作。' };
   }
-  for (let attempt = 0; attempt < 8; attempt++) {
+  // Finalization usually takes ~13–20 s on Devnet/localnet; poll for up to ~36 s before handing back a resumable pending state.
+  for (let attempt = 0; attempt < 24; attempt++) {
     await new Promise(resolve => setTimeout(resolve, 1500));
     context.assertCurrent();
     status = await api(`/chain/intents/${intent.intent_id}/confirm`, 'POST', token, receipt);
