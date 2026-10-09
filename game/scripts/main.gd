@@ -40,6 +40,9 @@ var name_input: LineEdit
 var gift_input: LineEdit
 var gift_recipient: String = ""
 var gift_pending: bool = false
+var codex_entries: Array = []
+var codex_open: bool = false
+var codex_family: int = 1
 var modal: Control
 var adventure_count: int = 0
 var adventure_choice: String = "sun"
@@ -576,6 +579,71 @@ func _render_collection() -> void:
 	var tip := _panel(content, MINT)
 	tip.add_child(_label("陪伴比稀有更珍贵", 19))
 	tip.add_child(_label("日光与月色偏好影响成长。现阶段没有付费抽卡，也没有承诺收益；喜欢哪种，就陪它慢慢长成那种模样。", 14))
+	_render_codex()
+
+## P2: optional 120-entry design codex. Unreleased entries show only a silhouette + "Coming later" (03 §2), one family at a time.
+func load_codex() -> Array:
+	if codex_entries.is_empty():
+		var file := FileAccess.open("res://data/codex.json", FileAccess.READ)
+		if file != null:
+			var parsed: Variant = JSON.parse_string(file.get_as_text())
+			if parsed is Dictionary and parsed.get("entries") is Array:
+				codex_entries = parsed["entries"]
+	return codex_entries
+
+func _render_codex() -> void:
+	var entries: Array = load_codex()
+	if entries.is_empty():
+		return
+	var toggle := _button(("收起图鉴总览" if codex_open else "浏览 120 图鉴总览"), func():
+		codex_open = not codex_open
+		_render())
+	content.add_child(toggle)
+	if not codex_open:
+		return
+	content.add_child(_label("设计目录：除现有 3 位伙伴外均为概念，尚未发行，只显示剪影。", 13, MUTED))
+	var families := HFlowContainer.new()
+	content.add_child(families)
+	var seen: Dictionary = {}
+	for entry in entries:
+		var fam: Dictionary = entry.get("family", {})
+		var n: int = int(fam.get("n", 0))
+		if seen.has(n):
+			continue
+		seen[n] = true
+		var label: String = str(fam.get("en", "")) if L10n.lang == "en" else str(fam.get("zh", ""))
+		var chip := _button("%02d %s" % [n, label], func():
+			codex_family = n
+			_render())
+		chip.disabled = n == codex_family
+		families.add_child(chip)
+	var grid := GridContainer.new()
+	grid.columns = 3 if small_layout else 5
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	content.add_child(grid)
+	for entry in entries:
+		if int(entry.get("family", {}).get("n", 0)) != codex_family:
+			continue
+		var card := _panel(grid, Color("fffdf5") if bool(entry.get("available", false)) else Color("e4e2d8"))
+		if bool(entry.get("available", false)) and entry.get("species_id") is String:
+			var art := ART_SCRIPT.new()
+			art.species = str(entry["species_id"])
+			art.form = "seed"
+			art.show_habitat = false
+			art.custom_minimum_size = Vector2(72, 80)
+			card.add_child(art)
+			card.add_child(_label(L10n.pick(entry.get("name", {})), 13))
+		else:
+			var shadow := Label.new()
+			shadow.text = "?"
+			shadow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			shadow.custom_minimum_size = Vector2(72, 80)
+			shadow.add_theme_font_size_override("font_size", 40)
+			shadow.add_theme_color_override("font_color", Color("6b6a63"))
+			card.add_child(shadow)
+			card.add_child(_label("Coming later" if L10n.lang == "en" else "敬请期待", 12, MUTED))
+		card.add_child(_label(str(entry.get("id", "")), 11, MUTED))
 
 func _load_journal() -> void:
 	var generation: int = account_generation

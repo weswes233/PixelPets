@@ -67,6 +67,8 @@ const EN := {
 	"登记和交易需要逐笔确认钱包。请核对宠物、对象与费用。": "Every claim or save asks your wallet to approve. Check the pet, recipient and fee first. Devnet test assets have no cash value.",
 	"保存成长到链上": "Save growth checkpoint", "登记当前伙伴": "Claim on Devnet", "查看真实报价": "View offers (Coming later)",
 	"想换哪只，就换哪只": "Ownership is on Solana",
+	"浏览 120 图鉴总览": "Browse the 120-companion codex", "收起图鉴总览": "Hide the codex",
+	"设计目录：除现有 3 位伙伴外均为概念，尚未发行，只显示剪影。": "Design catalogue: apart from the 3 current companions these are concepts, not issued — shown as silhouettes only.",
 	"送给朋友": "Send as a gift", "作为礼物送出": "Send as a gift", "接收者钱包地址": "Recipient wallet address",
 	"输入接收者的 Solana 钱包地址。确认前会显示网络、资产、接收者和费用；私人日记与其他伙伴不会转移。": "Enter the recipient's Solana wallet address. You'll review network, asset, recipient and fee before your wallet asks. Your private journal and other companions stay with you.",
 	"只有已登记到链上的伙伴可以赠送。": "Only companions claimed on Solana can be gifted.", "请先连接并验证钱包。": "Connect and verify your wallet first.",

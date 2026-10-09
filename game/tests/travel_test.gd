@@ -167,6 +167,21 @@ func run() -> void:
 	client._render()
 	check(has_text(client, "作为礼物送出"), "中文 toggle covers gift strings")
 	L10n.lang = "en"
+	# P2 codex: 120 entries, one family at a time, unreleased entries are silhouettes without names.
+	check(client.load_codex().size() == 120, "Codex data has 120 entries")
+	client.page = "collection"
+	client.codex_open = true
+	client.codex_family = 1
+	client._render()
+	check(has_text(client, "Coming later") and has_text(client, "P004") and has_text(client, "Moss"), "Codex shows D1 art names and Coming later silhouettes")
+	check(not has_text(client, "Button Otter"), "Unreleased codex entries do not reveal names")
+	client.codex_family = 12
+	client._render()
+	check(not has_text(client, "P001") and has_text(client, "Coming later"), "Codex switches family pages")
+	await process_frame
+	check(client.content.get_combined_minimum_size().x <= 360 - 36 + 1, "Codex fits 360 px (got %f)" % client.content.get_combined_minimum_size().x)
+	check(not L10n._has_cjk(" ".join(texts(client.content))), "English codex contains no Chinese text")
+	client.codex_open = false
 	client._switch_profile()
 	check(view.trips.is_empty() and view.collections.is_empty(), "Switching profile clears travel state")
 	viewport.queue_free()
