@@ -1,11 +1,11 @@
 {
   "schema": 1,
-  "runId": "f6d180c9-87a1-40bb-953e-3fb18f545192",
-  "startedAt": "2026-10-09T08:38:33.911Z",
-  "rpc": "http://127.0.0.1:8899",
-  "genesis": "5Q3cPyVTXVjfaUk1M57P8rccqvTCpnoy7TtreeBP2d7j",
+  "runId": "a24e320b-0d1d-4a55-8289-d5b6b31fdf52",
+  "startedAt": "2026-10-09T16:53:39.990Z",
+  "rpc": "http://127.0.0.1:8999",
+  "genesis": "2oMbM7g3hKSdzzMmsxA1GwSd95qHmF5WHDxBSWKdgb7R",
   "scenario": "checkpoint",
-  "program": "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR",
+  "program": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT",
   "actualSbf": true,
   "actualHttp": true,
   "simulatedBrowserWallet": true,
@@ -35,20 +35,20 @@
   "transactions": [
     {
       "label": "configure_disposable_service_issuer_and_fund_test_player",
-      "signature": "43QQPXAF25XS5uDkcLofjuJWFgo4MxHSgVypPL4a7u9RaDydEqzKtZrZZ8rcpSZ4SVDEUFPQDdjesQ1hN4mfuC26"
+      "signature": "23FZwhdfKvjJa3aC2c1Xi6C8KWoexDb79j9q6Q9ZeeQn2pB8iVSqbN21TtPviP4j9gdjjis78NbtLkCwJrSBQQrU"
     },
     {
       "label": "claim_after_restart",
-      "signature": "4LxS41MTuFQMCDE6XWC3DAEd6N69qv4eNWSoanMGfcWwqXaxKtsjrc11M5DKBCQxH9hf751t9d4q63Co6fkL7W9W",
-      "slot": 37,
-      "computeUnitsConsumed": 51825,
-      "wireSha256": "d76ed000a1d030b3fe4684c93b5926c7bb410f0de0b025bfa972e8086529e5a7",
-      "asset": "8Ls7q8ybBfiXY6kBeqEdawTrJCwCGhQ5n3axFnQKGdPY"
+      "signature": "qN2viwracdmu2hmz1vFc8J2Q7SuGCqXZF97KGYv5ZQXrjDhL4Z6BCBUGuvJAe4V1vuM8bKEuzxx8iPEUwuvwUXw",
+      "slot": 68,
+      "computeUnitsConsumed": 47325,
+      "wireSha256": "eaf131a6d181d7a4e90cb658793b488a2f61a8a780f2608936a712d4883e32e0",
+      "asset": "8jLtybB8QYHrW2NRnhwETo1iJS2chifPRa5cTX4pva3F"
     },
     {
       "label": "checkpoint_from_actual_care",
-      "signature": "2QEfSREVx5aRzyHRYXqLYYea7LkfBPUh617P385Ppq7jGWmoecEn8rDAM4umjfMyRhe7DNXGsGPayYE7kTMJyGMS",
-      "asset": "8Ls7q8ybBfiXY6kBeqEdawTrJCwCGhQ5n3axFnQKGdPY"
+      "signature": "48v3zn62sfd2GR5KpadJbHnnFzXbvsxCt3Q8k2HJswWZzNvnsDkDY5UASoYHkonX9Qg9jZmuqKYRodCyCt9VhMqK",
+      "asset": "8jLtybB8QYHrW2NRnhwETo1iJS2chifPRa5cTX4pva3F"
     }
   ],
   "reviewEstimates": [
@@ -56,8 +56,8 @@
       "title": "给伙伴一份链上身份",
       "petName": "链上验收苔苔",
       "network": "localnet",
-      "address": "FC4f65ucS6wfRhrNCmJ1YHdwimvGNgP5mjc9ywoLNkXH",
-      "asset": "8Ls7q8ybBfiXY6kBeqEdawTrJCwCGhQ5n3axFnQKGdPY",
+      "address": "E5iXAPFoChjEFhXdMqLnsmvdiyf7jtTf6po64BhTjeEP",
+      "asset": "8jLtybB8QYHrW2NRnhwETo1iJS2chifPRa5cTX4pva3F",
       "estimatedDebitSol": "0.00818964",
       "networkFeeSol": "0.000015",
       "message": "预计支出包括网络费、账户租金和 Core 协议费用。资产将归当前钱包所有。"
@@ -66,13 +66,13 @@
       "title": "保存这段成长",
       "petName": "链上验收苔苔",
       "network": "localnet",
-      "address": "FC4f65ucS6wfRhrNCmJ1YHdwimvGNgP5mjc9ywoLNkXH",
-      "asset": "8Ls7q8ybBfiXY6kBeqEdawTrJCwCGhQ5n3axFnQKGdPY",
+      "address": "E5iXAPFoChjEFhXdMqLnsmvdiyf7jtTf6po64BhTjeEP",
+      "asset": "8jLtybB8QYHrW2NRnhwETo1iJS2chifPRa5cTX4pva3F",
       "estimatedDebitSol": "0.00001",
       "networkFeeSol": "0.00001",
       "message": "本次只登记成长记录，宠物所有权保持在当前钱包。"
     }
   ],
   "result": "passed",
-  "completedAt": "2026-10-09T08:40:12.421Z"
+  "completedAt": "2026-10-09T16:54:19.561Z"
 }

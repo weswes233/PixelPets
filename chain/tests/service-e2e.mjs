@@ -15,7 +15,7 @@ import { WalletController } from '../../wallet-web/src/controller.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const rpcUrl = process.env.PIXELPETS_TEST_RPC ?? 'http://127.0.0.1:8899';
-assert.equal(rpcUrl, 'http://127.0.0.1:8899', 'Only the dedicated loopback validator is allowed');
+assert(['http://127.0.0.1:8899', 'http://127.0.0.1:8999'].includes(rpcUrl), 'Only the dedicated loopback validator is allowed');
 const genesis = process.env.PIXELPETS_EXPECTED_GENESIS;
 assert(genesis && !Object.values(GENESIS_HASHES).includes(genesis), 'Explicit non-public genesis is required');
 assert(process.env.PIXELPETS_TEST_ADMIN, 'An explicit disposable admin file is required');

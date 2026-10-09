@@ -15,7 +15,7 @@ const RPC = process.env.PIXELPETS_TEST_RPC ?? 'http://127.0.0.1:8899';
 const endpoint = new URL(RPC);
 assert.equal(endpoint.protocol, 'http:', 'Only local HTTP is accepted');
 assert.equal(endpoint.hostname, '127.0.0.1', 'Only the explicit loopback validator is accepted');
-assert.equal(endpoint.port, '8899', 'Only the dedicated test-validator port is accepted');
+assert(['8899', '8999'].includes(endpoint.port), 'Only the dedicated test-validator ports (8899 Windows helper, 8999 Linux helper) are accepted');
 assert.equal(endpoint.pathname, '/');
 assert(!endpoint.search && !endpoint.username && !endpoint.password);
 const expectedGenesis = process.env.PIXELPETS_EXPECTED_GENESIS;
