@@ -1,0 +1,38 @@
+{
+  "name": "PixelPets Puddle",
+  "symbol": "PXPET",
+  "description": "A wide-mouthed frog who always finds the snacks first. Original code-drawn pixel companion from PixelPets. Solana Devnet test asset with no cash value; growth and journeys are shown in the game and recorded in its PetRecord.",
+  "image": "ipfs://bafkreieskhf7warrqnnp5kxok7d2llccyjv3v7e3vkb45vsrmf5sygdaoa",
+  "external_url": "",
+  "attributes": [
+    {
+      "trait_type": "Species",
+      "value": "Puddle"
+    },
+    {
+      "trait_type": "Species ID",
+      "value": "puddle"
+    },
+    {
+      "trait_type": "Base temperament",
+      "value": "Snack-loving"
+    },
+    {
+      "trait_type": "Base form",
+      "value": "seed"
+    },
+    {
+      "trait_type": "Network",
+      "value": "devnet"
+    }
+  ],
+  "properties": {
+    "category": "image",
+    "files": [
+      {
+        "uri": "ipfs://bafkreieskhf7warrqnnp5kxok7d2llccyjv3v7e3vkb45vsrmf5sygdaoa",
+        "type": "image/png"
+      }
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "PixelPets Devnet Companions",
+  "symbol": "PXPET",
+  "description": "Official PixelPets companions on Solana Devnet. Test assets, no cash value, not migrated to mainnet.",
+  "image": "ipfs://bafkreia2dgvzqc3r6zpe52pnfbg7vyx7vave26pf3z3e2tsn7oxvsyor34",
+  "properties": {
+    "category": "image",
+    "files": [
+      {
+        "uri": "ipfs://bafkreia2dgvzqc3r6zpe52pnfbg7vyx7vave26pf3z3e2tsn7oxvsyor34",
+        "type": "image/png"
+      }
+    ]
+  }
+}
