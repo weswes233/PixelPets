@@ -1,5 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
+import { speciesTemperament } from './travel-content.ts';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { ApiError, addressBytes, catalog, eventId, hash, iso, nickname, objectBody, requestHash, secret, verifyWalletSignature } from './domain.ts';
@@ -99,7 +100,9 @@ export class Repository {
         : this.db.prepare("SELECT COUNT(*) AS total FROM pets WHERE user_id=? AND COALESCE(json_extract(data,'$.chain.received'),0)<>1").get(userId)) as Row;
       if (Number(count.total) >= 3) throw new ApiError(409, 'PET_LIMIT', '目前最多免费领养 3 位伙伴；收到的链上伙伴不占用领养名额。');
       const now = this.clock();
-      const pet: Pet = { id: randomUUID(), species_id: species.id, nickname: name, form: 'seed', bond: 0, energy: 80, mood: 70, care_count: 0, created_at: iso(now), updated_at: iso(now), revision: 1, traits: { sun: 0, moon: 0 }, chain: { status: 'unregistered' }, favorite: species.id === 'moss' ? 'sun' : 'moon' };
+      const pet: Pet = { id: randomUUID(), species_id: species.id, nickname: name, form: 'seed', bond: 0, energy: 80, mood: 70, care_count: 0, created_at: iso(now), updated_at: iso(now), revision: 1, traits: { sun: 0, moon: 0 }, chain: { status: 'unregistered' }, favorite: species.id === 'moss' ? 'sun' : 'moon',
+        // Individual temperament: species base is twice as likely as each other template (CSPRNG).
+        temperament: (() => { const base = speciesTemperament[species.id]; const pool = [base, base, ...(['cautious', 'curious', 'greedy'] as const).filter(t => t !== base)]; return pool[randomInt(0, pool.length)]; })() };
       this.db.prepare('INSERT INTO pets VALUES (?,?,?,NULL)').run(pet.id, userId, JSON.stringify(pet));
       this.entry(userId, pet.id, `${name} 来到了你身边。你们的故事从今天开始。`, now);
       const response = { pet }; this.remember(userId, id, digest, response); return response;

@@ -8,6 +8,7 @@ import type { OfferAccount, PetRecordAccount, RpcClient, SupportedNetwork } from
 import { ApiError, catalog, hash, iso } from './domain.ts';
 import type { Pet } from './domain.ts';
 import type { Repository } from './repository.ts';
+import { speciesTemperament } from './travel-content.ts';
 
 export type OwnershipRpc = Pick<Connection, 'getGenesisHash' | 'getMultipleAccountsInfoAndContext'>;
 export type OwnershipConfiguration = {
@@ -227,6 +228,8 @@ export class OwnershipService {
         pet.form = forms[snapshot.record.form]; pet.bond = snapshot.record.bond;
         pet.energy = 80; pet.mood = 70; pet.care_count = 0; pet.traits = { sun: 0, moon: 0 };
         pet.favorite = pet.species_id === 'moss' ? 'sun' : 'moon'; pet.created_at = now;
+        // Temperament is part of the private relationship; the receiver starts from the species base.
+        pet.temperament = speciesTemperament[pet.species_id];
         pet.chain = { status: 'registered', network: this.configuration!.network, program_id: this.configuration!.programId,
           asset_address: asset, checkpoint: snapshot.record.checkpoint.toString() };
         Object.assign(pet.chain, { received: true });
