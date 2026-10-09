@@ -158,6 +158,15 @@ func run() -> void:
 	unverified["ownership"] = {"status": "unverified", "can_interact": false}
 	check(not client.gift_block_reason(unverified, true).is_empty(), "Unverified ownership blocks gifting")
 	check(not L10n._has_cjk(" ".join(texts(client.content))), "English wallet screen with gift contains no Chinese text")
+	L10n.lang = "zh"
+	client.page = "travel"
+	view.trips[gift_pet["id"]] = {}
+	client._render()
+	check(has_text(client, "收拾行囊去旅行") and has_text(client, "出发"), "中文 toggle covers travel planner strings")
+	client.page = "trade"
+	client._render()
+	check(has_text(client, "作为礼物送出"), "中文 toggle covers gift strings")
+	L10n.lang = "en"
 	client._switch_profile()
 	check(view.trips.is_empty() and view.collections.is_empty(), "Switching profile clears travel state")
 	viewport.queue_free()
