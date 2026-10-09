@@ -129,6 +129,7 @@ func _build_shell() -> void:
 		button.set_meta("page", str(item[0]))
 		button.set_meta("source", str(item[1]))
 		button.clip_text = true
+		button.add_theme_font_size_override("font_size", 13)
 		shell_texts.append(button)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		navigation.add_child(button)
@@ -240,7 +241,7 @@ func _boot_failed(result: Dictionary) -> void:
 func _set_status(value: String) -> void:
 	status_text = L10n.t(value)
 	if is_instance_valid(status_label):
-		status_label.text = value
+		status_label.text = status_text
 
 func _on_resized() -> void:
 	var now_small: bool = size.x < 650
@@ -281,7 +282,11 @@ func _render() -> void:
 	_clear_content()
 	for child in navigation.get_children():
 		var nav_button := child as Button
-		nav_button.add_theme_stylebox_override("normal", _box(MINT if str(nav_button.get_meta("page")) == page else Color("eeeadd"), 2))
+		for state in ["normal", "hover", "pressed", "focus"]:
+			var tab := _box((MINT if str(nav_button.get_meta("page")) == page else Color("eeeadd")) if state == "normal" else (MINT if state != "focus" else Color(0, 0, 0, 0)), 2, CORAL if state == "focus" else Color("ced3c4"))
+			tab.content_margin_left = 2
+			tab.content_margin_right = 2
+			nav_button.add_theme_stylebox_override(state, tab)
 	if not online:
 		var notice := _panel(content)
 		notice.add_child(_label("让相遇被记住", 21))
@@ -293,8 +298,8 @@ func _render() -> void:
 		"companion": _render_companion()
 		"travel": travel.render(content)
 		"collection":
-			_render_collection()
 			travel.render_keepsakes(content)
+			_render_collection()
 		"journal": _render_journal()
 		"trade": _render_trade()
 
@@ -391,7 +396,7 @@ func _pet_access_message(pet: Dictionary) -> String:
 	return ""
 
 func _meter(parent: Node, title: String, value: int, maximum: int, color: Color) -> void:
-	parent.add_child(_label("%s   %d%s" % [title, value, " / " + str(maximum) if title == "亲密" and value < maximum else ""], 14))
+	parent.add_child(_label("%s   %d%s" % [L10n.t(title), value, " / " + str(maximum) if title == "亲密" and value < maximum else ""], 14))
 	var meter := ProgressBar.new()
 	meter.max_value = maximum
 	meter.value = mini(maximum, value)
@@ -423,7 +428,7 @@ func _render_adoption(parent: Node = null) -> void:
 	name_input = LineEdit.new()
 	name_input.placeholder_text = "给伙伴起个名字（最多 16 字）"
 	name_input.max_length = 16
-	name_input.text = str(SPECIES[selected_species]["name"])
+	name_input.text = L10n.t(str(SPECIES[selected_species]["name"]))
 	name_input.custom_minimum_size.y = 45
 	intro.add_child(name_input)
 	var adopt := _button("带它回家", _adopt, true)
@@ -464,7 +469,7 @@ func _adopt() -> void:
 		var pet: Dictionary = result["data"]["pet"]
 		_upsert_pet(pet)
 		selected_pet = str(pet["id"])
-		_set_status("%s 已经到家了。第一天，请多关照。" % str(pet["nickname"]))
+		_set_status(L10n.t("%s 已经到家了。第一天，请多关照。") % str(pet["nickname"]))
 	else:
 		_set_status(API_SCRIPT.error_message(result))
 		if int(result.get("http_status", 0)) >= 400 and int(result.get("http_status", 0)) < 500:

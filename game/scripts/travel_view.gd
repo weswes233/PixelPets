@@ -176,7 +176,8 @@ func _render_planner(content: VBoxContainer, pet: Dictionary) -> void:
 func _render_away(content: VBoxContainer, pet: Dictionary, trip: Dictionary) -> void:
 	var box: VBoxContainer = host._panel(content)
 	var route: Dictionary = _route(str(trip.get("route_id", "")))
-	box.add_child(host._label(_t("On the way to %s", "正在前往%s") % L10n.pick(route.get("name", {})), 19))
+	var arrived: bool = remaining_ms(trip) <= 0
+	box.add_child(host._label((_t("Back from %s", "从%s回来了") if arrived else _t("On the way to %s", "正在前往%s")) % L10n.pick(route.get("name", {})), 19))
 	var art: PetArt = ART_SCRIPT.new()
 	art.species = str(pet.get("species_id", "moss"))
 	art.form = str(pet.get("form", "seed"))
@@ -222,7 +223,7 @@ func render_postcard(content: VBoxContainer, pet: Dictionary, trip: Dictionary) 
 		card.add_child(host._label(str(line), 15))
 	for item in result.get("items", []):
 		var rarity: String = str(item.get("rarity", "common"))
-		card.add_child(host._label("✦ %s  ·  %s" % [L10n.pick(item.get("name", {})), str(RARITY_EN.get(rarity, rarity)) if L10n.lang == "en" else ("特别" if rarity == "special" else "常见")], 16, host.CORAL if rarity == "special" else host.INK))
+		card.add_child(host._label(_t("Keepsake: ", "纪念物：") + "%s  ·  %s" % [L10n.pick(item.get("name", {})), str(RARITY_EN.get(rarity, rarity)) if L10n.lang == "en" else ("特别" if rarity == "special" else "常见")], 16, host.CORAL if rarity == "special" else host.INK))
 	if result.get("clue") != null:
 		card.add_child(host._label(_t("A clue about a companion that is coming later (%s).", "发现了一位未来伙伴的线索（%s，尚未开放）。") % str(result.get("clue")), 13, host.MUTED))
 	card.add_child(host._label(_t("Rewards are drawn by the server. The result is recorded on Solana when you save the journey receipt.", "奖励由服务器抽取；保存旅程收据时，结果摘要会记录在 Solana 上。"), 12, host.MUTED))
@@ -296,7 +297,7 @@ func render_keepsakes(content: VBoxContainer) -> void:
 		var found: bool = bool(item.get("discovered", false))
 		var card: VBoxContainer = host._panel(grid, Color("fffdf5") if found else Color("efeee5"))
 		card.get_parent().size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		card.add_child(host._label(("✦ " if str(item.get("rarity", "")) == "special" else "· ") + (L10n.pick(item.get("name", {})) if found else "???"), 14, host.INK if found else host.MUTED))
+		card.add_child(host._label(("★ " if str(item.get("rarity", "")) == "special" else "") + (L10n.pick(item.get("name", {})) if found else "???"), 14, host.INK if found else host.MUTED))
 		card.add_child(host._label(L10n.pick(item.get("description", {})) if found else L10n.pick(_route(str(item.get("route", ""))).get("name", {})), 11, host.MUTED))
 		if found and int(item.get("quantity", 0)) > 1:
 			card.add_child(host._label("× %d" % int(item.get("quantity", 0)), 12, host.MUTED))

@@ -14,7 +14,7 @@ const EN := {
 	"晨曦微光": "Dawn Wisp", "星夜微光": "Starlit Wisp",
 	"正在寻找你的伙伴……": "Looking for your companion…", "未配置": "not configured",
 	"掌心伙伴": "PixelPets", "小小的陪伴，慢慢成为独一无二。": "A tiny companion. A world of stories. Collect the journey.",
-	"陪伴": "Home", "旅行": "Travel", "卡册": "Collection", "日记": "Journal", "交换": "Wallet",
+	"陪伴": "Home", "旅行": "Travel", "卡册": "Album", "日记": "Journal", "交换": "Wallet",
 	"正在连接伙伴小屋……": "Connecting to the pet house…",
 	"无法保存本机通行证，请检查浏览器存储或磁盘空间后重试。": "Couldn't save your local pass. Check browser storage or disk space and try again.",
 	"这张通行证已过期。可在交换页用原钱包找回，或重连创建新档案。": "This pass has expired. Recover with your original wallet on the Wallet tab, or reconnect to start a new profile.",
