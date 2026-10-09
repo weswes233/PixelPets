@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/pixel_pets.json`.
  */
 export type PixelPets = {
-  "address": "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR",
+  "address": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT",
   "metadata": {
     "name": "pixelPets",
     "version": "0.1.0",
@@ -1055,7 +1055,7 @@ export type PixelPets = {
         },
         {
           "name": "program",
-          "address": "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR"
+          "address": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT"
         },
         {
           "name": "programData"

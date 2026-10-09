@@ -9,7 +9,7 @@ use mpl_core::{
     DataBlob,
 };
 
-declare_id!("2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR");
+declare_id!("2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT");
 pub const MAX_FEE_BPS: u16 = 500;
 pub const MAX_OFFER_SECONDS: i64 = 30 * 24 * 60 * 60;
 pub const MAX_CLAIM_SECONDS: i64 = 15 * 60;
