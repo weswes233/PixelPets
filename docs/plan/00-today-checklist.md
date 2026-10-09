@@ -6,16 +6,16 @@
 
 | 级别 | 内容 | 状态 | 证据 / 备注 |
 | --- | --- | --- | --- |
-| P0 | 公开 HTTPS 英文主流程 | ❌ | 尚无域名/主机 |
+| P0 | 公开 HTTPS 英文主流程 | 🟡 部分 | 英文主流程本地完成（`tools/demo-up.sh local`）；公开 HTTPS 未完成：本盒出站 7844/22 被封，cloudflared/localhost.run/serveo 均不可用，需 Wes 提供主机或域名 |
 | P0 | 原有三宠（moss/puddle/wisp）保持兼容 | ✅ | 基线测试全绿（见 H0–H2） |
-| P0 | 一次免费、服务端权威、标注加速（45 s）的旅行 | ❌ | |
-| P0 | 故事与收藏反馈（2 地点、8 纪念物） | ❌ | |
-| P0 | 真实 Solana Devnet 领取宠物 | ⏸ | 程序可构建；部署者 0 SOL |
-| P0 | 旅行结果摘要 checkpoint v2 存证 | ❌ | |
-| P0 | 刷新及服务重启后恢复 | ❌ | |
-| P0 | 真实浏览器钱包演练（扩展钱包弹窗） | ⏸ | 需 Wes 在真机 |
-| P0 | 可复核的交易与结果证据 | ❌ | |
-| P1 | 两钱包赠送 + 接收后继续养成（UI） | ❌ | 合约/SDK 已有 `prepareGift()` |
+| P0 | 一次免费、服务端权威、标注加速（45 s）的旅行 | ✅ | 服务端 CSPRNG + 补给账本；`npm test` 146/146；Godot travel 26/26 |
+| P0 | 故事与收藏反馈（2 地点、8 纪念物） | ✅ | 明信片 + 纪念物；Album 优先显示；截图 `docs/evidence/ui-smoke/` |
+| P0 | 真实 Solana Devnet 领取宠物 | 🟡 部分 | localnet 上浏览器内 claim 已确认（资产 `2bL2TGgg…BHvTA`）；Devnet 未部署：deployer 仍 0 SOL（airdrop 限流），`tools/devnet-deploy.ts --network devnet --execute` 已就绪 |
+| P0 | 旅行结果摘要 checkpoint v2 存证 | ✅ localnet | 浏览器中钱包签名并确认（截图 37）；`chain/tests/deployed-stack-smoke.mjs` 4 PASS |
+| P0 | 刷新及服务重启后恢复 | 🟡 部分 | 行程存于 SQLite，按服务器时钟恢复，有测试覆盖；未单独录制重启演练 |
+| P0 | 真实浏览器钱包演练（扩展钱包弹窗） | 🟡 部分 | 在无头 Chrome 中用 Wallet Standard 测试钱包走通（SIWS、claim、receipt）；真实 Phantom/Backpack 弹窗需 Wes |
+| P0 | 可复核的交易与结果证据 | ✅ localnet | 公开证明 `jr_…` 经独立验证器 10 项检查；`chain/evidence/*.json` |
+| P1 | 两钱包赠送 + 接收后继续养成（UI） | ❌ | 转移合约/SDK 已有，游戏赠送 UI 本轮未完成 |
 | P2 | 中文全量校对、120 剪影目录、商店预览、更多动作 | ❌ | 不承诺 |
 
 ## H0–H24 时间盒与止损点
@@ -23,12 +23,12 @@
 | 墙钟 | 预算 | 门槛 | 状态 |
 | --- | ---: | --- | --- |
 | H0–H2 | 1h | 备份、分支、工具链、密钥公钥、Devnet 连通、确认存储上传渠道 | 🟡 见下表 |
-| H2–H7 | 3h | 上传三角色图/元数据；部署程序、Core 集合、3 editions；真实浏览器 claim 一次 | ⏸ 缺 Devnet SOL |
-| H7–H11 | 3h | 旅行表/迁移/接口/一次性结算；2 地点 8 纪念物；重启后可揭晓 | ❌ |
-| H11–H14 | 2h | 旅行 manifest、checkpoint v2、证明接口、finalized 恢复；本地重算摘要 | ❌ |
-| H14–H17 | 2h | 英文主流程、像素旅行反馈、收藏结果 | ❌ |
-| H17–H20 | 2h | 云端单实例 HTTPS、持久库、RPC/CSP、外部钱包与元数据访问 | ❌ |
-| H20–H22 | 1h | 关键异常演练；有余量才接 P1 赠送 | ❌ |
+| H2–H7 | 3h | 上传三角色图/元数据；部署程序、Core 集合、3 editions；真实浏览器 claim 一次 | 🟡 localnet 全部完成；Devnet 缺 SOL；元数据为本地 kubo 固定（开发用临时路径） |
+| H7–H11 | 3h | 旅行表/迁移/接口/一次性结算；2 地点 8 纪念物；重启后可揭晓 | ✅ |
+| H11–H14 | 2h | 旅行 manifest、checkpoint v2、证明接口、finalized 恢复；本地重算摘要 | ✅ localnet |
+| H14–H17 | 2h | 英文主流程、像素旅行反馈、收藏结果 | ✅ |
+| H17–H20 | 2h | 云端单实例 HTTPS、持久库、RPC/CSP、外部钱包与元数据访问 | 🟡 已做 PUBLIC_ORIGIN 白名单与服务端 RPC；HTTPS 隧道被封，未上线 |
+| H20–H22 | 1h | 关键异常演练；有余量才接 P1 赠送 | 🟡 已演练未签名意图恢复与 finalize 等待；赠送 UI 未做 |
 | H22–H24 | 2h | 录屏、交易与 manifest 核验、完成/未完成证据、发布说明 | ❌ |
 
 **止损：**H7 仍无真实 Devnet claim → 停止新玩法扩张，集中解决部署/钱包；H14 仍无法从 manifest 重算链上摘要 → 只保留一条旅行与一个结果模板；H20 仍无 HTTPS → 冻结功能处理公开访问。外部依赖拿不到时输出部分结果，不伪装成功。
