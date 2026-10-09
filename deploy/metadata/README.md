@@ -7,7 +7,7 @@ Status: **content-addressed locally, not yet pinned by a durable provider.**
   PetArt code as the game.
 - Each URI is a raw-leaf CIDv1 (`bafkrei…`, sha2-256) that depends only on
   the file bytes. Running `ipfs add --cid-version=1 --only-hash` (kubo 0.43.1)
-  gives the same CIDs (checked 2026-10-11).
+  gives the same CIDs (checked 2026-10-10).
 - Any pinning service that stores a single file as CIDv1 raw (Pinata,
   Filebase, Storacha, a self-hosted kubo) returns these exact URIs. Pinning
   later does not change the on-chain URI.

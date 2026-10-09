@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Linux helper: isolated, disposable solana-test-validator for PixelPets integration tests.
 # Uses RPC 127.0.0.1:8999 so it never touches a developer validator on 8899. Never reads the default wallet.
-# Usage: tools/local-chain.sh start | test contract|service|ownership | stop | status
+# Usage: tools/local-chain.sh start [--bare] | test contract|service|ownership | stop | status
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 RUNTIME="$ROOT/runtime"; STATE="$RUNTIME/local-chain-linux.json"
@@ -10,6 +10,7 @@ PROGRAM_SO="$ROOT/chain/target/deploy/pixel_pets.so"; RPC="http://127.0.0.1:8999
 CORE_ID=CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d
 rpc() { curl -s -m 2 -H "content-type: application/json" -d "$1" "$RPC" || true; }
 start() {
+  local bare="${1:-}"
   [ -f "$PROGRAM_SO" ] || { echo "missing $PROGRAM_SO (run tools/build-chain.sh)"; exit 1; }
   [ -f "$CORE_SO" ] || { echo "missing $CORE_SO (solana program dump $CORE_ID from devnet)"; exit 1; }
   mkdir -p "$(dirname "$ADMIN")"; [ -f "$ADMIN" ] || solana-keygen new --no-bip39-passphrase --silent -o "$ADMIN" >/dev/null
@@ -19,7 +20,7 @@ start() {
   run="$RUNTIME/validator-linux-$(date -u +%Y%m%d-%H%M%S)-$RANDOM"; mkdir -p "$run"
   RUST_LOG=warn nohup solana-test-validator --ledger "$run/ledger" --bind-address 127.0.0.1 --rpc-port 8999 \
     --faucet-port 9911 --gossip-port 9101 --dynamic-port-range 9200-9260 --mint "$admin" \
-    --upgradeable-program "$program" "$PROGRAM_SO" "$admin" --bpf-program "$CORE_ID" "$CORE_SO" \
+    $([ "$bare" = "--bare" ] || echo --upgradeable-program "$program" "$PROGRAM_SO" "$admin") --bpf-program "$CORE_ID" "$CORE_SO" \
     --limit-ledger-size 5000000 > "$run/stdout.log" 2> "$run/stderr.log" &
   local pid=$!
   for _ in $(seq 1 300); do
@@ -37,7 +38,7 @@ start() {
 }
 field() { node -p "require('$STATE').$1"; }
 case "${1:-}" in
-  start) start ;;
+  start) start "${2:-}" ;;  # --bare: Core only, PixelPets not preloaded (deploy rehearsal)
   stop) [ -f "$STATE" ] && { pid="$(field pid)"; run="$(field run)"; if tr '\0' ' ' < "/proc/$pid/cmdline" 2>/dev/null | grep -q -- "$run/ledger"; then kill "$pid"; fi; rm -f "$STATE"; echo stopped; } ;;
   status) cat "$STATE" ;;
   test)
@@ -47,6 +48,7 @@ case "${1:-}" in
       service) PIXELPETS_SERVICE_SCENARIO=checkpoint node "$ROOT/chain/tests/service-e2e.mjs" ;;
       ownership) PIXELPETS_SERVICE_SCENARIO=ownership node "$ROOT/chain/tests/service-e2e.mjs" ;;
       journey) PIXELPETS_SERVICE_SCENARIO=journey node "$ROOT/chain/tests/service-e2e.mjs" ;;
+      deployed) node "$ROOT/chain/tests/deployed-stack-smoke.mjs" ;;  # after: start --bare + tools/devnet-deploy.ts --network localnet --execute
       *) echo "test contract|service|ownership"; exit 2 ;;
     esac ;;
   *) echo "usage: $0 start|test <kind>|stop|status"; exit 2 ;;
