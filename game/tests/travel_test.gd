@@ -126,6 +126,38 @@ func run() -> void:
 			await process_frame
 			check(client.content.get_combined_minimum_size().x <= dimensions.x - 36, "%s fits %d px (got %f)" % [next_page, dimensions.x, client.content.get_combined_minimum_size().x])
 	check(has_text(client, "1 / 8 found") and has_text(client, "The Last Lantern") and has_text(client, "???"), "Keepsakes show found and unknown entries separately from pet cards")
+	# P1 gift: rendered only for registered pets; disabled while travelling (Astra §5).
+	viewport.size = Vector2i(360, 640)
+	client.size = Vector2(360, 640)
+	var gift_pet: Dictionary = {"id": "99999999-2222-3333-4444-555555555555", "species_id": "moss", "nickname": "G", "form": "seed", "bond": 1, "energy": 70, "mood": 70, "revision": 1,
+		"chain": {"status": "registered", "asset_address": "AssetAssetAssetAssetAssetAssetAsset11111"}, "ownership": {"status": "owned", "can_interact": true}}
+	client._upsert_pet(gift_pet)
+	client.selected_pet = gift_pet["id"]
+	client.chain_config = {"enabled": true, "network": "solana:localnet"}
+	client.wallet = {"connected": true, "authenticated": true, "address": "5wpnLLhKxxxxxxxxxxxxxxxxxxxxxxxxxxxxjdow"}
+	view.trips[gift_pet["id"]] = {"id": "t1", "state": "travelling"}
+	client.page = "trade"
+	client._render()
+	check(has_text(client, "Send as a gift"), "Registered pet shows Send as a gift")
+	check(client.gift_block_reason(gift_pet, true).contains("旅行"), "Gift is blocked while travelling")
+	check(has_text(client, "Gifting opens again after it is back"), "Travelling block reason is shown in English")
+	var gift_button: Button = null
+	for node in client.content.find_children("*", "Button", true, false):
+		if node.text == "Send as a gift":
+			gift_button = node
+	check(gift_button != null and gift_button.disabled, "Gift button is disabled while travelling")
+	view.trips[gift_pet["id"]] = {"id": "t1", "state": "revealed"}
+	client._render()
+	check(client.gift_block_reason(gift_pet, true).is_empty(), "Gift allowed after the trip is back")
+	for node in client.content.find_children("*", "Button", true, false):
+		if node.text == "Send as a gift":
+			gift_button = node
+	check(gift_button != null and not gift_button.disabled, "Gift button enabled once back")
+	check(not client.gift_block_reason({"id": "x", "chain": {"status": "unregistered"}}, true).is_empty(), "Unregistered pets cannot be gifted")
+	var unverified: Dictionary = gift_pet.duplicate(true)
+	unverified["ownership"] = {"status": "unverified", "can_interact": false}
+	check(not client.gift_block_reason(unverified, true).is_empty(), "Unverified ownership blocks gifting")
+	check(not L10n._has_cjk(" ".join(texts(client.content))), "English wallet screen with gift contains no Chinese text")
 	client._switch_profile()
 	check(view.trips.is_empty() and view.collections.is_empty(), "Switching profile clears travel state")
 	viewport.queue_free()

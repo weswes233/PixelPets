@@ -83,6 +83,7 @@ async function request(serialized: string): Promise<void> {
       case 'rename': data = await controller.rename(message.payload?.pet_id, message.payload?.nickname); break;
       case 'journey_receipt': data = await controller.journeyReceipt(message.payload?.pet_id, message.payload?.trip_id, message.payload?.result_hash); break;
       case 'travel': data = await controller.travel(message.payload?.op, message.payload?.pet_id, message.payload?.trip_id, message.payload?.body); break;
+      case 'gift': data = await controller.gift(message.payload?.pet_id, message.payload?.recipient); break;
       case 'offers': data = await controller.offers(message.payload?.cursor); break;
       default: throw new BridgeError('METHOD_UNSUPPORTED', 'This wallet action is not supported in this version.');
     }

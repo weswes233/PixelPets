@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "kind": "gift-two-wallet",
+  "network": "localnet",
+  "genesis": "xJhco3qdtajDKm5wE1bCSxfMfDae3vra99wr7ZgHMNe",
+  "program": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT",
+  "collection": "8uQPDvvJRNEsKZzGnnWaiRcTnNpE4cg8y8eEqK1PkBfP",
+  "localFundsHaveNoValue": true,
+  "wallets": {
+    "A": "5sjT2Ta8ez8igiVpytp3Qn4KWpFxmVvZ792QBDCEqy5A",
+    "B": "FRjuaKsrZLNVKGvXVZZs81Pd884cgUvq3vFcWRG6LwHC"
+  },
+  "startedAt": "2026-10-09T18:13:10.010Z",
+  "checks": [
+    "A claims the companion on localnet",
+    "Gift is refused while the companion is travelling (no transaction prepared)",
+    "Self-gift, invalid address and cancelled review all stop before signing",
+    "A gifts via owner-signed Core transfer; review showed network, asset, recipient and fee; finalized",
+    "A can no longer care after the gift (PET_NOT_FOUND)",
+    "B signs in, syncs, sees the same asset and continues care"
+  ],
+  "transactions": [
+    {
+      "label": "claim",
+      "signature": "3YiYpyju75441jrmGkKMKqrLbDmK2ucKnsngYW14WRvKf1HhxKZUEHpjszVUDhybHtsh6cb1KqDHEEGM9vjpQAD6",
+      "asset": "8WRG6YDfqEmRbgyQWVxA3a47DD8N5ZyhTSRq4Az81LnX"
+    },
+    {
+      "label": "gift",
+      "signature": "2HKvJS4TEomF6fjxyxhvD3pwkuknAKSxgPBMwVb6oevk4HA6WUDweVcXWVvrWb9VB89UgjRLbCespjhQfMB6Ykok",
+      "slot": 6498,
+      "from": "5sjT2Ta8ez8igiVpytp3Qn4KWpFxmVvZ792QBDCEqy5A",
+      "to": "FRjuaKsrZLNVKGvXVZZs81Pd884cgUvq3vFcWRG6LwHC",
+      "asset": "8WRG6YDfqEmRbgyQWVxA3a47DD8N5ZyhTSRq4Az81LnX"
+    }
+  ],
+  "asset": "8WRG6YDfqEmRbgyQWVxA3a47DD8N5ZyhTSRq4Az81LnX",
+  "recipientPetId": "07028bde-a014-48a4-a9b0-62e1cc876638",
+  "finishedAt": "2026-10-09T18:13:42.045Z"
+}

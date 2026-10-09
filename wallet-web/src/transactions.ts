@@ -199,3 +199,62 @@ function encodeBase58(bytes: Uint8Array): string {
   for (const byte of bytes) { if (byte !== 0) break; result = '1' + result; }
   return result;
 }
+
+/**
+ * P1 gift (Astra §9): owner-signed Core TransferV1 built locally with chain-client prepareGift().
+ * No server custody. Blocked while the pet is travelling. Success is only reported after the
+ * transfer is finalized AND the service's ownership sync no longer lists the pet for this wallet.
+ */
+export async function runGiftTransaction(context: FlowContext, petId: string, recipient: string): Promise<any> {
+  const { api, token, wallet, account, config } = context;
+  check(config.enabled && config.rpc_url && config.program_id && config.collection_address, 'CHAIN_NOT_DEPLOYED', 'On-chain gifting is not open yet.');
+  let recipientKey: PublicKey;
+  try { recipientKey = new PublicKey(recipient); } catch { throw new TransactionFlowError('RECIPIENT_INVALID', 'That is not a valid Solana address.'); }
+  check(recipientKey.toBase58() === recipient && PublicKey.isOnCurve(recipientKey.toBytes()), 'RECIPIENT_INVALID', 'Send gifts to a wallet address (not a program account).');
+  check(recipient !== account.address, 'SELF_TRANSFER', 'You already own this companion.');
+  const feature = wallet.features['solana:signTransaction'] as SolanaSignTransactionFeature['solana:signTransaction'] | undefined;
+  check(feature && account.features.includes('solana:signTransaction') && feature.supportedTransactionVersions.includes('legacy'), 'SIGN_TRANSACTION_UNSUPPORTED', 'Use a wallet that can sign Solana transactions.');
+  const rpc = context.connection ?? new Connection(config.rpc_url, { commitment: 'confirmed', disableRetryOnRateLimit: true, fetch: boundedRpcFetch });
+  const client = new PixelPetsClient({ rpc, network: rawNetwork(config.network), programId: config.program_id, expectedGenesisHash: config.genesis_hash, expectedCollection: config.collection_address });
+  await client.assertDeployment(); context.assertCurrent();
+  const pets = await api('/pets', 'GET', token);
+  const pet = pets.pets?.find((item: any) => item.id === petId);
+  check(pet, 'PET_NOT_FOUND', 'Companion not found. Refresh your profile.');
+  check(pet.chain?.status === 'registered' && pet.chain.asset_address, 'GIFT_NOT_REGISTERED', 'Only companions claimed on Solana can be gifted.');
+  check(pet.ownership?.can_interact !== false, 'OWNERSHIP_UNVERIFIED', 'Sync your wallet first; ownership of this companion is not confirmed.');
+  const current = await api(`/pets/${encodeURIComponent(petId)}/trips/current`, 'GET', token);
+  check(current?.trip?.state !== 'travelling', 'GIFT_BLOCKED_TRAVELLING', 'Your companion is travelling. Gifting opens again after it is back.');
+  context.assertCurrent();
+  const prepared = await client.prepareGift({ owner: account.address, recipient, asset: pet.chain.asset_address });
+  const approved = await context.review({ title: 'Send as a gift', petName: String(pet.nickname ?? pet.id), network: config.network,
+    address: `${account.address} → ${recipient}`, asset: pet.chain.asset_address, estimatedDebitSol: lamportsToSol(prepared.networkFeeLamports),
+    networkFeeSol: lamportsToSol(prepared.networkFeeLamports),
+    message: `This transfers the companion to ${recipient}. Your private journal and other companions stay with you. This cannot be undone by the game.` });
+  check(approved, 'USER_CANCELLED', 'Gift cancelled. Nothing was sent.');
+  context.assertCurrent();
+  const [signed] = await feature.signTransaction({ account, transaction: prepared.transaction.serialize({ requireAllSignatures: false }), chain: config.network as `${string}:${string}` });
+  context.assertCurrent();
+  check(signed?.signedTransaction, 'SIGNATURE_MISSING', 'The wallet did not return a signature.');
+  const signedTx = await client.verifySignedTransaction(prepared, signed.signedTransaction, { requiredSigners: [account.address] });
+  const signature = encodeBase58(signedTx.signature!);
+  try {
+    const returned = await rpc.sendRawTransaction(signedTx.serialize(), { skipPreflight: false, preflightCommitment: 'confirmed', maxRetries: 3 });
+    check(returned === signature, 'SIGNATURE_MISMATCH', 'The node returned a different signature.');
+  } catch (error) {
+    if (error instanceof TransactionFlowError) throw error;
+    return { state: 'pending', signature, recipient, message: 'Gift submission is uncertain. Check this signature before trying again.' };
+  }
+  for (let attempt = 0; attempt < 30; attempt++) {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    const status = await client.queryFinalized(signature, prepared.lastValidBlockHeight);
+    if (status.state === 'failed') throw new TransactionFlowError('TRANSACTION_FAILED', 'The gift did not go through. Your companion is still yours.');
+    if (status.state === 'finalized') {
+      context.assertCurrent();
+      const synced = await api('/wallet/assets/sync', 'POST', token, {});
+      const still = synced.pets?.find((item: any) => item.id === petId);
+      if (still && still.ownership?.can_interact) return { state: 'pending', signature, recipient, message: 'Gift finalized; the service has not caught up yet. Sync again shortly.' };
+      return { state: 'gifted', signature, slot: status.slot, recipient, pets: synced.pets, ownership: synced.ownership, message: 'Gift confirmed on Solana. The recipient can sync their wallet to continue care.' };
+    }
+  }
+  return { state: 'pending', signature, recipient, message: 'Gift submitted · checking confirmation. Sync your wallet later.' };
+}

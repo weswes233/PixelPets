@@ -37,6 +37,9 @@ var status_label: Label
 var navigation: HBoxContainer
 var pet_art: PetArt
 var name_input: LineEdit
+var gift_input: LineEdit
+var gift_recipient: String = ""
+var gift_pending: bool = false
 var modal: Control
 var adventure_count: int = 0
 var adventure_choice: String = "sun"
@@ -641,6 +644,8 @@ func _render_trade() -> void:
 	var register := _button("保存成长到链上" if registered else "登记当前伙伴", func(): _send_bridge("checkpoint" if registered else "register", {"pet_id": str(current_pet().get("id", ""))}), true)
 	register.disabled = busy or not enabled or current_pet().is_empty() or not connected or (registered and not _pet_access_message(current_pet()).is_empty())
 	market.add_child(register)
+	if registered:
+		_render_gift(market, connected)
 	var offers := _button("查看真实报价", func(): _send_bridge("offers"))
 	offers.disabled = not bool(chain_config.get("market_enabled", false))
 	market.add_child(offers)
@@ -649,6 +654,63 @@ func _render_trade() -> void:
 	var explanation := _panel(content)
 	explanation.add_child(_label("想换哪只，就换哪只", 19))
 	explanation.add_child(_label("未来的交换将明确展示双方宠物，并由同一次链上结算完成交割。未成交时可按规则取回。所有权以确认后的链上记录为准。", 14, MUTED))
+
+## P1 gift (Astra §5/§9). Returns "" when gifting is allowed, else the reason shown to the player.
+func gift_block_reason(pet: Dictionary, connected: bool) -> String:
+	if pet.is_empty() or pet.get("chain", {}).get("status", "") != "registered":
+		return "只有已登记到链上的伙伴可以赠送。"
+	if not connected or not bool(chain_config.get("enabled", false)):
+		return "请先连接并验证钱包。"
+	if str(travel.trips.get(str(pet.get("id", "")), {}).get("state", "")) == "travelling":
+		return "伙伴正在旅行，回来后才能赠送。"
+	if pet.get("ownership") is Dictionary and not bool(pet["ownership"].get("can_interact", true)):
+		return "请先同步钱包，确认你仍拥有这位伙伴。"
+	if gift_pending:
+		return "赠送正在处理中……"
+	return ""
+
+func _render_gift(parent: VBoxContainer, connected: bool) -> void:
+	var pet: Dictionary = current_pet()
+	parent.add_child(_label("送给朋友", 18))
+	parent.add_child(_label("输入接收者的 Solana 钱包地址。确认前会显示网络、资产、接收者和费用；私人日记与其他伙伴不会转移。", 13, MUTED))
+	gift_input = LineEdit.new()
+	gift_input.placeholder_text = L10n.t("接收者钱包地址")
+	gift_input.text = gift_recipient
+	gift_input.text_changed.connect(func(value: String): gift_recipient = value)
+	parent.add_child(gift_input)
+	var reason: String = gift_block_reason(pet, connected)
+	var send := _button("作为礼物送出", _send_gift)
+	send.disabled = busy or not reason.is_empty()
+	parent.add_child(send)
+	if not reason.is_empty():
+		parent.add_child(_label(reason, 13, CORAL))
+
+func _send_gift() -> void:
+	var pet: Dictionary = current_pet()
+	var recipient: String = gift_recipient.strip_edges()
+	if not gift_block_reason(pet, true).is_empty() or recipient.is_empty():
+		_set_status("请输入接收者钱包地址。" if recipient.is_empty() else gift_block_reason(pet, true))
+		return
+	gift_pending = true
+	_set_status("请在钱包中核对赠送……")
+	_render()
+	var result: Dictionary = await _bridge_call("gift", {"pet_id": str(pet.get("id", "")), "recipient": recipient})
+	gift_pending = false
+	if not result.get("ok", false):
+		_set_status(API_SCRIPT.error_message(result))
+		_render()
+		return
+	var data: Dictionary = result.get("data", {})
+	if str(data.get("state", "")) == "gifted":
+		if data.get("pets") is Array:
+			pets = data["pets"]
+			pet_list_generation += 1
+			selected_pet = str(current_pet().get("id", ""))
+		gift_recipient = ""
+		_set_status("礼物已在链上确认。接收者同步钱包后即可继续照顾。")
+	else:
+		_set_status("赠送已提交，正在等待确认。稍后同步钱包核对。")
+	_render()
 
 func _render_market_quotes() -> void:
 	var heading := _panel(content)

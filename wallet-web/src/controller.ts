@@ -1,7 +1,7 @@
 import type { Wallet, WalletAccount } from '@wallet-standard/base';
 import type { StandardConnectFeature, StandardDisconnectFeature, StandardEventsFeature } from '@wallet-standard/features';
 import type { SolanaSignMessageFeature } from '@solana/wallet-standard-features';
-import { runPetTransaction, TransactionFlowError } from './transactions.ts';
+import { runGiftTransaction, runPetTransaction, TransactionFlowError } from './transactions.ts';
 import type { DeploymentConfig, TransactionReview, IntentKind } from './transactions.ts';
 
 export class BridgeError extends Error {
@@ -252,6 +252,29 @@ export class WalletController {
       // Diagnostic only: the error class and message (no keys, tokens or transaction bytes).
       console.warn('[PixelPets] transaction flow stopped:', (error as Error)?.name, String((error as Error)?.message ?? error).slice(0, 300));
       throw new BridgeError('TRANSACTION_NOT_COMPLETED', '交易尚未完成，请核对钱包提示与网络状态后重试。');
+    } finally { this.busy = false; }
+  }
+
+  /** P1 gift: owner-signed Core transfer; the service only observes ownership afterwards. */
+  async gift(petId: unknown, recipient: unknown): Promise<unknown> {
+    this.requirePetId(petId);
+    if (typeof recipient !== 'string' || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(recipient.trim())) throw new BridgeError('RECIPIENT_INVALID', 'Enter the recipient\'s Solana wallet address.');
+    const startingVersion = this.version;
+    await this.refresh();
+    if (startingVersion !== this.version) throw new BridgeError('ACCOUNT_CHANGED', 'Wallet or profile changed. Reconnect and check again.');
+    if (!this.config.enabled) throw new BridgeError('CHAIN_NOT_DEPLOYED', 'On-chain gifting is not open yet.');
+    if (!this.walletSessionToken || !this.wallet || !this.account) throw new BridgeError('WALLET_AUTH_REQUIRED', 'Connect and verify your wallet first.');
+    if (this.busy) throw new BridgeError('WALLET_BUSY', 'The wallet is still handling the previous request.');
+    this.busy = true;
+    const version = this.version;
+    try {
+      return await runGiftTransaction({ api: this.api, token: this.walletSessionToken, wallet: this.wallet, account: this.account, config: this.config, review: this.review,
+        assertCurrent: () => { if (this.version !== version) throw new BridgeError('ACCOUNT_CHANGED', 'Wallet or profile changed. Reconnect and check the gift.'); } }, String(petId), recipient.trim());
+    } catch (error) {
+      if (error instanceof TransactionFlowError) throw new BridgeError(error.code, error.message);
+      if (error instanceof BridgeError) throw error;
+      console.warn('[PixelPets] gift flow stopped:', (error as Error)?.name, String((error as Error)?.message ?? error).slice(0, 300));
+      throw new BridgeError('TRANSACTION_NOT_COMPLETED', 'The gift did not finish. Check the wallet prompt and network, then retry.');
     } finally { this.busy = false; }
   }
 
