@@ -18,12 +18,12 @@ function reviewTransaction(summary: TransactionReview): Promise<boolean> {
     const title = document.createElement('h2'); title.textContent = summary.title;
     const note = document.createElement('p'); note.textContent = summary.message;
     const details = document.createElement('dl');
-    for (const [label, value] of [['伙伴', summary.petName], ['网络', summary.network], ['接收钱包', summary.address], ['资产地址', summary.asset], ['预计总支出', `${summary.estimatedDebitSol} SOL`], ['其中网络费', `${summary.networkFeeSol} SOL`]]) {
+    for (const [label, value] of [['Companion', summary.petName], ['Network', summary.network], ['Wallet', summary.address], ['Asset', summary.asset], ['Estimated total debit', `${summary.estimatedDebitSol} SOL`], ['Network fee (included)', `${summary.networkFeeSol} SOL`]]) {
       const term = document.createElement('dt'); term.textContent = label;
       const valueNode = document.createElement('dd'); valueNode.textContent = value; details.append(term, valueNode);
     }
-    const accept = document.createElement('button'); accept.textContent = '核对无误，前往钱包确认';
-    const cancel = document.createElement('button'); cancel.textContent = '先不登记'; cancel.className = 'wallet-cancel';
+    const accept = document.createElement('button'); accept.textContent = 'Looks right — continue in wallet';
+    const cancel = document.createElement('button'); cancel.textContent = 'Not now'; cancel.className = 'wallet-cancel';
     const finish = (approved: boolean) => { dialog.close(); dialog.remove(); resolve(approved); };
     accept.addEventListener('click', () => finish(true)); cancel.addEventListener('click', () => finish(false));
     dialog.addEventListener('cancel', event => { event.preventDefault(); finish(false); });
@@ -32,23 +32,23 @@ function reviewTransaction(summary: TransactionReview): Promise<boolean> {
 }
 
 function chooseWallet(recover = false): Promise<Wallet> {
-  if (document.getElementById('pet-wallet-dialog')) return Promise.reject(new BridgeError('WALLET_BUSY', '钱包选择窗口已打开。'));
+  if (document.getElementById('pet-wallet-dialog')) return Promise.reject(new BridgeError('WALLET_BUSY', 'The wallet picker is already open.'));
   return new Promise((resolve, reject) => {
     const dialog = document.createElement('dialog');
     dialog.id = 'pet-wallet-dialog';
-    const title = document.createElement('h2'); title.id = 'pet-wallet-title'; title.textContent = recover ? '找回已有伙伴' : '带上你的伙伴';
+    const title = document.createElement('h2'); title.id = 'pet-wallet-title'; title.textContent = recover ? 'Recover your companions' : 'Connect a Solana wallet';
     const note = document.createElement('p'); note.id = 'pet-wallet-note'; note.textContent = recover
-      ? '用原来绑定的钱包签名，找回原档案。当前游客伙伴不会合并或删除；你可以在游戏里切回。登录签名不转移资产，也不收网络费。'
-      : '先验证钱包归属。登录签名不会转走资产，也不会收取网络费。';
+      ? 'Sign in with the wallet you linked before to open your original profile. This guest profile is not merged or deleted. Signing in moves no assets and costs no fee.'
+      : 'Verify you own this wallet. Signing in moves no assets and costs no fee. Use Solana Devnet.';
     dialog.setAttribute('aria-labelledby', title.id); dialog.setAttribute('aria-describedby', note.id);
     const list = document.createElement('div'); list.className = 'wallet-list';
-    const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = '先继续养宠物'; cancel.className = 'wallet-cancel';
+    const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = 'Keep playing without a wallet'; cancel.className = 'wallet-cancel';
     dialog.append(title, note, list, cancel); document.body.append(dialog);
-    const finish = (wallet?: Wallet) => { off(); dialog.close(); dialog.remove(); wallet ? resolve(wallet) : reject(new BridgeError('USER_CANCELLED', '已取消连接，养成进度不受影响。')); };
+    const finish = (wallet?: Wallet) => { off(); dialog.close(); dialog.remove(); wallet ? resolve(wallet) : reject(new BridgeError('USER_CANCELLED', 'Connection cancelled. Your progress is unaffected.')); };
     const render = () => {
       list.replaceChildren();
       const available = wallets.get().filter(isSolanaWallet);
-      if (!available.length) { const empty = document.createElement('p'); empty.textContent = '没有发现 Solana 钱包。请在钱包内置浏览器打开，或安装浏览器钱包扩展后刷新。'; list.append(empty); }
+      if (!available.length) { const empty = document.createElement('p'); empty.textContent = 'No Solana wallet found. Open this page in a wallet browser, or install a wallet extension (e.g. Phantom, Backpack, Solflare) and refresh.'; list.append(empty); }
       for (const wallet of available) {
         const button = document.createElement('button'); button.type = 'button'; button.textContent = wallet.name;
         button.addEventListener('click', () => finish(wallet)); list.append(button);
@@ -64,9 +64,9 @@ function chooseWallet(recover = false): Promise<Wallet> {
 async function request(serialized: string): Promise<void> {
   let id = 'invalid';
   try {
-    if (typeof serialized !== 'string' || serialized.length > 8192) throw new BridgeError('INVALID_REQUEST', '无效的钱包请求。');
+    if (typeof serialized !== 'string' || serialized.length > 8192) throw new BridgeError('INVALID_REQUEST', 'Invalid wallet request.');
     const message = JSON.parse(serialized);
-    if (!message || typeof message.id !== 'string' || message.id.length > 100) throw new BridgeError('INVALID_REQUEST', '无效的请求编号。');
+    if (!message || typeof message.id !== 'string' || message.id.length > 100) throw new BridgeError('INVALID_REQUEST', 'Invalid request id.');
     id = message.id;
     let data: unknown;
     switch (message.method) {
@@ -83,11 +83,11 @@ async function request(serialized: string): Promise<void> {
       case 'journey_receipt': data = await controller.journeyReceipt(message.payload?.pet_id, message.payload?.trip_id, message.payload?.result_hash); break;
       case 'travel': data = await controller.travel(message.payload?.op, message.payload?.pet_id, message.payload?.trip_id, message.payload?.body); break;
       case 'offers': data = await controller.offers(message.payload?.cursor); break;
-      default: throw new BridgeError('METHOD_UNSUPPORTED', '当前版本不支持此钱包操作。');
+      default: throw new BridgeError('METHOD_UNSUPPORTED', 'This wallet action is not supported in this version.');
     }
     notify({ id, ok: true, data });
   } catch (error) {
-    const reason = error instanceof BridgeError ? error : new BridgeError('WALLET_REQUEST_FAILED', '钱包请求未完成，请检查钱包提示后重试。');
+    const reason = error instanceof BridgeError ? error : new BridgeError('WALLET_REQUEST_FAILED', 'The wallet request did not finish. Check the wallet prompt and retry.');
     notify({ id, ok: false, error: { code: reason.code, message: reason.message } });
   }
 }

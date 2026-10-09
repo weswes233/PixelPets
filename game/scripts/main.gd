@@ -798,7 +798,10 @@ func _on_bridge(arguments: Array) -> void:
 		if data.get("state", "") == "confirmed" and not testing:
 			_sync_assets()
 		if data.has("message"):
-			_set_status(str(data["message"]))
+			var bridge_message: String = str(data["message"])
+			if L10n.lang == "en" and L10n._has_cjk(bridge_message):
+				bridge_message = "Confirmed on Solana." if str(data.get("state", "")) == "confirmed" else ("Submitted · checking confirmation" if str(data.get("state", "")) in ["submitted", "pending", "signed", "prepared"] else "Wallet request finished. Check the result above.")
+			_set_status(bridge_message)
 	if page == "trade":
 		_render()
 	if method == "connect" and wallet.get("authenticated", false) and not testing:

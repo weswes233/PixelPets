@@ -160,7 +160,7 @@ export async function runPetTransaction(context: FlowContext, petId: string, kin
   const debit = Math.max(fee.value!, before - after!);
   context.assertCurrent();
   const approved = await context.review({ title: kind === 'claim' ? 'Claim on Devnet · 给伙伴一份链上身份' : options.tripId ? 'Save journey receipt · 保存旅程凭证' : 'Save growth · 保存这段成长', petName: pet.nickname, network: rawNetwork(config.network), address: account.address, asset: intent.asset_address,
-    estimatedDebitSol: lamportsToSol(String(debit)), networkFeeSol: lamportsToSol(String(fee.value)), message: kind === 'claim' ? '预计支出包括网络费、账户租金和 Core 协议费用。资产将归当前钱包所有。' : '本次只登记成长记录，宠物所有权保持在当前钱包。' });
+    estimatedDebitSol: lamportsToSol(String(debit)), networkFeeSol: lamportsToSol(String(fee.value)), message: kind === 'claim' ? 'Includes the network fee, account rent and the Core protocol fee. The asset will be owned by this wallet. Devnet test asset, no cash value. · 预计支出包括网络费、账户租金和 Core 协议费用。' : options.tripId ? 'Records this trip result (hash) on your pet record. Ownership stays in this wallet. · 只登记旅程结果摘要，所有权不变。' : 'Records a growth checkpoint only. Ownership stays in this wallet. · 本次只登记成长记录。' });
   check(approved, 'USER_CANCELLED', '已取消，本次没有提交交易。');
   context.assertCurrent(); await client.assertNetwork();
   check(await rpc.getBlockHeight('confirmed') <= intent.last_valid_block_height && Date.parse(intent.expires_at) > Date.now(), 'INTENT_EXPIRED', '确认期间交易已过期，请重新准备。');
