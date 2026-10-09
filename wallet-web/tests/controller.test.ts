@@ -30,6 +30,7 @@ function fixture(options: { reject?: boolean; invalidMessage?: boolean; serverRe
       return { wallet_address: account.address, token: 'wallet-session-for-test' };
     }
     if (path === '/wallet/session') { assert.equal(token, 'wallet-session-for-test'); return { wallet_address: account.address }; }
+    if (/^\/(pets|trips)\//.test(path)) { assert.equal(token, 'wallet-session-for-test'); return { trip: { id: 'trip', state: 'travelling' }, body }; }
     throw new Error(`Unexpected API ${path}`);
   };
   const controller = new WalletController(api);
@@ -105,4 +106,19 @@ test('only wallets with Solana support and connect are eligible', () => {
   assert.equal(isSolanaWallet(wallet), true);
   assert.equal(isSolanaWallet({ ...wallet, chains: ['eip155:1'] }), false);
   assert.equal(isSolanaWallet({ ...wallet, features: {} }), false);
+});
+
+test('trips of registered pets go through the wallet session and are strictly validated', async () => {
+  const { controller, wallet, calls } = fixture();
+  const pet = '491351ab-46c7-4763-8cca-8d6f09204ee1', trip = '293eb6a9-de69-4899-8488-67c0aa6908ca';
+  await assert.rejects(controller.travel('start', pet, undefined, { event_id: 'a'.repeat(32), route_id: 'sunny_market', packing_id: 'snack_tin' }), (e: BridgeError) => e.code === 'WALLET_AUTH_REQUIRED');
+  await controller.connect(wallet);
+  await controller.travel('start', pet, undefined, { event_id: 'a'.repeat(32), route_id: 'sunny_market', packing_id: 'snack_tin' });
+  await controller.travel('reveal', pet, trip, { event_id: 'b'.repeat(32) });
+  await controller.travel('current', pet);
+  assert.deepEqual(calls.slice(-3), [`POST /pets/${pet}/trips`, `POST /trips/${trip}/reveal`, `GET /pets/${pet}/trips/current`]);
+  await assert.rejects(controller.travel('start', pet, undefined, { event_id: 'a'.repeat(32), route_id: 'x', packing_id: 'y', extra: 1 }), (e: BridgeError) => e.code === 'INVALID_REQUEST');
+  await assert.rejects(controller.travel('reveal', pet, '../../wallet', { event_id: 'b'.repeat(32) }), (e: BridgeError) => e.code === 'INVALID_REQUEST');
+  await assert.rejects(controller.travel('delete', pet), (e: BridgeError) => e.code === 'METHOD_UNSUPPORTED');
+  await assert.rejects(controller.journeyReceipt(pet, trip, 'not-a-hash'), (e: BridgeError) => e.code === 'INVALID_REQUEST');
 });

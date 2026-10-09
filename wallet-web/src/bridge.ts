@@ -80,6 +80,8 @@ async function request(serialized: string): Promise<void> {
       case 'sync_assets': data = await controller.syncAssets(); break;
       case 'care': data = await controller.care(message.payload?.pet_id, message.payload?.care); break;
       case 'rename': data = await controller.rename(message.payload?.pet_id, message.payload?.nickname); break;
+      case 'journey_receipt': data = await controller.journeyReceipt(message.payload?.pet_id, message.payload?.trip_id, message.payload?.result_hash); break;
+      case 'travel': data = await controller.travel(message.payload?.op, message.payload?.pet_id, message.payload?.trip_id, message.payload?.body); break;
       case 'offers': data = await controller.offers(message.payload?.cursor); break;
       default: throw new BridgeError('METHOD_UNSUPPORTED', '当前版本不支持此钱包操作。');
     }

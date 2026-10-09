@@ -120,7 +120,7 @@ export class Repository {
       const pet = JSON.parse(String(row.data)) as Pet;
       const now = this.clock(); const next = Number(row.last_care_at) + 12000;
       if (row.last_care_at !== null && now < next) {
-        const response = { pet, event: { id, message: '伙伴正在回味刚才的陪伴，稍等一小会儿。', applied: false, next_allowed_at: iso(next) } };
+        const response = { pet, event: { id, message: '伙伴正在回味刚才的陪伴，稍等一小会儿。', message_en: 'Your companion is still savouring that moment. Try again in a few seconds.', applied: false, next_allowed_at: iso(next) } };
         this.remember(userId, id, digest, response); return response;
       }
       const action = body.action as Action;
@@ -131,13 +131,15 @@ export class Repository {
       pet.mood = Math.min(100, pet.mood + ({ feed: 4, play: 8, rest: 3, explore: 6 }[action]));
       pet.updated_at = iso(now);
       let message = ({ feed: `${pet.nickname} 开心地吃光了点心，还悄悄蹭了蹭你。`, play: `${pet.nickname} 和你追逐了一小束光，玩得很开心。`, rest: `${pet.nickname} 在你身旁安心地打了个盹。`, explore: preference === 'sun' ? `${pet.nickname} 和你发现了一处暖洋洋的角落。` : `${pet.nickname} 和你收藏了一点安静的月光。` }[action]);
+      let messageEn = ({ feed: `${pet.nickname} finished the snack and gave you a little nuzzle.`, play: `${pet.nickname} chased a tiny beam of light with you.`, rest: `${pet.nickname} took a calm nap beside you.`, explore: preference === 'sun' ? `${pet.nickname} found a warm, sunny corner with you.` : `${pet.nickname} gathered a little quiet moonlight with you.` }[action]);
       if (pet.form === 'seed' && pet.bond >= 6) {
         pet.form = pet.traits.sun === pet.traits.moon ? pet.favorite : pet.traits.sun > pet.traits.moon ? 'sun' : 'moon';
         message += ` 你们的陪伴让它成长为${pet.form === 'sun' ? '阳光' : '月色'}形态！`;
+        messageEn += ` Your time together helped it grow into its ${pet.form === 'sun' ? 'sunny' : 'moonlit'} form!`;
       }
       this.db.prepare('UPDATE pets SET data=?,last_care_at=? WHERE id=? AND user_id=?').run(JSON.stringify(pet), now, petId, userId);
       this.entry(userId, petId, message, now);
-      const response = { pet, event: { id, message, applied: true, next_allowed_at: iso(now + 12000) } };
+      const response = { pet, event: { id, message, message_en: messageEn, applied: true, next_allowed_at: iso(now + 12000) } };
       this.remember(userId, id, digest, response); return response;
     });
   }

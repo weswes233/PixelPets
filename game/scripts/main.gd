@@ -1,6 +1,9 @@
 extends Control
 
 const API_SCRIPT = preload("res://scripts/api_client.gd")
+const TRAVEL_SCRIPT = preload("res://scripts/travel_view.gd")
+
+signal bridge_settled(request_id: String, result: Dictionary)
 const ART_SCRIPT = preload("res://scripts/pet_art.gd")
 const FONT = preload("res://assets/fonts/NotoSansSC-Medium.ttf")
 const INK := Color("344a48")
@@ -44,14 +47,21 @@ var testing: bool = false
 var account_generation: int = 0
 var bridge_requests: Dictionary = {}
 var pet_list_generation: int = 0
+var travel: TravelView
+var shell_texts: Array = []
 
 func _ready() -> void:
 	testing = "--client-test" in OS.get_cmdline_user_args()
+	if not testing:
+		var settings := ConfigFile.new()
+		if settings.load("user://settings.cfg") == OK and str(settings.get_value("ui", "lang", "en")) in ["en", "zh"]:
+			L10n.lang = str(settings.get_value("ui", "lang", "en"))
 	small_layout = size.x < 650
 	_build_shell()
 	api = API_SCRIPT.new()
 	api.test_mode = testing
 	add_child(api)
+	travel = TRAVEL_SCRIPT.new(self)
 	_setup_bridge()
 	resized.connect(_on_resized)
 	if testing:
@@ -96,16 +106,30 @@ func _build_shell() -> void:
 	shell.add_child(heading)
 	var title := _label("掌心伙伴", 27)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.set_meta("source", "掌心伙伴")
+	shell_texts.append(title)
 	heading.add_child(title)
-	var wordmark := _label("PIXEL PETS", 13, MUTED)
-	heading.add_child(wordmark)
-	shell.add_child(_label("小小的陪伴，慢慢成为独一无二。", 14, MUTED))
+	var language := Button.new()
+	language.text = "中文" if L10n.lang == "en" else "EN"
+	language.tooltip_text = "Language / 语言"
+	language.custom_minimum_size = Vector2(56, 36)
+	language.pressed.connect(func():
+		_set_language("zh" if L10n.lang == "en" else "en")
+		language.text = "中文" if L10n.lang == "en" else "EN")
+	heading.add_child(language)
+	var tagline := _label("小小的陪伴，慢慢成为独一无二。", 14, MUTED)
+	tagline.set_meta("source", "小小的陪伴，慢慢成为独一无二。")
+	shell_texts.append(tagline)
+	shell.add_child(tagline)
 	navigation = HBoxContainer.new()
 	navigation.add_theme_constant_override("separation", 7)
 	shell.add_child(navigation)
-	for item in [["companion", "陪伴"], ["collection", "卡册"], ["journal", "日记"], ["trade", "交换"]]:
+	for item in [["companion", "陪伴"], ["travel", "旅行"], ["collection", "卡册"], ["journal", "日记"], ["trade", "交换"]]:
 		var button := _button(str(item[1]), func(): _switch_page(str(item[0])))
 		button.set_meta("page", str(item[0]))
+		button.set_meta("source", str(item[1]))
+		button.clip_text = true
+		shell_texts.append(button)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		navigation.add_child(button)
 	var scroll := ScrollContainer.new()
@@ -133,7 +157,7 @@ func _box(color: Color, border: int = 1, border_color: Color = Color("ced3c4")) 
 
 func _label(value: String, font_size: int = 16, color: Color = INK) -> Label:
 	var label := Label.new()
-	label.text = value
+	label.text = L10n.t(value)
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -142,7 +166,7 @@ func _label(value: String, font_size: int = 16, color: Color = INK) -> Label:
 
 func _button(value: String, callback: Callable, primary: bool = false) -> Button:
 	var button := Button.new()
-	button.text = value
+	button.text = L10n.t(value)
 	button.custom_minimum_size.y = 45
 	button.pressed.connect(callback)
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -214,7 +238,7 @@ func _boot_failed(result: Dictionary) -> void:
 	_render()
 
 func _set_status(value: String) -> void:
-	status_text = value
+	status_text = L10n.t(value)
 	if is_instance_valid(status_label):
 		status_label.text = value
 
@@ -230,9 +254,22 @@ func _clear_content() -> void:
 		content.remove_child(child)
 		child.queue_free()
 
+func _set_language(next: String) -> void:
+	L10n.lang = next
+	if not testing:
+		var settings := ConfigFile.new()
+		settings.set_value("ui", "lang", next)
+		settings.save("user://settings.cfg")
+	for node in shell_texts:
+		if is_instance_valid(node):
+			node.text = L10n.t(str(node.get_meta("source")))
+	_render()
+
 func _switch_page(next: String) -> void:
 	page = next
 	_render()
+	if page in ["travel", "collection"] and online:
+		travel.refresh(true)
 	if page == "journal" and online:
 		_load_journal()
 	elif page == "trade":
@@ -254,7 +291,10 @@ func _render() -> void:
 		notice.add_child(retry)
 	match page:
 		"companion": _render_companion()
-		"collection": _render_collection()
+		"travel": travel.render(content)
+		"collection":
+			_render_collection()
+			travel.render_keepsakes(content)
 		"journal": _render_journal()
 		"trade": _render_trade()
 
@@ -272,7 +312,7 @@ func _render_companion() -> void:
 		var selector := OptionButton.new()
 		selector.custom_minimum_size.y = 44
 		for i in range(pets.size()):
-			selector.add_item(str(pets[i].get("nickname", "伙伴")))
+			selector.add_item(str(pets[i].get("nickname", L10n.t("伙伴"))))
 			if str(pets[i]["id"]) == selected_pet:
 				selector.select(i)
 		selector.item_selected.connect(func(index: int):
@@ -304,7 +344,7 @@ func _render_companion() -> void:
 	_meter(details, "精神", int(pet.get("energy", 0)), 100, Color("93b397"))
 	_meter(details, "心情", int(pet.get("mood", 0)), 100, Color("bdad76"))
 	var bond: int = int(pet.get("bond", 0))
-	details.add_child(_label("再积累 %d 点亲密，就会迎来新的模样。" % maxi(0, 6 - bond) if pet.get("form", "seed") == "seed" else "已经长成独特的模样。陪伴还会继续。", 14, MUTED))
+	details.add_child(_label(L10n.t("再积累 %d 点亲密，就会迎来新的模样。") % maxi(0, 6 - bond) if pet.get("form", "seed") == "seed" else "已经长成独特的模样。陪伴还会继续。", 14, MUTED))
 	var actions := GridContainer.new()
 	actions.columns = 2
 	actions.add_theme_constant_override("h_separation", 8)
@@ -321,11 +361,12 @@ func _render_companion() -> void:
 	if not access_message.is_empty():
 		details.add_child(_label(access_message, 14, CORAL))
 		details.add_child(_button("查看钱包与伙伴归属", func(): _switch_page("trade")))
+	details.add_child(_button(("Pack & Travel" if L10n.lang == "en" else "收拾行囊去旅行"), func(): _switch_page("travel"), true))
 	var rename := _button("给它取个新名字", _open_rename)
 	rename.disabled = busy or not online or not access_message.is_empty()
 	details.add_child(rename)
 	if _adopted_count() < 3:
-		content.add_child(_button("再认识一位伙伴  ·  %d / 3" % _adopted_count(), func(): _open_adoption()))
+		content.add_child(_button(L10n.t("再认识一位伙伴  ·  %d / 3") % _adopted_count(), func(): _open_adoption()))
 
 func _adopted_count() -> int:
 	var count: int = 0
@@ -478,7 +519,7 @@ func _finish_care(result: Dictionary, key: String, action: String) -> void:
 		pending_actions.erase(key)
 		_upsert_pet(result["data"]["pet"])
 		var event: Dictionary = result["data"].get("event", {})
-		_set_status(str(event.get("message", "这次陪伴已经记住了。")))
+		_set_status(str(event.get("message_en" if L10n.lang == "en" else "message", event.get("message", "这次陪伴已经记住了。"))))
 		_render()
 		if is_instance_valid(pet_art) and event.get("applied", true):
 			pet_art.celebrate(action)
@@ -491,13 +532,13 @@ func _finish_care(result: Dictionary, key: String, action: String) -> void:
 func _form_name(pet: Dictionary) -> String:
 	var info: Dictionary = SPECIES.get(str(pet.get("species_id", "moss")), SPECIES["moss"])
 	var form: String = str(pet.get("form", "seed"))
-	return "初遇 · " + str(info["name"]) if form == "seed" else str(info.get(form, info["name"]))
+	return L10n.t("初遇 · ") + L10n.t(str(info["name"])) if form == "seed" else L10n.t(str(info.get(form, info["name"])))
 
 func _chain_label(pet: Dictionary) -> String:
 	match str(pet.get("chain", {}).get("status", "unregistered")):
-		"registered": return "已登记链上"
-		"pending": return "等待链上确认"
-	return "小屋伙伴"
+		"registered": return L10n.t("已登记链上")
+		"pending": return L10n.t("等待链上确认")
+	return L10n.t("小屋伙伴")
 
 func _render_collection() -> void:
 	content.add_child(_label("每种模样，都有一段相处", 23))
@@ -585,7 +626,7 @@ func _render_trade() -> void:
 	var enabled: bool = bool(chain_config.get("enabled", false))
 	var market := _panel(content, Color("f0f1e5"))
 	market.add_child(_label("链上登记与交换", 20))
-	market.add_child(_label("网络：" + str(chain_config.get("network", "未配置")), 14, MUTED))
+	market.add_child(_label(L10n.t("网络：") + str(chain_config.get("network", "未配置")), 14, MUTED))
 	if not enabled:
 		market.add_child(_label("交易服务尚未开放", 18))
 		market.add_child(_label("先免费领养，记录你们的日常。链上身份与交换开放后，你可以选择把伙伴带进钱包。", 15, MUTED))
@@ -625,22 +666,22 @@ func _render_market_quotes() -> void:
 		art.custom_minimum_size = Vector2(100, 115)
 		card.add_child(art)
 		card.add_child(_label(_form_name(pet), 18))
-		card.add_child(_label("亲密 %s · 成长记录 %s" % [str(pet.get("bond", 0)), str(pet.get("checkpoint", "0"))], 13, MUTED))
+		card.add_child(_label(L10n.t("亲密 %s · 成长记录 %s") % [str(pet.get("bond", 0)), str(pet.get("checkpoint", "0"))], 13, MUTED))
 		if quote.get("kind", "") == "sale":
 			card.add_child(_label(str(quote.get("price_sol", "—")) + " SOL", 21))
-			card.add_child(_label("成交款内含市场费用 %s SOL；买方另付网络费用。" % str(quote.get("fee_sol", "—")), 13, MUTED))
+			card.add_child(_label(L10n.t("成交款内含市场费用 %s SOL；买方另付网络费用。") % str(quote.get("fee_sol", "—")), 13, MUTED))
 		else:
 			var wanted: Dictionary = quote.get("desired_pet", {})
-			card.add_child(_label("希望交换：" + _form_name(wanted), 16))
+			card.add_child(_label(L10n.t("希望交换：") + _form_name(wanted), 16))
 			var wanted_address: String = str(wanted.get("asset_address", ""))
-			card.add_child(_label("指定伙伴：" + wanted_address.left(8) + "…" + wanted_address.right(6), 13, MUTED))
+			card.add_child(_label(L10n.t("指定伙伴：") + wanted_address.left(8) + "…" + wanted_address.right(6), 13, MUTED))
 		var asset: String = str(pet.get("asset_address", ""))
-		card.add_child(_label("宠物：" + asset.left(8) + "…" + asset.right(6), 12, MUTED))
+		card.add_child(_label(L10n.t("宠物：") + asset.left(8) + "…" + asset.right(6), 12, MUTED))
 		if not bool(quote.get("can_settle", false)):
 			card.add_child(_label("这条报价目前不能成交。", 14, CORAL))
 	var rejected: Array = market_page.get("rejected", [])
 	if not rejected.is_empty():
-		heading.add_child(_label("本页有 %d 条已过期或未通过核对的报价，已隐藏。" % rejected.size(), 13, MUTED))
+		heading.add_child(_label(L10n.t("本页有 %d 条已过期或未通过核对的报价，已隐藏。") % rejected.size(), 13, MUTED))
 	if bool(market_page.get("has_more", false)):
 		content.add_child(_button("查看下一页", func(): _send_bridge("offers", {"cursor": str(market_page.get("next_cursor", ""))})))
 
@@ -666,6 +707,19 @@ func _send_bridge(method: String, payload: Dictionary = {}, context: Dictionary 
 	bridge.request(JSON.stringify({"id": request_id, "method": method, "payload": payload}))
 	return true
 
+## Awaitable bridge call used by small components (travel). Late answers from an old profile are dropped by generation.
+func _bridge_call(method: String, payload: Dictionary) -> Dictionary:
+	if bridge == null:
+		return {"ok": false, "error": {"code": "WALLET_UNSUPPORTED", "message": "请在网页版使用钱包。桌面版的浏览器配对尚未开放。"}}
+	var request_id: String = API_SCRIPT.event_id()
+	bridge_requests[request_id] = {"method": "await", "generation": account_generation}
+	bridge.request(JSON.stringify({"id": request_id, "method": method, "payload": payload}))
+	while true:
+		var settled: Array = await bridge_settled
+		if str(settled[0]) == request_id:
+			return settled[1]
+	return {}
+
 func _on_bridge(arguments: Array) -> void:
 	if arguments.is_empty():
 		return
@@ -681,6 +735,9 @@ func _on_bridge(arguments: Array) -> void:
 		return
 	var method: String = str(request.get("method", ""))
 	var context: Dictionary = request.get("context", {})
+	if method == "await":
+		bridge_settled.emit(request_id, result)
+		return
 	if method == "care":
 		_finish_care(result, str(context.get("key", "")), str(context.get("action", "")))
 		return
@@ -731,7 +788,7 @@ func _on_bridge(arguments: Array) -> void:
 			pet_list_generation += 1
 			selected_pet = str(current_pet().get("id", ""))
 			var unavailable: int = int(data.get("ownership", {}).get("unavailable", 0))
-			_set_status("伙伴已同步；还有 %d 份归属暂未能确认，请稍后重试。" % unavailable if unavailable > 0 else "伙伴归属已同步，可以继续你们的日常了。")
+			_set_status(L10n.t("伙伴已同步；还有 %d 份归属暂未能确认，请稍后重试。") % unavailable if unavailable > 0 else "伙伴归属已同步，可以继续你们的日常了。")
 			_render()
 		if data.get("state", "") == "confirmed" and not testing:
 			_sync_assets()
@@ -781,6 +838,7 @@ func _switch_profile() -> void:
 	journal.clear()
 	market_page.clear()
 	pending_actions.clear()
+	travel.reset()
 	selected_pet = ""
 	wallet.clear()
 	busy = false
@@ -872,7 +930,7 @@ func _finish_rename(result: Dictionary) -> void:
 	busy = false
 	if result.get("ok", false):
 		_upsert_pet(result["data"]["pet"])
-		_set_status("它记住了这个新名字：" + str(result["data"]["pet"].get("nickname", "")))
+		_set_status(L10n.t("它记住了这个新名字：") + str(result["data"]["pet"].get("nickname", "")))
 	else:
 		_set_status(API_SCRIPT.error_message(result))
 	_render()
@@ -904,7 +962,7 @@ func _start_adventure(choice: String) -> void:
 func _add_memory_fragment() -> void:
 	if not is_instance_valid(adventure_field):
 		return
-	var fragment := _button("记忆 %d / 3" % (adventure_count + 1), _collect_memory, true)
+	var fragment := _button(L10n.t("记忆 %d / 3") % (adventure_count + 1), _collect_memory, true)
 	fragment.name = "MemoryFragment"
 	fragment.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	fragment.anchor_left = [0.08, 0.55, 0.30][adventure_count]
