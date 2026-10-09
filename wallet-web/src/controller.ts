@@ -10,6 +10,7 @@ export class BridgeError extends Error {
 }
 export type ApiCall = (path: string, method: string, token?: string, body?: unknown) => Promise<any>;
 export type WalletState = { connected: boolean; authenticated: boolean; address: string; network: string; chain_enabled: boolean; market_enabled: boolean };
+export type RecoveryState = WalletState & { recovered: true; game_token: string; user_id: string; game_expires_at: string };
 export type ChainConfig = DeploymentConfig;
 
 export async function httpApi(path: string, method: string, token?: string, body?: unknown): Promise<any> {
@@ -62,11 +63,15 @@ export class WalletController {
   }
 
   async refresh(): Promise<WalletState> {
+    const version = this.version;
+    const token = this.walletSessionToken;
     const config = await this.api('/chain/config', 'GET');
+    if (version !== this.version) return this.state();
     this.config = { ...config, enabled: config.enabled === true, network: networkId(config.network) };
-    if (this.walletSessionToken) {
-      try { await this.api('/wallet/session', 'GET', this.walletSessionToken); }
+    if (token) {
+      try { await this.api('/wallet/session', 'GET', token); }
       catch (error) {
+        if (version !== this.version || token !== this.walletSessionToken) return this.state();
         if (error instanceof BridgeError && ['UNAUTHORIZED', 'SESSION_EXPIRED', 'AUTH_REQUIRED', 'INVALID_TOKEN'].includes(error.code)) this.clearConnection();
         else throw error;
       }
@@ -74,8 +79,12 @@ export class WalletController {
     return this.state();
   }
 
-  async connect(wallet: Wallet): Promise<WalletState> {
-    if (!this.guestToken) throw new BridgeError('SESSION_REQUIRED', '先领养或载入宠物档案，再连接钱包。');
+  async connect(wallet: Wallet): Promise<WalletState> { return this.authenticate(wallet, 'bind'); }
+
+  async recover(wallet: Wallet): Promise<RecoveryState> { return this.authenticate(wallet, 'recover') as Promise<RecoveryState>; }
+
+  private async authenticate(wallet: Wallet, mode: 'bind' | 'recover'): Promise<WalletState | RecoveryState> {
+    if (mode === 'bind' && !this.guestToken) throw new BridgeError('SESSION_REQUIRED', '先领养或载入宠物档案，再连接钱包。');
     if (this.busy) throw new BridgeError('WALLET_BUSY', '钱包正在处理上一次请求。');
     if (!isSolanaWallet(wallet)) throw new BridgeError('WALLET_UNSUPPORTED', '请选择支持 Solana 的钱包。');
     this.busy = true;
@@ -83,6 +92,7 @@ export class WalletController {
     const operationVersion = this.version;
     try {
       await this.refresh();
+      if (operationVersion !== this.version) throw new BridgeError('ACCOUNT_CHANGED', '钱包或档案已变化，请重新连接。');
       const connect = wallet.features['standard:connect'] as StandardConnectFeature['standard:connect'];
       const result = await connect.connect();
       const account = result.accounts.find(item => item.chains.includes(this.config.network as `${string}:${string}`));
@@ -97,7 +107,9 @@ export class WalletController {
       });
       const feature = wallet.features['solana:signMessage'] as SolanaSignMessageFeature['solana:signMessage'] | undefined;
       if (!feature || !account.features.includes('solana:signMessage')) throw new BridgeError('SIGN_MESSAGE_UNSUPPORTED', '此钱包不支持登录签名，请换用支持消息签名的钱包。');
-      const challenge = await this.api('/wallet/challenge', 'POST', this.guestToken, { address: account.address });
+      const prefix = mode === 'recover' ? '/wallet/recovery' : '/wallet';
+      const authToken = mode === 'recover' ? undefined : this.guestToken;
+      const challenge = await this.api(`${prefix}/challenge`, 'POST', authToken, { address: account.address });
       if (operationVersion !== this.version) throw new BridgeError('ACCOUNT_CHANGED', '钱包已切换，请重新连接。');
       const message = new TextEncoder().encode(challenge.message);
       const [proof] = await feature.signMessage({ account, message });
@@ -105,12 +117,22 @@ export class WalletController {
         throw new BridgeError('SIGNATURE_INVALID', '钱包返回的签名内容不匹配。');
       if (operationVersion !== this.version) throw new BridgeError('ACCOUNT_CHANGED', '钱包已切换，请重新连接。');
       const signature = btoa(String.fromCharCode(...proof.signature));
-      const verified = await this.api('/wallet/verify', 'POST', this.guestToken, { challenge_id: challenge.challenge_id, signature });
+      const verified = await this.api(`${prefix}/verify`, 'POST', authToken, { challenge_id: challenge.challenge_id, signature });
       if (operationVersion !== this.version) throw new BridgeError('ACCOUNT_CHANGED', '钱包已切换，请重新连接。');
       if (verified.wallet_address !== account.address || typeof verified.token !== 'string' || !verified.token)
         throw new BridgeError('SESSION_INVALID', '服务端未确认该钱包，请重新连接。');
+      if (mode === 'recover') {
+        if (typeof verified.game_token !== 'string' || !/^[a-zA-Z0-9_-]{43}$/.test(verified.game_token)
+          || typeof verified.user_id !== 'string' || !/^[a-f0-9-]{36}$/.test(verified.user_id)
+          || typeof verified.network !== 'string' || networkId(verified.network) !== this.config.network
+          || typeof verified.game_expires_at !== 'string' || !(Date.parse(verified.game_expires_at) > Date.now()))
+          throw new BridgeError('RECOVERY_INVALID', '恢复结果不完整，当前档案保持不变，请重新验证。');
+        this.guestToken = verified.game_token;
+      }
       this.walletSessionToken = verified.token;
       this.changed(this.state());
+      if (mode === 'recover') return { ...this.state(), recovered: true, game_token: verified.game_token,
+        user_id: verified.user_id, game_expires_at: verified.game_expires_at };
       return this.state();
     } catch (error) {
       this.clearConnection();
@@ -141,8 +163,53 @@ export class WalletController {
 
   async checkpoint(petId: unknown): Promise<unknown> { return this.petTransaction(petId, 'checkpoint'); }
 
+  async syncAssets(): Promise<unknown> { return this.walletOperation('/wallet/assets/sync', 'POST', {}); }
+
+  async care(petId: unknown, payload: unknown): Promise<unknown> {
+    this.requirePetId(petId);
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new BridgeError('INVALID_REQUEST', '照顾记录无效，请重试。');
+    const value = payload as Record<string, unknown>;
+    if (Object.keys(value).some(key => !['action', 'event_id', 'choice'].includes(key))
+      || !['feed', 'play', 'rest', 'explore'].includes(String(value.action))
+      || typeof value.event_id !== 'string' || !/^[a-f0-9]{32}$/.test(value.event_id)
+      || (value.choice !== undefined && !['sun', 'moon'].includes(String(value.choice))))
+      throw new BridgeError('INVALID_REQUEST', '照顾记录无效，请重试。');
+    return this.walletOperation(`/pets/${encodeURIComponent(String(petId))}/care`, 'POST', value);
+  }
+
+  async rename(petId: unknown, nickname: unknown): Promise<unknown> {
+    this.requirePetId(petId);
+    if (typeof nickname !== 'string' || !nickname.trim() || [...nickname.trim()].length > 16)
+      throw new BridgeError('INVALID_REQUEST', '请给伙伴取一个 1 到 16 字的名字。');
+    return this.walletOperation(`/pets/${encodeURIComponent(String(petId))}`, 'PATCH', { nickname: nickname.trim() });
+  }
+
+  private requirePetId(petId: unknown): void {
+    if (typeof petId !== 'string' || !/^[a-f0-9-]{36}$/.test(petId)) throw new BridgeError('PET_REQUIRED', '请选择要照顾的伙伴。');
+  }
+
+  private async walletOperation(path: string, method: string, body: unknown): Promise<unknown> {
+    if (!this.walletSessionToken || !this.account) throw new BridgeError('WALLET_AUTH_REQUIRED', '请先连接并验证钱包，再照顾链上伙伴。');
+    if (this.busy) throw new BridgeError('WALLET_BUSY', '钱包正在处理上一次请求。');
+    this.busy = true;
+    const version = this.version;
+    try {
+      // The wallet credential stays in this controller; daily care never submits a chain transaction.
+      const result = await this.api(path, method, this.walletSessionToken, body);
+      if (version !== this.version) throw new BridgeError('ACCOUNT_CHANGED', '钱包或档案已变化，请重新连接后刷新伙伴。');
+      return result;
+    } catch (error) {
+      if (version === this.version && error instanceof BridgeError && ['UNAUTHORIZED', 'SESSION_EXPIRED', 'AUTH_REQUIRED', 'INVALID_TOKEN'].includes(error.code)) {
+        this.clearConnection(); this.changed(this.state());
+      }
+      throw error;
+    } finally { this.busy = false; }
+  }
+
   private async petTransaction(petId: unknown, kind: IntentKind): Promise<unknown> {
+    const startingVersion = this.version;
     await this.refresh();
+    if (startingVersion !== this.version) throw new BridgeError('ACCOUNT_CHANGED', '钱包或档案已变化，请重新连接后核对伙伴。');
     if (!this.config.enabled) throw new BridgeError('CHAIN_NOT_DEPLOYED', '链上登记尚未开放，你的养成进度会继续保存。');
     if (!this.walletSessionToken) throw new BridgeError('WALLET_AUTH_REQUIRED', '请先连接并验证钱包。');
     if (typeof petId !== 'string' || !petId) throw new BridgeError('PET_REQUIRED', '请选择要登记的宠物。');
@@ -161,7 +228,9 @@ export class WalletController {
   }
 
   async offers(cursor?: unknown): Promise<unknown> {
+    const version = this.version;
     await this.refresh();
+    if (version !== this.version) throw new BridgeError('ACCOUNT_CHANGED', '钱包或档案已变化，请刷新报价。');
     if (!this.config.market_enabled) throw new BridgeError('CHAIN_NOT_DEPLOYED', '市场报价尚未开放。你可以先养成想要交换的伙伴。');
     if (cursor !== undefined && (typeof cursor !== 'string' || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(cursor))) throw new BridgeError('INVALID_CURSOR', '报价页码无效，请刷新。');
     if (!this.guestToken) throw new BridgeError('SESSION_REQUIRED', '请先载入伙伴档案。');

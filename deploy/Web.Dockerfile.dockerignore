@@ -1,0 +1,14 @@
+**
+!deploy/
+!deploy/Caddyfile
+!deploy/Web.Dockerfile
+!dist/
+!dist/web/
+!dist/web/*.html
+!dist/web/*.js
+!dist/web/*.css
+!dist/web/*.wasm
+!dist/web/*.pck
+!dist/web/*.png
+!dist/web/*.svg
+!dist/web/*.json

@@ -1,0 +1,76 @@
+name: pixelpets
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/API.Dockerfile
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:24-bookworm-slim}
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp:rw,noexec,nosuid,size=16m]
+    environment:
+      HOST: 0.0.0.0
+      PORT: "9782"
+      PUBLIC_ORIGIN: https://${DOMAIN:?Set DOMAIN in deploy/.env}
+      PIXELPETS_DB: /app/runtime/pets.sqlite
+      TRUSTED_PROXY_IPS: "172.29.11.2"
+      CHAIN_NETWORK: devnet
+      # Public care-only trial first. Chain deployment and issuer secrets have a separate acceptance gate.
+      CHAIN_ENABLED: "false"
+    volumes:
+      - pets-data:/app/runtime
+    networks:
+      edge:
+        ipv4_address: 172.29.11.3
+    # API has no published host port. Only the edge can reach it from the public Internet.
+    healthcheck:
+      test: [CMD, node, --input-type=module, -e, "const r=await fetch('http://127.0.0.1:9782/api/v1/live',{signal:AbortSignal.timeout(5000)});process.exit(r.ok?0:1)"]
+      interval: 30s
+      timeout: 8s
+      retries: 3
+      start_period: 15s
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Web.Dockerfile
+      args:
+        CADDY_IMAGE: ${CADDY_IMAGE:-caddy:2-alpine}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      DOMAIN: ${DOMAIN:?Set DOMAIN in deploy/.env}
+      ACME_EMAIL: ${ACME_EMAIL:?Set ACME_EMAIL in deploy/.env}
+      CHAIN_PUBLIC_RPC_ORIGIN: ${CHAIN_PUBLIC_RPC_ORIGIN:-https://api.devnet.solana.com}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      edge:
+        ipv4_address: 172.29.11.2
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+networks:
+  edge:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.29.11.0/28
+volumes:
+  pets-data:
+  caddy-data:
+  caddy-config:

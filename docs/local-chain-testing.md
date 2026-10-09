@@ -1,6 +1,6 @@
 # 本地真实链执行验证
 
-本文件记录 2026-10-08 在 Windows 上实际运行的验证，不代表已经部署到 Devnet 或主网。
+本文件记录截至 2026-10-09 在 Windows 上实际运行的验证，不代表已经部署到 Devnet 或主网。
 
 ## 已取得的合约证据
 
@@ -13,7 +13,7 @@
 - 只读市场模块已读取实际 finalized 挂单、Clock、托管宠物和原始费率，包含详情查询。
 - 失败首轮的证据保留在同目录带 `previous` 的文件中；它通过了功能检查，但未取得最终确认，不能计作完整通过。
 
-`chain/evidence/service-e2e.json` 另记录了完整跨层验证，结果同样为 `passed`：5 项检查、3 笔真实本地交易。它使用独立 genesis `3v2DJJuppmRzRhdkLbYLmQD4NwPBoNp9NE6KTRqVYqUp`，验证了实际 HTTP 领养和 SIWS 登录、签名提交中断后的 SQLite/HTTP 服务重启恢复、同一领取请求去重、实际照顾后的成长上链、再次重启后的身份与成长持久化。钱包由测试脚本中的一次性适配器签名；本结果不等同于已验证真实浏览器钱包扩展的弹窗和用户交互。
+`chain/evidence/service-e2e.json` 另记录了完整跨层验证，2026-10-09 重跑结果为 `passed`：5 项检查、3 笔真实本地交易。具体 genesis 与时间以该 JSON 为准。验证包括实际 HTTP 领养和 SIWS 登录、签名提交中断后的 SQLite/HTTP 服务重启恢复、同一领取请求去重、实际照顾后的成长上链、再次重启后的身份与成长持久化。钱包由测试脚本中的一次性适配器签名；本结果不等同于已验证真实浏览器钱包扩展的弹窗和用户交互。
 
 ## 重现方式
 
@@ -29,7 +29,15 @@
 .\tools\start-local-chain.ps1 -RunServiceTests -StopAfterTests
 ```
 
-两种测试独立运行。helper 每次创建新的 `runtime/validator-local-.../ledger`，保存日志、genesis 和 PID；不会删除旧 ledger，不会读取默认钱包，不会连接公共 RPC。它等待健康且 confirmed slot 至少为 2，避免 genesis 初始 slot 0 时程序账户已存在但还不能调用的启动竞态。端口被占用时退出；结束时只停止可执行路径和 ledger 参数与本次启动匹配的进程。
+实际转手、钱包找回及接收方养成测试使用另一条独立新链：
+
+```powershell
+.\tools\start-local-chain.ps1 -RunOwnershipTests -StopAfterTests
+```
+
+对应证据是 [ownership-service-e2e.json](../chain/evidence/ownership-service-e2e.json)：6 项跨层检查、3 笔真实交易。旧主人即使尚未手动同步，也不能继续照顾已转出的伙伴；接收方已有 3 只免费宠物时仍可接收资产。新的 WalletController 用真实签名找回接收方档案，新主人免费养成后重启服务，身份和进度仍保留。采用脚本 Wallet Standard 签名器，不能代替浏览器扩展和手机钱包的验收。
+
+三种测试独立运行。helper 每次创建新的 `runtime/validator-local-.../ledger`，保存日志、genesis 和 PID；不会删除旧 ledger，不会读取默认钱包，不会连接公共 RPC。它等待健康且 confirmed slot 至少为 2，避免 genesis 初始 slot 0 时程序账户已存在但还不能调用的启动竞态。端口被占用时退出；结束时只停止可执行路径和 ledger 参数与本次启动匹配的进程。
 
 运行需要已有的官方 Agave 2.3.13 Windows 工具、本项目 SBF、Core SBF 和 `runtime/chain-fixtures/local-admin.keypair.json`。该钱包只用于隔离本地链。运行时所有余额都没有经济价值。
 

@@ -41,6 +41,9 @@ var adventure_field: Control
 var small_layout: bool = false
 var boot_generation: int = 0
 var testing: bool = false
+var account_generation: int = 0
+var bridge_requests: Dictionary = {}
+var pet_list_generation: int = 0
 
 func _ready() -> void:
 	testing = "--client-test" in OS.get_cmdline_user_args()
@@ -165,17 +168,21 @@ func _boot() -> void:
 	_render()
 	if api.token.is_empty():
 		var guest: Dictionary = await api.request("/guests", HTTPClient.METHOD_POST)
+		if generation != boot_generation:
+			return
 		if not guest.get("ok", false):
 			_boot_failed(guest)
 			return
-		api.save_token(str(guest["data"]["token"]))
+		if not api.save_token(str(guest["data"]["token"])):
+			_boot_failed({"error": {"message": "无法保存本机通行证，请检查浏览器存储或磁盘空间后重试。"}})
+			return
 	var response: Dictionary = await api.request("/pets")
 	if generation != boot_generation:
 		return
 	if int(response.get("http_status", 0)) == 401:
-		api.save_token("")
+		var cleared: bool = api.save_token("")
 		busy = false
-		_set_status("这张访客通行证已过期，请点击重连。")
+		_set_status("这张通行证已过期。可在交换页用原钱包找回，或重连创建新档案。" if cleared else "通行证已过期，但本机存储暂时无法更新。请检查浏览器存储或磁盘空间后重试。")
 		online = false
 		_render()
 		return
@@ -191,10 +198,14 @@ func _boot() -> void:
 	_send_bridge("set_session", {"token": api.token})
 	_render()
 	var configured: Dictionary = await api.request("/chain/config")
+	if generation != boot_generation:
+		return
 	if configured.get("ok", false):
 		chain_config = configured["data"]
 	if page == "trade":
 		_render()
+	if wallet.get("authenticated", false):
+		_sync_assets()
 
 func _boot_failed(result: Dictionary) -> void:
 	online = false
@@ -299,16 +310,44 @@ func _render_companion() -> void:
 	actions.add_theme_constant_override("h_separation", 8)
 	actions.add_theme_constant_override("v_separation", 8)
 	details.add_child(actions)
+	var access_message: String = _pet_access_message(pet)
 	for item in [["feed", "喂一口"], ["play", "陪它玩"], ["rest", "歇一会"], ["explore", "小小出游"]]:
 		var action: String = str(item[0])
 		var button := _button(str(item[1]), _open_adventure if action == "explore" else _care.bind(action, ""), action == "explore")
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.disabled = busy or not online
+		button.disabled = busy or not online or not access_message.is_empty()
 		actions.add_child(button)
 	details.add_child(_label("每种照顾都有自己的节奏。没有死亡，也不用担心落下一天。", 13, MUTED))
-	details.add_child(_button("给它取个新名字", _open_rename))
-	if pets.size() < 3:
-		content.add_child(_button("再认识一位伙伴  ·  %d / 3" % pets.size(), func(): _open_adoption()))
+	if not access_message.is_empty():
+		details.add_child(_label(access_message, 14, CORAL))
+		details.add_child(_button("查看钱包与伙伴归属", func(): _switch_page("trade")))
+	var rename := _button("给它取个新名字", _open_rename)
+	rename.disabled = busy or not online or not access_message.is_empty()
+	details.add_child(rename)
+	if _adopted_count() < 3:
+		content.add_child(_button("再认识一位伙伴  ·  %d / 3" % _adopted_count(), func(): _open_adoption()))
+
+func _adopted_count() -> int:
+	var count: int = 0
+	for pet in pets:
+		if not pet.get("chain", {}).get("received", false):
+			count += 1
+	return count
+
+func _requires_wallet(pet: Dictionary) -> bool:
+	return pet.get("chain", {}).get("status", "unregistered") == "registered"
+
+func _pet_access_message(pet: Dictionary) -> String:
+	if not _requires_wallet(pet):
+		return ""
+	var ownership: Dictionary = pet.get("ownership", {})
+	if ownership.get("status", "unverified") == "escrow":
+		return "伙伴正在等待成交，取回并同步归属后才能继续照顾。"
+	if not wallet.get("authenticated", false):
+		return "连接并验证钱包后，可以继续免费照顾这位链上伙伴。"
+	if not ownership.get("can_interact", false):
+		return "请先在交换页同步钱包伙伴，确认它仍属于你。"
+	return ""
 
 func _meter(parent: Node, title: String, value: int, maximum: int, color: Color) -> void:
 	parent.add_child(_label("%s   %d%s" % [title, value, " / " + str(maximum) if title == "亲密" and value < maximum else ""], 14))
@@ -347,7 +386,7 @@ func _render_adoption(parent: Node = null) -> void:
 	name_input.custom_minimum_size.y = 45
 	intro.add_child(name_input)
 	var adopt := _button("带它回家", _adopt, true)
-	adopt.disabled = busy or not online or pets.size() >= 3
+	adopt.disabled = busy or not online or _adopted_count() >= 3
 	intro.add_child(adopt)
 	intro.add_child(_label("日光与月色会留下不同的成长印记。每种伙伴都有两条成长分支。", 13, MUTED))
 
@@ -371,10 +410,13 @@ func _adopt() -> void:
 		return
 	var key: String = "adopt:" + selected_species + ":" + nickname
 	var event: String = _event_for(key)
+	var generation: int = account_generation
 	busy = true
 	_close_modal()
 	_render()
 	var result: Dictionary = await api.request("/pets", HTTPClient.METHOD_POST, {"species_id": selected_species, "nickname": nickname, "event_id": event})
+	if generation != account_generation:
+		return
 	busy = false
 	if result.get("ok", false):
 		pending_actions.erase(key)
@@ -396,14 +438,23 @@ func _event_for(key: String) -> String:
 func _upsert_pet(pet: Dictionary) -> void:
 	for i in range(pets.size()):
 		if str(pets[i]["id"]) == str(pet["id"]):
+			if int(pet.get("revision", 0)) < int(pets[i].get("revision", 0)):
+				return
 			pets[i] = pet
+			pet_list_generation += 1
 			return
 	pets.append(pet)
+	pet_list_generation += 1
 
 func _care(action: String, choice: String = "") -> void:
 	if busy or not online or current_pet().is_empty():
 		return
 	var pet: Dictionary = current_pet()
+	var access_message: String = _pet_access_message(pet)
+	if not access_message.is_empty():
+		_set_status(access_message)
+		return
+	var generation: int = account_generation
 	var key: String = str(pet["id"]) + ":" + action + ":" + choice
 	var payload := {"action": action, "event_id": _event_for(key)}
 	if not choice.is_empty():
@@ -411,7 +462,17 @@ func _care(action: String, choice: String = "") -> void:
 	busy = true
 	_set_status("正在记下这次陪伴……")
 	_render()
+	if _requires_wallet(pet):
+		if not _send_bridge("care", {"pet_id": str(pet["id"]), "care": payload}, {"key": key, "action": action}):
+			busy = false
+			_render()
+		return
 	var result: Dictionary = await api.request("/pets/" + str(pet["id"]) + "/care", HTTPClient.METHOD_POST, payload)
+	if generation != account_generation:
+		return
+	_finish_care(result, key, action)
+
+func _finish_care(result: Dictionary, key: String, action: String) -> void:
 	busy = false
 	if result.get("ok", false):
 		pending_actions.erase(key)
@@ -468,7 +529,10 @@ func _render_collection() -> void:
 	tip.add_child(_label("日光与月色偏好影响成长。现阶段没有付费抽卡，也没有承诺收益；喜欢哪种，就陪它慢慢长成那种模样。", 14))
 
 func _load_journal() -> void:
+	var generation: int = account_generation
 	var result: Dictionary = await api.request("/journal")
+	if generation != account_generation:
+		return
 	if result.get("ok", false):
 		journal = result["data"].get("entries", [])
 	else:
@@ -502,8 +566,22 @@ func _render_trade() -> void:
 	if connected:
 		card.add_child(_label(address.left(8) + "…" + address.right(6), 14, MUTED))
 	else:
-		card.add_child(_label("连接时由钱包确认身份。日常照顾不需要钱包。", 14, MUTED))
-	card.add_child(_button("断开钱包" if connected else "连接钱包", func(): _send_bridge("disconnect" if connected else "connect"), true))
+		card.add_child(_label("小屋伙伴无需钱包。已登记的伙伴需验证钱包身份，日常照顾仍然免费。", 14, MUTED))
+	var connect_button := _button("断开钱包" if connected else "连接钱包", func(): _send_bridge("disconnect" if connected else "connect"), true)
+	connect_button.disabled = busy
+	card.add_child(connect_button)
+	var sync_button := _button("同步钱包里的伙伴", _sync_assets)
+	sync_button.disabled = busy or not wallet.get("authenticated", false)
+	card.add_child(sync_button)
+	card.add_child(_label("同步本游戏已登记伙伴的最新归属；接收的伙伴不占免费领养名额。", 13, MUTED))
+	var recover := _button("找回已有伙伴 / 切换档案", _open_recovery)
+	recover.disabled = busy
+	card.add_child(recover)
+	card.add_child(_label("换设备后，用原来绑定的钱包找回伙伴。当前游客档案会保留在这台设备，不会自动合并。", 13, MUTED))
+	if not api.previous_tokens.is_empty():
+		var previous := _button("切回上一份本机档案", _restore_previous_profile)
+		previous.disabled = busy
+		card.add_child(previous)
 	var enabled: bool = bool(chain_config.get("enabled", false))
 	var market := _panel(content, Color("f0f1e5"))
 	market.add_child(_label("链上登记与交换", 20))
@@ -515,7 +593,7 @@ func _render_trade() -> void:
 		market.add_child(_label("登记和交易需要逐笔确认钱包。请核对宠物、对象与费用。", 14, MUTED))
 	var registered: bool = current_pet().get("chain", {}).get("status", "unregistered") == "registered"
 	var register := _button("保存成长到链上" if registered else "登记当前伙伴", func(): _send_bridge("checkpoint" if registered else "register", {"pet_id": str(current_pet().get("id", ""))}), true)
-	register.disabled = not enabled or current_pet().is_empty() or not connected
+	register.disabled = busy or not enabled or current_pet().is_empty() or not connected or (registered and not _pet_access_message(current_pet()).is_empty())
 	market.add_child(register)
 	var offers := _button("查看真实报价", func(): _send_bridge("offers"))
 	offers.disabled = not bool(chain_config.get("market_enabled", false))
@@ -575,12 +653,18 @@ func _setup_bridge() -> void:
 	bridge_callback = JavaScriptBridge.create_callback(_on_bridge)
 	bridge.subscribe(bridge_callback)
 
-func _send_bridge(method: String, payload: Dictionary = {}) -> void:
+func _send_bridge(method: String, payload: Dictionary = {}, context: Dictionary = {}) -> bool:
 	if bridge == null:
 		if method not in ["set_session", "status"]:
 			_set_status("请在网页版使用钱包。桌面版的浏览器配对尚未开放。")
-		return
-	bridge.request(JSON.stringify({"id": API_SCRIPT.event_id(), "method": method, "payload": payload}))
+		return false
+	var request_id: String = API_SCRIPT.event_id()
+	bridge_requests[request_id] = {"method": method, "generation": account_generation, "context": context}
+	if method in ["connect", "recover", "register", "checkpoint"]:
+		busy = true
+		_render()
+	bridge.request(JSON.stringify({"id": request_id, "method": method, "payload": payload}))
+	return true
 
 func _on_bridge(arguments: Array) -> void:
 	if arguments.is_empty():
@@ -588,11 +672,49 @@ func _on_bridge(arguments: Array) -> void:
 	var result: Variant = JSON.parse_string(str(arguments[0]))
 	if not result is Dictionary:
 		return
+	var request_id: String = str(result.get("id", ""))
+	var request: Dictionary = bridge_requests.get(request_id, {})
+	bridge_requests.erase(request_id)
+	if request.is_empty() and request_id != "wallet_changed":
+		return
+	if not request.is_empty() and int(request.get("generation", -1)) != account_generation:
+		return
+	var method: String = str(request.get("method", ""))
+	var context: Dictionary = request.get("context", {})
+	if method == "care":
+		_finish_care(result, str(context.get("key", "")), str(context.get("action", "")))
+		return
+	if method == "rename":
+		_finish_rename(result)
+		return
+	if method in ["sync_assets", "connect", "recover", "register", "checkpoint"]:
+		busy = false
 	if not result.get("ok", false):
 		_set_status(API_SCRIPT.error_message(result))
+		_render()
 		return
 	var data: Variant = result.get("data", {})
 	if data is Dictionary:
+		if request_id == "wallet_changed":
+			wallet = {"connected": data.get("connected", false), "authenticated": data.get("authenticated", false), "address": data.get("address", ""), "network": data.get("network", "")}
+			_render()
+			return
+		if data.get("recovered", false):
+			if request.get("method", "") != "recover" or str(data.get("game_token", "")).length() != 43:
+				_set_status("档案恢复回应无效，原档案保持不变。")
+				return
+			if not api.save_token(str(data["game_token"]), true):
+				_send_bridge("disconnect")
+				if not api.token.is_empty():
+					_send_bridge("set_session", {"token": api.token})
+				_set_status("无法保存恢复后的档案，原档案保持不变。请检查浏览器存储或磁盘空间。")
+				return
+			_switch_profile()
+			wallet = data.duplicate()
+			wallet.erase("game_token")
+			if not testing:
+				_boot()
+			return
 		if data.has("connected") or data.has("address") or data.has("publicKey"):
 			wallet = data
 		if data.has("chain_enabled"):
@@ -604,19 +726,80 @@ func _on_bridge(arguments: Array) -> void:
 			_set_status("已核对当前页的链上报价。")
 		if data.get("pet") is Dictionary:
 			_upsert_pet(data["pet"])
+		if method == "sync_assets" and data.get("pets") is Array:
+			pets = data["pets"]
+			pet_list_generation += 1
+			selected_pet = str(current_pet().get("id", ""))
+			var unavailable: int = int(data.get("ownership", {}).get("unavailable", 0))
+			_set_status("伙伴已同步；还有 %d 份归属暂未能确认，请稍后重试。" % unavailable if unavailable > 0 else "伙伴归属已同步，可以继续你们的日常了。")
+			_render()
 		if data.get("state", "") == "confirmed" and not testing:
-			_refresh_chain_pet()
+			_sync_assets()
 		if data.has("message"):
 			_set_status(str(data["message"]))
 	if page == "trade":
 		_render()
+	if method == "connect" and wallet.get("authenticated", false) and not testing:
+		_sync_assets()
+
+func _sync_assets() -> void:
+	if busy or not wallet.get("authenticated", false):
+		return
+	busy = true
+	_set_status("正在核对钱包伙伴的最新归属……")
+	if not _send_bridge("sync_assets"):
+		busy = false
+	_render()
 
 func _refresh_chain_pet() -> void:
+	var generation: int = account_generation
+	var list_generation: int = pet_list_generation
 	var result: Dictionary = await api.request("/pets")
+	if generation != account_generation or list_generation != pet_list_generation:
+		return
 	if result.get("ok", false):
-		for pet in result.get("data", {}).get("pets", []):
-			_upsert_pet(pet)
+		pets = result.get("data", {}).get("pets", [])
+		pet_list_generation += 1
+		selected_pet = str(current_pet().get("id", ""))
 		_render()
+
+func _open_recovery() -> void:
+	if busy:
+		return
+	var body := _open_modal("找回已有伙伴")
+	body.add_child(_label("请使用之前绑定的钱包。验证后打开原来的宠物档案；当前游客伙伴不会被合并或删除，你可以在这台设备切回。", 15))
+	body.add_child(_label("首次使用钱包时，请先关闭这个窗口，选择「连接钱包」来绑定当前伙伴。", 13, MUTED))
+	body.add_child(_button("用原钱包找回", func():
+		_close_modal()
+		_send_bridge("recover"), true))
+
+func _switch_profile() -> void:
+	account_generation += 1
+	boot_generation += 1
+	pet_list_generation += 1
+	pets.clear()
+	journal.clear()
+	market_page.clear()
+	pending_actions.clear()
+	selected_pet = ""
+	wallet.clear()
+	busy = false
+	online = false
+	_close_modal()
+	_set_status("正在打开这份伙伴档案……")
+	_render()
+
+func _restore_previous_profile() -> void:
+	if busy or api.previous_tokens.is_empty():
+		return
+	if not api.restore_previous_session():
+		_set_status("无法保存档案切换，原档案保持不变。请检查浏览器存储或磁盘空间。")
+		return
+	_send_bridge("disconnect")
+	_switch_profile()
+	_send_bridge("set_session", {"token": api.token})
+	if not testing:
+		_boot()
 
 func _open_modal(title: String) -> VBoxContainer:
 	_close_modal()
@@ -653,6 +836,8 @@ func _close_modal() -> void:
 	modal = null
 
 func _open_rename() -> void:
+	if busy or not _pet_access_message(current_pet()).is_empty():
+		return
 	var body := _open_modal("一个只属于它的名字")
 	name_input = LineEdit.new()
 	name_input.text = str(current_pet().get("nickname", ""))
@@ -662,7 +847,7 @@ func _open_rename() -> void:
 	body.add_child(_button("记住这个名字", _rename, true))
 
 func _rename() -> void:
-	if busy:
+	if busy or not online or current_pet().is_empty() or not _pet_access_message(current_pet()).is_empty():
 		return
 	var nickname: String = name_input.text.strip_edges()
 	if nickname.is_empty():
@@ -670,18 +855,30 @@ func _rename() -> void:
 		return
 	busy = true
 	var pet_id: String = str(current_pet().get("id", ""))
+	var generation: int = account_generation
 	_close_modal()
+	_render()
+	if _requires_wallet(current_pet()):
+		if not _send_bridge("rename", {"pet_id": pet_id, "nickname": nickname}):
+			busy = false
+			_render()
+		return
 	var result: Dictionary = await api.request("/pets/" + pet_id, HTTPClient.METHOD_PATCH, {"nickname": nickname})
+	if generation != account_generation:
+		return
+	_finish_rename(result)
+
+func _finish_rename(result: Dictionary) -> void:
 	busy = false
 	if result.get("ok", false):
 		_upsert_pet(result["data"]["pet"])
-		_set_status("它记住了这个新名字：" + nickname)
+		_set_status("它记住了这个新名字：" + str(result["data"]["pet"].get("nickname", "")))
 	else:
 		_set_status(API_SCRIPT.error_message(result))
 	_render()
 
 func _open_adventure() -> void:
-	if busy or not online:
+	if busy or not online or current_pet().is_empty() or not _pet_access_message(current_pet()).is_empty():
 		return
 	var body := _open_modal("今天，想走哪条小路？")
 	body.add_child(_label("找到三片记忆碎片，一起带回家。走过的路线会影响伙伴的日光或月色偏好。", 15, MUTED))

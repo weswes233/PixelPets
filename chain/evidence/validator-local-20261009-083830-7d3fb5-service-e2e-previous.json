@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "runId": "ec203035-63df-4520-be8d-8617e00c7777",
+  "startedAt": "2026-10-09T08:35:07.214Z",
+  "rpc": "http://127.0.0.1:8899",
+  "genesis": "9zYdKXzYjkecQPtV8BKVGHWxvS7EBHbbbt4uYxTiY6xm",
+  "scenario": "checkpoint",
+  "program": "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR",
+  "actualSbf": true,
+  "actualHttp": true,
+  "simulatedBrowserWallet": true,
+  "localFundsHaveNoValue": true,
+  "checks": [
+    {
+      "name": "HTTP guest adoption and real SIWS authenticate a funded disposable wallet against the deployed local program",
+      "status": "passed"
+    },
+    {
+      "name": "Interrupted submission survives HTTP service and SQLite restart, reuses one wallet signature, and finalizes a real Core asset",
+      "status": "passed"
+    },
+    {
+      "name": "Repeated claim returns the same confirmed intent and asset",
+      "status": "passed"
+    }
+  ],
+  "transactions": [
+    {
+      "label": "configure_disposable_service_issuer_and_fund_test_player",
+      "signature": "nGaTmqEEkXqPtAi4fcjcD1c5HPwMvhcVsqET57Wv9adhQuT9ynpeSNA59KQAh47DscCcNe4AXnwaM1gLNjTnePu"
+    },
+    {
+      "label": "claim_after_restart",
+      "signature": "4NCA7e3cEgBwXdyBBco3wtAmWSKhuBpWzsseW4or3ZPfH7VLuDgnLnQzLavz8BAnSeCJBwnun9r8E8dqbmm7VMgT",
+      "slot": 37,
+      "computeUnitsConsumed": 48825,
+      "wireSha256": "4567122643515d2bc56933e6d6318094184e69d529a9b510ffbf530c82913197",
+      "asset": "7QN4GfidmdSVAFomkjynHWTiA4n5uiQtuFt3m2BJnCud"
+    }
+  ],
+  "reviewEstimates": [
+    {
+      "title": "给伙伴一份链上身份",
+      "petName": "链上验收苔苔",
+      "network": "localnet",
+      "address": "9uhjsnTDTLwyx7K7tY54wqhU9a9ZUzftLGFMemxxNNLB",
+      "asset": "7QN4GfidmdSVAFomkjynHWTiA4n5uiQtuFt3m2BJnCud",
+      "estimatedDebitSol": "0.00818964",
+      "networkFeeSol": "0.000015",
+      "message": "预计支出包括网络费、账户租金和 Core 协议费用。资产将归当前钱包所有。"
+    },
+    {
+      "title": "保存这段成长",
+      "petName": "链上验收苔苔",
+      "network": "localnet",
+      "address": "9uhjsnTDTLwyx7K7tY54wqhU9a9ZUzftLGFMemxxNNLB",
+      "asset": "7QN4GfidmdSVAFomkjynHWTiA4n5uiQtuFt3m2BJnCud",
+      "estimatedDebitSol": "0.00001",
+      "networkFeeSol": "0.00001",
+      "message": "本次只登记成长记录，宠物所有权保持在当前钱包。"
+    }
+  ],
+  "result": "failed",
+  "error": "AssertionError: GET /chain/intents/515fa34c-5400-49d7-ad03-78666ade69ef: {\"code\":\"OWNERSHIP_CLOCK_MISMATCH\",\"message\":\"无法确认资产快照的一致性。\"}",
+  "completedAt": "2026-10-09T08:36:39.484Z"
+}

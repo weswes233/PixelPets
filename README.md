@@ -10,6 +10,8 @@ Windows 双击项目里的 **开始游玩.cmd**。它会启动本机服务并打
 - 喂食、陪玩、休息、出游增加亲密度；照顾间隔由服务端计算。
 - 出游选日光或月色，收集三片记忆。累计 6 点亲密后，根据照顾偏好长成不同形态。
 - 在卡册查看收集目标，在日记查看已完成的互动。
+- 在交换页用原来绑定的钱包「找回已有伙伴」，并可切回上一份本机档案。恢复不会合并或删除游客伙伴。
+- 已登记宠物通过钱包验证身份后可以免费照顾；同步归属会接收转入的本游戏伙伴、移除已转出的伙伴，托管中的伙伴只读。
 - 链上服务没有配置或未通过部署检查时，养成仍可使用，交易入口保持关闭。
 
 Windows 客户端在 `dist/windows/PixelPets.exe`，同样需要养成服务运行。当前钱包操作在网页版进行。
@@ -24,7 +26,7 @@ Windows 客户端在 `dist/windows/PixelPets.exe`，同样需要养成服务运�
 
 1. 安装 Node.js 24（包含 npm），将 Godot 4.5.2 的命令行程序加入 PATH。
 2. 在仓库根目录运行 `npm.cmd ci --ignore-scripts`。如果只安装了 Node、没有 npm，可先运行 `python tools/bootstrap_npm.py`，再使用下方的 `tools/npm.ps1`。
-3. 从 Godot 官方安装 **4.5.2 对应的导出模板**，把 `web_nothreads_release.zip`、`web_nothreads_debug.zip` 和 `windows_release_x86_64.exe` 复制到本项目的 `runtime/` 目录。当前构建脚本使用这些自定义模板路径；旧工作区还支持从相邻 `Oddsprout/runtime/` 自动复制，但首次克隆不依赖该目录。
+3. 从 Godot 官方安装 **4.5.2 对应的导出模板**。Web 只需 `web_nothreads_release.zip`，Windows 只需 `windows_release_x86_64.exe`，不需要 debug 模板。构建脚本会查找项目 `runtime/` 和标准模板目录；也可用 `PIXELPETS_GODOT_PATH` 与 `PIXELPETS_GODOT_TEMPLATES` 明确指定。运行 `./tools/build.ps1 -Target All -ValidateOnly` 可只检查环境。
 4. 运行 `./tools/build.ps1 -Target All`，然后运行 `./tools/start.ps1 -OpenBrowser`。
 
 只检查 TypeScript 部分时，安装 JS 依赖后即可运行 `npm.cmd test` 与对应的 `npm.cmd run typecheck:...`，不需要导出模板或链上钱包。链上密钥需要在自己的开发环境生成，不应通过 Git 共享。
@@ -45,6 +47,8 @@ Windows 客户端在 `dist/windows/PixelPets.exe`，同样需要养成服务运�
 ./tools/npm.ps1 run typecheck:server
 ./tools/npm.ps1 run typecheck:sdk
 Godot_v4.5.2-stable_win64_console.exe --headless --path game --script tests/client_test.gd -- --client-test
+Godot_v4.5.2-stable_win64_console.exe --headless --path game --script tests/session_storage_test.gd -- --session-storage-test
+node tools/test-godot-http.mjs
 ```
 
 ## 链上操作如何衔接
@@ -61,10 +65,12 @@ Godot_v4.5.2-stable_win64_console.exe --headless --path game --script tests/clie
 
 ## 验证边界
 
-本轮完整审查见 [当前版本 Review、玩家卡点与下一阶段规划](docs/review-2026-10-08.md)，其中区分了本轮重跑结果、已有链上证据、语言和平台支持范围。当前优先补齐钱包恢复与资产归属同步，再推进公共测试网和游戏内交易。
+最新进展见 [钱包恢复、归属同步与发布基础验收](docs/release-progress-2026-10-09.md)。[2026-10-08 完整 Review](docs/review-2026-10-08.md) 保留为历史基线，不代表其中待办仍全部未完成。
 
-查看 [实现状态](docs/implementation_status.md) 和 [本次构建验收清单](docs/acceptance-2026-10-08.json) 获取当前证据。已通过 77 项 JS 测试、31 项 Godot 客户端检查和 11 项实际 HTTP 检查。真实本地链完成 16 项合约/市场检查（36 笔交易）及 5 项服务端到端检查（3 笔交易）。自动测试、SBF 编译、实际测试链执行、浏览器钱包扩展及主网部署是不同的验收项。
+查看 [实现状态](docs/implementation_status.md) 和 [2026-10-09 验收记录](docs/acceptance-2026-10-09.json) 获取验证结果。钱包恢复、接收与转出、受控重试、备份恢复、身份来源及本机档案保存均有回归检查；真实本地链另外验证 Core 转手后的归属、找回和新主人养成。自动测试、SBF 编译、实际测试链执行、浏览器钱包扩展及主网部署是不同的验收项。
 
 只读市场报价已接入交换页，按实际托管、成长记录、手续费快照和链上时间核验。未配置链服务时入口关闭；游戏内上架和成交流程尚未开放。复现真实链测试见 [本地链验收说明](docs/local-chain-testing.md)。
 
 最终发布目标仍包含实际资产发行与交易、公开 HTTPS 服务及主网验收。AI 表达和只读硬件展示可沿现有宠物档案扩展；当前不宣称硬件或冷钱包集成已经完成。
+
+公开免费试玩的单机 HTTPS、持久数据库与备份部署模板见 [部署说明](docs/deployment.md)。模板已准备；当前机器未运行 Docker/Caddy 容器，也尚未发布公共网址。

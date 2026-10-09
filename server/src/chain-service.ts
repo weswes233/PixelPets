@@ -83,7 +83,7 @@ export class ChainService {
   readonly configuration?: ChainConfiguration;
   readonly client?: PixelPetsClient;
   private readonly queue = new Map<string, Promise<unknown>>();
-  private readonly leases = new Map<string, { scope: string; token: string; lost: boolean }>();
+  private readonly leases = new Map<string, { scope: string; token: string; lost: boolean; ownershipFence?: () => void }>();
   constructor(repository: Repository, configuration?: ChainConfiguration) {
     this.repository = repository;
     if (configuration) {
@@ -135,7 +135,9 @@ export class ChainService {
   }
   private save(intent: Intent): void {
     const lease = this.lease(intent.pet_id);
-    intent.updated_at = iso(this.repository.clock());
+    const write = () => {
+      lease.ownershipFence?.();
+      intent.updated_at = iso(this.repository.clock());
     // The lease check and write are one SQLite statement: another process cannot
     // take over between a separate ownership read and this state update.
     const result = this.repository.db.prepare(`INSERT INTO chain_intents(id,scope,user_id,pet_id,data)
@@ -143,6 +145,9 @@ export class ChainService {
       ON CONFLICT(id) DO UPDATE SET data=excluded.data`)
       .run(intent.intent_id, intent.scope, intent.user_id, intent.pet_id, JSON.stringify(intent), lease.scope, lease.token, this.repository.clock());
     ensure(result.changes === 1, 'CHAIN_LEASE_LOST', '这笔请求已由新的恢复请求接管，请重新查询。');
+    };
+    // Keep the ownership fence and write atomic across server processes as well.
+    if (this.repository.db.isTransaction) write(); else this.repository.transaction(write);
   }
   private lease(petId: string) {
     const lease = this.leases.get(petId);
@@ -163,7 +168,7 @@ export class ChainService {
       attempts: attempts.map(a => ({ attempt: a.attempt, state: a.state, signature: a.signature ?? null,
         asset_address: a.asset_address, expires_at: a.expires_at, finalized_slot: a.finalized_slot ?? null })) };
   }
-  private async exclusive<T>(petId: string, operation: () => Promise<T>): Promise<T> {
+  private async exclusive<T>(petId: string, operation: () => Promise<T>, ownershipFence?: () => void): Promise<T> {
     const key = `${this.chainScope()}:${petId}`;
     const previous = this.queue.get(key) ?? Promise.resolve();
     const next = previous.catch(() => {}).then(async () => {
@@ -173,7 +178,7 @@ export class ChainService {
         const result = this.repository.db.prepare('INSERT OR IGNORE INTO chain_leases VALUES (?,?,?)').run(key, token, now + 120000);
         ensure(result.changes === 1, 'CHAIN_BUSY', '上一笔请求仍在核对，请稍后恢复。');
       });
-      const lease = { scope: key, token, lost: false };
+      const lease = { scope: key, token, lost: false, ownershipFence };
       this.leases.set(petId, lease);
       // A complete verification performs several bounded RPC reads. Renew only our
       // own token so a legitimate slow operation cannot outlive its SQLite lease.
@@ -234,7 +239,7 @@ export class ChainService {
         event_hash: hash(JSON.stringify(['pixel-pets:checkpoint:v1', claimId, pet.revision, pet.form, pet.bond, pet.care_count, pet.traits.sun, pet.traits.moon])) },
       attempts: [], created_at: now, updated_at: now };
   }
-  async prepare(auth: WalletAuth, petId: string, kind: Kind, input: unknown) {
+  async prepare(auth: WalletAuth, petId: string, kind: Kind, input: unknown, ownershipFence?: () => void) {
     const wallet = this.wallet(auth); objectBody(input, []); this.config(); this.pet(auth.user_id, petId);
     return this.exclusive(petId, async () => {
       await this.ready();
@@ -279,7 +284,7 @@ export class ChainService {
           program_id: intent.program_id, intent_id: intent.intent_id, asset_address: intent.attempts.at(-1)!.asset_address });
       });
       return this.response(intent);
-    });
+    }, ownershipFence);
   }
   private async build(intent: Intent, pet: Pet): Promise<void> {
     const config = this.config(); const client = this.client!;
@@ -317,6 +322,7 @@ export class ChainService {
   }
   private updatePet(intent: Intent, changes: Partial<Pet['chain']>): void {
     const lease = this.lease(intent.pet_id);
+    lease.ownershipFence?.();
     // Read again after RPC so care/rename requests completed during a network call are never overwritten.
     const pet = this.pet(intent.user_id, intent.pet_id);
     pet.chain = { ...pet.chain, ...changes }; pet.revision += 1; pet.updated_at = iso(this.repository.clock());
@@ -325,14 +331,19 @@ export class ChainService {
       .run(JSON.stringify(pet), pet.id, intent.user_id, lease.scope, lease.token, this.repository.clock());
     ensure(result.changes === 1, 'CHAIN_LEASE_LOST', '这笔请求已由新的恢复请求接管，请重新查询。');
   }
-  async get(auth: WalletAuth, id: string) {
+  intentPetId(auth: WalletAuth, id: string): string {
+    const wallet = this.wallet(auth); this.config(); const intent = this.read(auth.user_id, id);
+    ensure(intent.wallet_address === wallet, 'WALLET_MISMATCH', '请使用创建此请求的钱包。', 403);
+    return intent.pet_id;
+  }
+  async get(auth: WalletAuth, id: string, ownershipFence?: () => void) {
     const wallet = this.wallet(auth); this.config(); const initial = this.read(auth.user_id, id);
     ensure(initial.wallet_address === wallet, 'WALLET_MISMATCH', '请使用创建此请求的钱包。', 403);
     return this.exclusive(initial.pet_id, async () => {
       const intent = this.read(auth.user_id, id); await this.reconcile(intent); return this.response(intent);
-    });
+    }, ownershipFence);
   }
-  async confirm(auth: WalletAuth, id: string, input: unknown) {
+  async confirm(auth: WalletAuth, id: string, input: unknown, ownershipFence?: () => void) {
     const wallet = this.wallet(auth); this.config(); const body = objectBody(input, ['signature', 'transaction_base64']);
     ensure(typeof body.signature === 'string' && /^[1-9A-HJ-NP-Za-km-z]{64,88}$/.test(body.signature), 'INVALID_SIGNATURE', '交易签名格式无效。', 400);
     ensure(typeof body.transaction_base64 === 'string' && body.transaction_base64.length <= 8192
@@ -359,7 +370,7 @@ export class ChainService {
       if (intent.state !== 'confirmed') intent.state = 'pending';
       this.save(intent); // Preserve proof before a timeout or restart; reads can now reconcile it.
       await this.reconcile(intent); return this.response(intent);
-    });
+    }, ownershipFence);
   }
   private async reconcile(intent: Intent): Promise<void> {
     if (intent.state === 'confirmed') return;

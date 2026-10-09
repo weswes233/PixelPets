@@ -1,0 +1,41 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	root * /srv
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy same-origin
+		Cross-Origin-Opener-Policy same-origin-allow-popups
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' {$CHAIN_PUBLIC_RPC_ORIGIN}; worker-src 'self' blob:; frame-ancestors 'self'; object-src 'none'; base-uri 'self'"
+		-Server
+	}
+	# Caddy is the public edge. Do not put a CDN/proxy in front without separately designing its trust boundary.
+	handle /api/* {
+		reverse_proxy api:9782 {
+			header_up X-PixelPets-Client-IP {http.request.remote.host}
+			header_up -Forwarded
+			transport http {
+				dial_timeout 3s
+				response_header_timeout 20s
+			}
+		}
+	}
+	handle {
+		@hidden path_regexp hidden (^|/)\.
+		respond @hidden 404
+		@wasm path *.wasm
+		header @wasm Content-Type application/wasm
+		@pack path *.pck
+		header @pack Content-Type application/octet-stream
+		# The current export uses stable filenames. Revalidate them; do not cache old JS/PCK as immutable.
+		header Cache-Control "public, max-age=0, must-revalidate"
+		encode zstd gzip {
+			match {
+				header Content-Type text/* application/javascript* application/wasm* application/octet-stream* application/json* image/svg+xml*
+			}
+		}
+		file_server
+	}
+}

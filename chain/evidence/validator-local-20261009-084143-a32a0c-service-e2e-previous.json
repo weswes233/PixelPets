@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "runId": "aec42d05-e2e1-4d7d-9bf1-28e3356ffd85",
+  "startedAt": "2026-10-09T08:32:50.372Z",
+  "rpc": "http://127.0.0.1:8899",
+  "genesis": "Gyk67M56eGCxmFipjYCK1ohRNHJr9JgigEWtRVJ5neLA",
+  "scenario": "ownership",
+  "program": "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR",
+  "actualSbf": true,
+  "actualHttp": true,
+  "simulatedBrowserWallet": true,
+  "localFundsHaveNoValue": true,
+  "checks": [
+    {
+      "name": "HTTP guest adoption and real SIWS authenticate a funded disposable wallet against the deployed local program",
+      "status": "passed"
+    },
+    {
+      "name": "Interrupted submission survives HTTP service and SQLite restart, reuses one wallet signature, and finalizes a real Core asset",
+      "status": "passed"
+    },
+    {
+      "name": "Repeated claim returns the same confirmed intent and asset",
+      "status": "passed"
+    },
+    {
+      "name": "Real owner-signed Core transfer is finalized; the old owner cannot care even before requesting synchronization",
+      "status": "passed"
+    },
+    {
+      "name": "A fresh wallet controller recovers the receiving profile and synchronizes the real asset beside three free pets without copying the old relationship",
+      "status": "passed"
+    },
+    {
+      "name": "New owner daily care requires no transaction signature and survives a real HTTP/SQLite restart with recovered credentials",
+      "status": "passed"
+    }
+  ],
+  "transactions": [
+    {
+      "label": "configure_disposable_service_issuer_and_fund_test_player",
+      "signature": "9HZAxfZvDfMv6gZRCc9nVq4rkK1A2avtnuiUb1244Gbyun5ssG6GbRm1MybfT9fG12gaboHR2abj1crC8NBn3Mr"
+    },
+    {
+      "label": "claim_after_restart",
+      "signature": "4ash2hYdHejWbudLehrJzTvwE9PE1bZxmTopixfTEiADrVG5G1TZ2fumzGWVbtSt8HJz3XnNxP51wNcgCtN8ktBB",
+      "slot": 37,
+      "computeUnitsConsumed": 51825,
+      "wireSha256": "e941b6042bafa290f3d863d6433588a4a6d6798a8e81563d237f0124c0fa578f",
+      "asset": "6iZN9MUxzWQVcSNXrRbsmwWXWiCRJmEHeM4y2bHHzyiC"
+    },
+    {
+      "label": "owner_signed_core_gift_to_another_bound_wallet",
+      "signature": "2wrqwS3eccYn5566GnrTNjwmEseEMYw9zmX3ctTQJuWxGXw1j8QfGD5Q97JtPMwFy6A4PPZY2MNGEQ6ZaCx7mxiZ"
+    }
+  ],
+  "reviewEstimates": [
+    {
+      "title": "给伙伴一份链上身份",
+      "petName": "链上验收苔苔",
+      "network": "localnet",
+      "address": "q3u15bQnb3RWV4m48HKjNFG9QmGPTDu9PjyMwaHa1q8",
+      "asset": "6iZN9MUxzWQVcSNXrRbsmwWXWiCRJmEHeM4y2bHHzyiC",
+      "estimatedDebitSol": "0.00818964",
+      "networkFeeSol": "0.000015",
+      "message": "预计支出包括网络费、账户租金和 Core 协议费用。资产将归当前钱包所有。"
+    }
+  ],
+  "result": "passed",
+  "completedAt": "2026-10-09T08:34:29.017Z"
+}

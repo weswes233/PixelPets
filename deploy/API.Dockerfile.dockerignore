@@ -1,0 +1,16 @@
+**
+!package.json
+!package-lock.json
+!server/
+!server/src/
+!server/src/**
+!chain-client/
+!chain-client/src/
+!chain-client/src/**
+!chain/
+!chain/idl/
+!chain/idl/**
+!tools/
+!tools/backup.ts
+!deploy/
+!deploy/API.Dockerfile

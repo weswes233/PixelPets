@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { BN, BorshAccountsCoder } from '@coral-xyz/anchor';
-import { Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
+import { Keypair, PublicKey, SystemProgram, Transaction, SYSVAR_CLOCK_PUBKEY } from '@solana/web3.js';
 import type { AccountInfo } from '@solana/web3.js';
 import { publicKey as umiKey } from '@metaplex-foundation/umi';
 import { Key, PluginType, getPluginHeaderV1AccountDataSerializer } from '@metaplex-foundation/mpl-core';
@@ -19,6 +19,7 @@ import { CORE_PROGRAM_ID, PROGRAM_ID, UPGRADEABLE_LOADER_ID, PIXEL_PETS_IDL, Pix
 import { Repository, start, ChainService, chainServiceFromEnvironment } from '../src/public.ts';
 import type { ChainConfiguration, ChainRpc } from '../src/public.ts';
 import type { Pet } from '../src/domain.ts';
+import { ApiError } from '../src/domain.ts';
 import { createChainRpcConnection } from '../src/chain-service.ts';
 
 // Real SQLite persistence, Anchor account bytes, Core plugin records and Ed25519 signatures.
@@ -64,7 +65,7 @@ async function fixture() {
   const repo = new Repository(path, repositoryOptions);
   const issuer = Keypair.generate(); const admin = Keypair.generate(); const collection = Keypair.generate().publicKey;
   const accounts = new Map<string, AccountInfo<Buffer>>();
-  const state = { genesis: Keypair.generate().publicKey.toBase58(), height: 90, lastValidBlockHeight: 100,
+  const state = { genesis: Keypair.generate().publicKey.toBase58(), slot: 42, height: 90, lastValidBlockHeight: 100,
     blockhash: Keypair.generate().publicKey.toBase58(), status: null as unknown, transaction: null as unknown,
     simulations: 0, simulationError: null as unknown, lookupError: false };
   const put = async (name: string, address: PublicKey, value: object) => accounts.set(address.toBase58(), account(await coder.encode(name, value)));
@@ -85,6 +86,11 @@ async function fixture() {
   const rpc = {
     async getGenesisHash() { return state.genesis; },
     async getAccountInfo(address: PublicKey) { return accounts.get(address.toBase58()) ?? null; },
+    async getMultipleAccountsInfoAndContext(keys: PublicKey[]) {
+      const clock = Buffer.alloc(40); clock.writeBigUInt64LE(BigInt(state.slot));
+      accounts.set(SYSVAR_CLOCK_PUBKEY.toBase58(), account(clock, new PublicKey('Sysvar1111111111111111111111111111111111111')));
+      return { context: { slot: state.slot }, value: keys.map(key => accounts.get(key.toBase58()) ?? null) };
+    },
     async getLatestBlockhash() { return { blockhash: state.blockhash, lastValidBlockHeight: state.lastValidBlockHeight }; },
     async getFeeForMessage() { return { context: { slot: 9 }, value: 15000 }; },
     async simulateTransaction() { state.simulations++; return { context: { slot: 9 }, value: { err: state.simulationError, logs: ['test RPC simulation'], unitsConsumed: 5000 } }; },
@@ -418,4 +424,55 @@ test('a failed on-chain attempt can retry with one canonical receipt identity an
     assert.equal(retry.intent_id, first.intent_id); assert.equal(retry.claim_id, first.claim_id);
     assert.notEqual(retry.asset_address, first.asset_address); assert.equal(retry.attempt, 2);
   } finally { await f.close(); }
+});
+
+test('HTTP claim confirmation and checkpoint routes retain ownership fencing after an external transfer', async t => {
+  const f = await fixture(); t.after(f.close);
+  const a = f.player(); const b = f.player();
+  const first = await f.request('POST', `/pets/${a.pet.id}/claim-intent`, {}, a.session.token);
+  assert.equal(first.status, 200); const claim = first.body.data as Prepared; const proof = signed(claim, a.wallet);
+  await f.land(claim, proof, a.wallet);
+  const confirmed = await f.request('POST', `/chain/intents/${claim.intent_id}/confirm`, submitted(proof), a.session.token);
+  assert.equal(confirmed.status, 200); assert.equal(confirmed.body.data.pet.chain.status, 'registered');
+  const care = await f.request('POST', `/pets/${a.pet.id}/care`, { action: 'play', event_id: 'http-chain-care' }, a.session.token);
+  assert.equal(care.status, 200); assert.equal(care.body.data.pet.ownership.status, 'owned');
+  const checkpoint = await f.request('POST', `/pets/${a.pet.id}/checkpoint-intent`, {}, a.session.token);
+  assert.equal(checkpoint.status, 200); const checkpointProof = signed(checkpoint.body.data as Prepared, a.wallet);
+  f.accounts.set(claim.asset_address, account(coreAssetData(b.wallet.publicKey, f.collection), CORE_PROGRAM_ID)); f.state.slot++;
+  const before = f.repo.db.prepare('SELECT data FROM chain_intents WHERE id=?').get(checkpoint.body.data.intent_id)!.data;
+  const denied = await f.request('POST', `/chain/intents/${checkpoint.body.data.intent_id}/confirm`, submitted(checkpointProof), a.session.token);
+  assert.equal(denied.status, 403); assert.equal(denied.body.error.code, 'PET_OWNER_CHANGED');
+  assert.equal(f.repo.db.prepare('SELECT data FROM chain_intents WHERE id=?').get(checkpoint.body.data.intent_id)!.data, before);
+  assert.equal((await f.request('GET', `/chain/intents/${claim.intent_id}`, undefined, a.session.token)).status, 404);
+  assert.equal((await f.request('GET', `/chain/intents/${checkpoint.body.data.intent_id}`, undefined, a.session.token)).status, 404);
+  const received = (await f.request('GET', '/pets', undefined, b.guest.token)).body.data.pets.find((pet: Pet) => pet.id === a.pet.id);
+  assert.equal(received.bond, 0); assert.equal(received.chain.checkpoint, '0'); assert.equal(received.ownership.status, 'owned');
+});
+
+test('ownership fence prevents preparation writes after an awaited simulation loses its lease', async t => {
+  const f = await fixture(); t.after(f.close); const p = f.player(); let valid = true;
+  const simulate = f.configuration.rpc.simulateTransaction.bind(f.configuration.rpc);
+  f.configuration.rpc.simulateTransaction = (async (...args: any[]) => {
+    const value = await (simulate as any)(...args); valid = false; return value;
+  }) as typeof f.configuration.rpc.simulateTransaction;
+  const fence = () => { if (!valid) throw new ApiError(409, 'OWNERSHIP_LEASE_LOST', 'test ownership lease expired'); };
+  await assert.rejects(f.service.prepare(p.auth, p.pet.id, 'claim', {}, fence), code('OWNERSHIP_LEASE_LOST'));
+  assert.equal(f.repo.db.prepare('SELECT COUNT(*) AS total FROM chain_intents').get()!.total, 0);
+  assert.equal(f.repo.listPets(p.guest.user_id).pets[0].chain.status, 'unregistered');
+});
+
+test('ownership fence preserves proof but prevents final pet writes after an awaited confirmation loses its lease', async t => {
+  const f = await fixture(); t.after(f.close); const p = f.player(); const claim = await f.prepare(p); const proof = signed(claim, p.wallet);
+  await f.land(claim, proof, p.wallet); let valid = true;
+  const getTransaction = f.configuration.rpc.getTransaction.bind(f.configuration.rpc);
+  f.configuration.rpc.getTransaction = (async (...args: any[]) => {
+    const value = await (getTransaction as any)(...args); valid = false; return value;
+  }) as typeof f.configuration.rpc.getTransaction;
+  const fence = () => { if (!valid) throw new ApiError(409, 'OWNERSHIP_LEASE_LOST', 'test ownership lease expired'); };
+  await assert.rejects(f.service.confirm(p.auth, claim.intent_id, submitted(proof), fence), code('OWNERSHIP_LEASE_LOST'));
+  const persisted = JSON.parse(String(f.repo.db.prepare('SELECT data FROM chain_intents WHERE id=?').get(claim.intent_id)!.data));
+  assert.equal(persisted.state, 'pending'); assert.equal(persisted.attempts[0].signature, proof.signature);
+  assert.equal(f.repo.listPets(p.guest.user_id).pets[0].chain.status, 'pending');
+  f.configuration.rpc.getTransaction = getTransaction;
+  assert.equal((await f.service.get(p.auth, claim.intent_id, () => {})).state, 'confirmed');
 });

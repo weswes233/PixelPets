@@ -1,0 +1,77 @@
+{
+  "schema": 1,
+  "runId": "d06188ce-6ffe-4a29-8f16-1e3acd26a0e2",
+  "startedAt": "2026-10-08T09:10:41.042Z",
+  "rpc": "http://127.0.0.1:8899",
+  "genesis": "3v2DJJuppmRzRhdkLbYLmQD4NwPBoNp9NE6KTRqVYqUp",
+  "program": "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR",
+  "actualSbf": true,
+  "actualHttp": true,
+  "simulatedBrowserWallet": true,
+  "localFundsHaveNoValue": true,
+  "checks": [
+    {
+      "name": "HTTP guest adoption and real SIWS authenticate a funded disposable wallet against the deployed local program",
+      "status": "passed"
+    },
+    {
+      "name": "Interrupted submission survives HTTP service and SQLite restart, reuses one wallet signature, and finalizes a real Core asset",
+      "status": "passed"
+    },
+    {
+      "name": "Repeated claim returns the same confirmed intent and asset",
+      "status": "passed"
+    },
+    {
+      "name": "Actual HTTP care is co-signed, finalized on chain and reflected in the persisted pet checkpoint",
+      "status": "passed"
+    },
+    {
+      "name": "Guest save retains the correct asset identity, growth and checkpoint after another service restart",
+      "status": "passed"
+    }
+  ],
+  "transactions": [
+    {
+      "label": "configure_disposable_service_issuer_and_fund_test_player",
+      "signature": "3BqiNUo8CuJuTcZT6PxcF17MLDVpGBJ78su8BcSpnj3oQnhFrzsKBm5Ja9QUpAVBoHMndv7JvTMs4hxsqxyFLEjH"
+    },
+    {
+      "label": "claim_after_restart",
+      "signature": "34VWtjfzUR9NoffTafb3K9vXGKbWwvoBEFJkaordKMrVTsjBhHJfJY8zn1MmNc8jzVwZMTLduFvcjLWVrzNHvzDY",
+      "slot": 37,
+      "computeUnitsConsumed": 47325,
+      "wireSha256": "32db74580619d6bc60ed298f3418f00b57c8da6cb2ff1238d9a60bd17ce4f48e",
+      "asset": "GM1j3WzXSrMUfWkMjmMAPvpeMMGAMyx1deZGFHiddLqK"
+    },
+    {
+      "label": "checkpoint_from_actual_care",
+      "signature": "41WgBBEvoLGx3nyphL5TPD7eH4HSvnpGCt9iHSV2zxgBem7nyRoma6BUf4RzuFyWZ5jGyq32tgbWfE87AaLM6mmq",
+      "asset": "GM1j3WzXSrMUfWkMjmMAPvpeMMGAMyx1deZGFHiddLqK"
+    }
+  ],
+  "reviewEstimates": [
+    {
+      "title": "给伙伴一份链上身份",
+      "petName": "链上验收苔苔",
+      "network": "localnet",
+      "address": "EsSdnXGJ4qwVqzRAssyQswJW1ALTQCAC8NdZQSs9mkfQ",
+      "asset": "GM1j3WzXSrMUfWkMjmMAPvpeMMGAMyx1deZGFHiddLqK",
+      "estimatedDebitSol": "0.00818964",
+      "networkFeeSol": "0.000015",
+      "message": "预计支出包括网络费、账户租金和 Core 协议费用。资产将归当前钱包所有。"
+    },
+    {
+      "title": "保存这段成长",
+      "petName": "链上验收苔苔",
+      "network": "localnet",
+      "address": "EsSdnXGJ4qwVqzRAssyQswJW1ALTQCAC8NdZQSs9mkfQ",
+      "asset": "GM1j3WzXSrMUfWkMjmMAPvpeMMGAMyx1deZGFHiddLqK",
+      "estimatedDebitSol": "0.00001",
+      "networkFeeSol": "0.00001",
+      "message": "本次只登记成长记录，宠物所有权保持在当前钱包。"
+    }
+  ],
+  "result": "passed",
+  "completedAt": "2026-10-08T09:12:20.749Z"
+}

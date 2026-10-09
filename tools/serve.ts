@@ -23,7 +23,9 @@ const server = createServer((req, res) => {
   try { pathname = decodeURIComponent(new URL(req.url || '/', `http://127.0.0.1:${port}`).pathname); }
   catch { res.writeHead(400); res.end('Invalid URL'); return; }
   if (pathname.startsWith('/api/')) {
-    const upstream = proxyRequest({ host: '127.0.0.1', port: apiPort, path: req.url, method: req.method, headers: { ...req.headers, host: `127.0.0.1:${apiPort}` } }, response => {
+    const headers = { ...req.headers, host: `127.0.0.1:${apiPort}` };
+    delete headers['x-pixelpets-client-ip'];
+    const upstream = proxyRequest({ host: '127.0.0.1', port: apiPort, path: req.url, method: req.method, headers }, response => {
       res.writeHead(response.statusCode || 502, response.headers); response.pipe(res);
     });
     upstream.on('error', () => { if (!res.headersSent) res.writeHead(503, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ ok: false, error: { code: 'SERVICE_UNAVAILABLE', message: '养成服务尚未启动，请稍后重试。' } })); });

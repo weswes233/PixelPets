@@ -7,7 +7,7 @@ export type Pet = {
   bond: number; energy: number; mood: number; care_count: number;
   created_at: string; updated_at: string; revision: number;
   traits: { sun: number; moon: number };
-  chain: { status: 'unregistered' | 'pending' | 'registered'; network?: string; program_id?: string; asset_address?: string; intent_id?: string; checkpoint?: string }; favorite: 'sun' | 'moon';
+  chain: { status: 'unregistered' | 'pending' | 'registered'; network?: string; program_id?: string; asset_address?: string; intent_id?: string; checkpoint?: string; received?: boolean }; favorite: 'sun' | 'moon';
 };
 
 export const catalog = {

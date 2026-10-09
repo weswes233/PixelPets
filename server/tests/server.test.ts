@@ -181,7 +181,7 @@ test('real Ed25519 SIWS verification binds original guest, rejects forged signat
   } finally { await f.close(); }
 });
 
-test('wallet challenge expiry, message tampering, input injection and session renewal invalidate stale proof', async () => {
+test('wallet challenge expiry and tampering reject stale proof while independent device sessions coexist', async () => {
   const f = await fixture();
   try {
     const a = await f.guest(); const key = wallet();
@@ -196,7 +196,7 @@ test('wallet challenge expiry, message tampering, input injection and session re
       return (await f.request('POST', '/wallet/verify', { challenge_id: c.challenge_id, signature: key.sign(c.message) }, a.token)).body.data.token;
     };
     const old = await login(); const current = await login();
-    assert.equal((await f.request('GET', '/wallet/session', undefined, old)).status, 401);
+    assert.equal((await f.request('GET', '/wallet/session', undefined, old)).status, 200);
     assert.equal((await f.request('GET', '/wallet/session', undefined, current)).status, 200);
     f.advance(86400000);
     assert.equal((await f.request('GET', '/wallet/session', undefined, current)).status, 401);

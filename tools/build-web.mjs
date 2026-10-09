@@ -12,7 +12,14 @@ const htmlFile = path.join(output, 'index.html');
 try {
   let html = await readFile(htmlFile, 'utf8');
   if (!html.includes('src="/bridge.js"')) html = html.replace('</head>', '<script src="/bridge.js"></script>\n</head>');
-  html = html.replace('<title>PixelPets</title>', '<title>像素伴伴 · PixelPets</title>');
+  html = html.replace(/<html\b([^>]*)>/i, (_tag, attributes) =>
+    `<html${attributes.replace(/\s+lang\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/i, '')} lang="zh-CN">`);
+  const viewport = '<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">';
+  const viewportTag = /<meta\b[^>]*\bname\s*=\s*["']viewport["'][^>]*>/i;
+  html = viewportTag.test(html) ? html.replace(viewportTag, viewport) : html.replace('</head>', `${viewport}\n</head>`);
+  // Godot's shell disables browser gestures by default. Keep canvas input, but permit pinch zoom.
+  html = html.replace(/touch-action:\s*none\s*;/g, 'touch-action: pinch-zoom;');
+  html = html.replace(/<title>[^<]*<\/title>/i, '<title>PixelPets · 掌心伙伴</title>');
   await writeFile(htmlFile, html, 'utf8');
   console.log('Wallet bridge built and attached to Godot export.');
 } catch (error) {

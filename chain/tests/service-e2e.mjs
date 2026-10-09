@@ -8,9 +8,10 @@ import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Connection, Keypair, PublicKey, SystemProgram, Transaction } from '@solana/web3.js';
-import { PixelPetsClient, PROGRAM_ID, GENESIS_HASHES } from '../../chain-client/src/index.ts';
+import { PixelPetsClient, PROGRAM_ID, GENESIS_HASHES, createGiftInstruction } from '../../chain-client/src/index.ts';
 import { Repository, ChainService, start } from '../../server/src/public.ts';
 import { runPetTransaction } from '../../wallet-web/src/transactions.ts';
+import { WalletController } from '../../wallet-web/src/controller.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const rpcUrl = process.env.PIXELPETS_TEST_RPC ?? 'http://127.0.0.1:8899';
@@ -33,8 +34,11 @@ const oldConfig = hasConfig ? await client.fetchConfig('finalized') : { admin: a
 assert(oldConfig.admin.equals(admin.publicKey), 'Local test admin must own this Config');
 const runId = randomUUID(), directory = path.join(runtime, `service-e2e-${runId}`);
 await mkdir(directory, { recursive: false });
-const evidenceFile = path.join(root, 'chain/evidence/service-e2e.json');
+const scenario = process.env.PIXELPETS_SERVICE_SCENARIO ?? 'checkpoint';
+assert(['checkpoint', 'ownership'].includes(scenario), 'Unknown local service scenario');
+const evidenceFile = path.join(root, `chain/evidence/${scenario === 'ownership' ? 'ownership-service-e2e' : 'service-e2e'}.json`);
 const evidence = { schema: 1, runId, startedAt: new Date().toISOString(), rpc: rpcUrl, genesis,
+  scenario,
   program: PROGRAM_ID.toBase58(), actualSbf: true, actualHttp: true, simulatedBrowserWallet: true,
   localFundsHaveNoValue: true, checks: [], transactions: [], reviewEstimates: [] };
 const save = () => writeFile(evidenceFile, JSON.stringify(evidence, null, 2) + '\n');
@@ -138,8 +142,59 @@ try {
   const replay = await api(`/pets/${pet.id}/claim-intent`, 'POST', session.token, {});
   assert.equal(replay.intent_id, registered.intent_id); assert.equal(replay.asset_address, registered.asset_address);
   await check('Repeated claim returns the same confirmed intent and asset');
-  const care = await api(`/pets/${pet.id}/care`, 'POST', guest.token, { action: 'explore', choice: 'moon', event_id: randomUUID() });
+  const care = await api(`/pets/${pet.id}/care`, 'POST', session.token, { action: 'explore', choice: 'moon', event_id: randomUUID() });
   assert.equal(care.pet.bond, 1);
+  if (scenario === 'ownership') {
+    const receiver = Keypair.generate();
+    const receiverGuest = await api('/guests', 'POST', undefined, {});
+    for (let index = 0; index < 3; index++) await api('/pets', 'POST', receiverGuest.token,
+      { species_id: 'wisp', nickname: `接收方小屋${index}`, event_id: randomUUID() });
+    const receiverKey = createPrivateKey({ format: 'der', type: 'pkcs8', key: Buffer.concat([
+      Buffer.from('302e020100300506032b657004220420', 'hex'), Buffer.from(receiver.secretKey.subarray(0, 32))]) });
+    const receiverChallenge = await api('/wallet/challenge', 'POST', receiverGuest.token, { address: receiver.publicKey.toBase58() });
+    await api('/wallet/verify', 'POST', receiverGuest.token, { challenge_id: receiverChallenge.challenge_id,
+      signature: sign(null, Buffer.from(receiverChallenge.message), receiverKey).toString('base64') });
+    await submitSetup('owner_signed_core_gift_to_another_bound_wallet', [createGiftInstruction({
+      asset: registered.asset_address, collection: oldConfig.collection, owner: player.publicKey,
+      recipient: receiver.publicKey, payer: admin.publicKey,
+    })], [player]);
+    const actual = await client.verifyOfficialPet(registered.asset_address, receiver.publicKey, 'finalized');
+    assert.equal(actual.record.bond, 0, 'Uncheckpointed relationship growth is not transferable');
+    const forbidden = await fetch(`${baseUrl}/pets/${pet.id}/care`, { method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+      body: JSON.stringify({ action: 'feed', event_id: randomUUID() }) });
+    assert.equal(forbidden.status, 403);
+    assert.equal((await forbidden.json()).error.code, 'PET_OWNER_CHANGED');
+    assert.equal((await api('/pets', 'GET', guest.token)).pets.length, 0);
+    await check('Real owner-signed Core transfer is finalized; the old owner cannot care even before requesting synchronization');
+    const receiverAccount = { address: receiver.publicKey.toBase58(), publicKey: receiver.publicKey.toBytes(),
+      chains: ['solana:localnet'], features: ['solana:signMessage'] };
+    let recoverySignatures = 0;
+    const recoveryWallet = { version: '1.0.0', name: 'Disposable recovery signer', icon: 'data:image/svg+xml;base64,',
+      accounts: [receiverAccount], chains: receiverAccount.chains, features: {
+        'standard:connect': { version: '1.0.0', async connect() { return { accounts: [receiverAccount] }; } },
+        'solana:signMessage': { version: '1.0.0', async signMessage({ message }) { recoverySignatures++;
+          return [{ signedMessage: message, signature: new Uint8Array(sign(null, message, receiverKey)) }]; } },
+      } };
+    const recoveredController = new WalletController(api);
+    const recovered = await recoveredController.recover(recoveryWallet);
+    assert.equal(recovered.user_id, receiverGuest.user_id);
+    const assets = await recoveredController.syncAssets();
+    const received = assets.pets.find(item => item.id === pet.id);
+    assert.equal(assets.pets.length, 4); assert.equal(received.chain.received, true);
+    assert.equal(received.ownership.can_interact, true); assert.equal(received.bond, 0);
+    assert.equal(received.nickname, '苔苔');
+    const privateHistory = await api('/journal', 'GET', recovered.game_token);
+    assert(!privateHistory.entries.some(entry => entry.pet_id === pet.id), 'Old owner diary stays private');
+    await check('A fresh wallet controller recovers the receiving profile and synchronizes the real asset beside three free pets without copying the old relationship');
+    const nextCare = await recoveredController.care(pet.id, { action: 'feed', event_id: randomUUID().replaceAll('-', '') });
+    assert.equal(nextCare.pet.bond, 1); assert.equal(recoverySignatures, 1, 'Daily care needs no additional wallet signature');
+    await closeService(); await openService();
+    const persisted = (await api('/pets', 'GET', recovered.game_token)).pets.find(item => item.id === pet.id);
+    assert.equal(persisted.chain.asset_address, registered.asset_address); assert.equal(persisted.bond, 1);
+    assert.equal(persisted.chain.received, true); assert.equal((await recoveredController.syncAssets()).pets.length, 4);
+    await check('New owner daily care requires no transaction signature and survives a real HTTP/SQLite restart with recovered credentials');
+  } else {
   const checkpoint = await runPetTransaction(context, pet.id, 'checkpoint');
   const grown = await finalizedIntent(checkpoint.intent_id, session.token);
   const grownAccount = await client.verifyOfficialPet(registered.asset_address, player.publicKey, 'finalized');
@@ -151,6 +206,7 @@ try {
   const reloaded = (await api('/pets', 'GET', guest.token)).pets.find(item => item.id === pet.id);
   assert.equal(reloaded.chain.asset_address, registered.asset_address); assert.equal(reloaded.chain.checkpoint, '1'); assert.equal(reloaded.bond, 1);
   await check('Guest save retains the correct asset identity, growth and checkpoint after another service restart');
+  }
   evidence.result = 'passed';
 } catch (error) {
   evidence.result = 'failed'; evidence.error = `${error.name}: ${error.message}`; process.exitCode = 1; console.error(evidence.error);

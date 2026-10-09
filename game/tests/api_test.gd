@@ -14,6 +14,7 @@ func _initialize() -> void:
 
 func run() -> void:
 	var api = load("res://scripts/api_client.gd").new()
+	api.session_path = "user://http-test-" + api.event_id() + ".cfg"
 	root.add_child(api)
 	# Use a fresh test guest without persisting its token over a player's session.
 	api.token = ""

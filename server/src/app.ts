@@ -5,13 +5,18 @@ import { Repository } from './repository.ts';
 import { ChainService } from './chain-service.ts';
 import { ChainClientError, lamportsToSol } from '../../chain-client/src/index.ts';
 import { MarketReader } from './market-reader.ts';
+import { createRequestPolicy, RequestPolicyError } from './request-policy.ts';
 import type { MarketRpc, MarketOfferCard } from './market-reader.ts';
+import { OwnershipService } from './ownership-service.ts';
+import type { OwnershipRpc } from './ownership-service.ts';
 
 export type AppOptions = {
   repository: Repository;
   chainService?: ChainService;
   marketReader?: MarketReader;
+  ownershipService?: OwnershipService;
   rateLimit?: { requests: number; guestCreations: number; windowMs: number };
+  trustedProxies?: readonly string[];
 };
 type Bucket = { count: number; reset: number };
 function reply(response: ServerResponse, status: number, value: unknown): void {
@@ -30,8 +35,14 @@ async function body(request: IncomingMessage): Promise<unknown> {
 
 export function createApp(options: AppOptions): Server {
   const repository = options.repository;
+  const requestIdentity = createRequestPolicy({ trustedProxies: options.trustedProxies });
   const chain = options.chainService ?? new ChainService(repository);
   const deployment = chain.configuration;
+  const ownershipRpc = deployment?.rpc as OwnershipRpc | undefined;
+  const ownership = options.ownershipService ?? new OwnershipService(repository,
+    deployment && typeof ownershipRpc?.getMultipleAccountsInfoAndContext === 'function'
+      ? { rpc: ownershipRpc, network: deployment.network, programId: deployment.programId,
+        collectionAddress: deployment.collectionAddress, expectedGenesisHash: deployment.expectedGenesisHash } : undefined);
   const marketRpc = deployment?.rpc as MarketRpc | undefined;
   const market = options.marketReader ?? new MarketReader(deployment && typeof marketRpc?.getProgramAccounts === 'function'
     && typeof marketRpc.getMultipleAccountsInfoAndContext === 'function' ? { rpc: marketRpc, network: deployment.network,
@@ -52,9 +63,13 @@ export function createApp(options: AppOptions): Server {
       const url = new URL(request.url ?? '/', 'http://localhost');
       const pathname = url.pathname;
       const method = request.method ?? 'GET';
-      const ip = request.socket.remoteAddress ?? 'unknown';
+      const ip = requestIdentity(request);
       limit(`ip:${ip}`, limits.requests);
       if (request.headers.origin && request.headers.origin !== repository.publicOrigin) throw new ApiError(403, 'ORIGIN_REJECTED', '请从正式游戏页面访问。');
+      if (method === 'GET' && pathname === '/api/v1/live') {
+        repository.db.prepare('SELECT 1').get();
+        return reply(response, 200, { ok: true, data: { service: 'pixel-pets', storage: 'sqlite', live: true } });
+      }
       if (method === 'GET' && pathname === '/api/v1/health') {
         repository.db.prepare('SELECT 1').get();
         const config = await chain.publicConfig();
@@ -70,10 +85,19 @@ export function createApp(options: AppOptions): Server {
         limit(`guest:${ip}`, limits.guestCreations); objectBody(await body(request), []);
         return reply(response, 201, { ok: true, data: repository.guest() });
       }
+      if (method === 'POST' && pathname === '/api/v1/wallet/recovery/challenge') {
+        limit(`recovery:${ip}`, 20);
+        return reply(response, 200, { ok: true, data: repository.recoveryChallenge(await body(request)) });
+      }
+      if (method === 'POST' && pathname === '/api/v1/wallet/recovery/verify') {
+        limit(`recovery:${ip}`, 20);
+        return reply(response, 200, { ok: true, data: repository.recoverWallet(await body(request)) });
+      }
       const bearer = request.headers.authorization?.match(/^Bearer ([a-zA-Z0-9_-]+)$/)?.[1];
-      const auth = repository.authenticate(bearer, pathname === '/api/v1/wallet/session' || pathname.startsWith('/api/v1/chain/') || /\/(claim|checkpoint)-intent$/.test(pathname));
+      const auth = repository.authenticate(bearer, pathname === '/api/v1/wallet/session' || pathname === '/api/v1/wallet/assets/sync'
+        || pathname.startsWith('/api/v1/chain/') || /\/(claim|checkpoint)-intent$/.test(pathname));
       let result: unknown; let status = 200;
-      if (method === 'GET' && pathname === '/api/v1/pets') result = repository.listPets(auth.user_id);
+      if (method === 'GET' && pathname === '/api/v1/pets') result = ownership.listPets(auth.user_id);
       else if (method === 'POST' && pathname === '/api/v1/pets') { result = repository.adopt(auth.user_id, await body(request)); status = 201; }
       else if (method === 'GET' && pathname === '/api/v1/journal') result = repository.journal(auth.user_id);
       else if (method === 'GET' && pathname === '/api/v1/offers') {
@@ -86,6 +110,9 @@ export function createApp(options: AppOptions): Server {
       else if (method === 'POST' && pathname === '/api/v1/wallet/challenge') { limit(`wallet:${ip}`, 20); result = repository.challenge(auth.user_id, await body(request)); }
       else if (method === 'POST' && pathname === '/api/v1/wallet/verify') { limit(`wallet:${ip}`, 20); result = repository.verifyWallet(auth.user_id, await body(request)); }
       else if (method === 'GET' && pathname === '/api/v1/wallet/session') result = repository.walletSession(auth.user_id);
+      else if (method === 'POST' && pathname === '/api/v1/wallet/assets/sync') {
+        objectBody(await body(request), []); result = await ownership.syncWallet(auth);
+      }
       else if (method === 'DELETE' && pathname === '/api/v1/wallet/session') { repository.revokeSession(bearer!); result = { disconnected: true }; }
       else {
         const careMatch = pathname.match(/^\/api\/v1\/pets\/([a-f0-9-]{36})\/care$/);
@@ -96,16 +123,39 @@ export function createApp(options: AppOptions): Server {
         if (method === 'GET' && offerMatch) {
           const page = await market.detail(offerMatch[1], offerMatch[2]); result = { ...page, offer: displayOffer(page.offer) };
         }
-        else if (method === 'POST' && prepareMatch) result = await chain.prepare(auth, prepareMatch[1], prepareMatch[2] as 'claim' | 'checkpoint', await body(request));
-        else if (method === 'POST' && intentMatch?.[2]) result = await chain.confirm(auth, intentMatch[1], await body(request));
-        else if (method === 'GET' && intentMatch && !intentMatch[2]) result = await chain.get(auth, intentMatch[1]);
-        else if (method === 'POST' && careMatch) result = repository.care(auth.user_id, careMatch[1], await body(request));
-        else if (method === 'PATCH' && petMatch) result = repository.rename(auth.user_id, petMatch[1], await body(request));
+        else if (method === 'POST' && prepareMatch) {
+          const input = await body(request);
+          result = await ownership.withOwnedPet(auth, prepareMatch[1], fence => chain.prepare(auth, prepareMatch[1], prepareMatch[2] as 'claim' | 'checkpoint', input, fence));
+        }
+        else if (method === 'POST' && intentMatch?.[2]) {
+          const input = await body(request); const petId = chain.intentPetId(auth, intentMatch[1]);
+          result = await ownership.withOwnedPet(auth, petId, fence => chain.confirm(auth, intentMatch[1], input, fence));
+        }
+        else if (method === 'GET' && intentMatch && !intentMatch[2]) {
+          const petId = chain.intentPetId(auth, intentMatch[1]);
+          result = await ownership.withOwnedPet(auth, petId, fence => chain.get(auth, intentMatch[1], fence));
+        }
+        else if (method === 'POST' && careMatch) {
+          const input = await body(request);
+          result = await ownership.withOwnedPet(auth, careMatch[1], fence => repository.care(auth.user_id, careMatch[1], input, fence));
+        }
+        else if (method === 'PATCH' && petMatch) {
+          const input = await body(request);
+          result = await ownership.withOwnedPet(auth, petMatch[1], fence => repository.rename(auth.user_id, petMatch[1], input, fence));
+        }
         else throw new ApiError(404, 'NOT_FOUND', '这个接口还不可用。');
+      }
+      // Every mutation returns the same ownership view as a subsequent pet list.
+      // The view is informational; all registered writes perform a fresh finalized check.
+      if (result && typeof result === 'object' && 'pet' in result && result.pet && typeof result.pet === 'object' && 'id' in result.pet) {
+        const petId = result.pet.id;
+        const visible = ownership.listPets(auth.user_id).pets.find(pet => pet.id === petId);
+        if (visible && 'ownership' in visible) result = { ...result, pet: { ...result.pet, ownership: visible.ownership } };
       }
       reply(response, status, { ok: true, data: result });
     } catch (error) {
-      if (error instanceof ApiError) reply(response, error.status, { ok: false, error: { code: error.code, message: error.message, ...error.details } });
+      if (error instanceof RequestPolicyError) reply(response, error.status, { ok: false, error: { code: error.code, message: error.message } });
+      else if (error instanceof ApiError) reply(response, error.status, { ok: false, error: { code: error.code, message: error.message, ...error.details } });
       else if (error instanceof ChainClientError) reply(response, /INVALID|REPLACED|MISSING_COSIGNATURE/.test(error.code) ? 400 : 409,
         { ok: false, error: { code: error.code, message: error.message } });
       else { console.error('Request failed:', error instanceof Error ? error.name : 'UnknownError'); reply(response, 500, { ok: false, error: { code: 'INTERNAL_ERROR', message: '服务暂时出了点问题，请稍后重试。' } }); }

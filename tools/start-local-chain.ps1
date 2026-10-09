@@ -1,6 +1,7 @@
 param(
     [switch]$RunContractTests,
     [switch]$RunServiceTests,
+    [switch]$RunOwnershipTests,
     [switch]$StopAfterTests
 )
 $ErrorActionPreference = 'Stop'
@@ -14,8 +15,8 @@ $corePath = Join-Path $runtimePath 'chain-fixtures\mpl_core.so'
 foreach ($requiredPath in @($validatorExe, $keygenExe, $adminPath, $programPath, $corePath)) {
     if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) { throw "Required local fixture is missing: $requiredPath" }
 }
-if ($RunContractTests -and $RunServiceTests) { throw 'Choose either -RunContractTests or -RunServiceTests, each requires an isolated fresh chain.' }
-if ($StopAfterTests -and -not ($RunContractTests -or $RunServiceTests)) { throw '-StopAfterTests requires a test run.' }
+if (([int]$RunContractTests.IsPresent + [int]$RunServiceTests.IsPresent + [int]$RunOwnershipTests.IsPresent) -gt 1) { throw 'Choose one test mode; each requires an isolated fresh chain.' }
+if ($StopAfterTests -and -not ($RunContractTests -or $RunServiceTests -or $RunOwnershipTests)) { throw '-StopAfterTests requires a test run.' }
 foreach ($localPort in @(8899,8900,9900)) {
     if (Get-NetTCPConnection -LocalPort $localPort -State Listen -ErrorAction SilentlyContinue) {
         throw "Port $localPort is already in use. Existing processes and ledgers were left unchanged."
@@ -64,20 +65,24 @@ try {
     $run.readyAt=[DateTime]::UtcNow.ToString('o'); Save-Run
     Write-Host "Local validator ready. Genesis: $($run.genesis)"
     Write-Warning 'This official Windows build has a short snapshot-limited lifetime. Use this helper for immediate tests, not a persistent development service.'
-    if ($RunContractTests -or $RunServiceTests) {
+    if ($RunContractTests -or $RunServiceTests -or $RunOwnershipTests) {
         $testName = if ($RunContractTests) { 'local-validator-e2e' } else { 'service-e2e' }
-        $evidencePath = Join-Path $projectRoot ('chain\evidence\' + $testName + '.json')
+        $evidenceName = if ($RunOwnershipTests) { 'ownership-service-e2e' } else { $testName }
+        $evidencePath = Join-Path $projectRoot ('chain\evidence\' + $evidenceName + '.json')
         if (Test-Path -LiteralPath $evidencePath) {
-            Copy-Item -LiteralPath $evidencePath -Destination (Join-Path (Split-Path -Parent $evidencePath) ($runId + '-' + $testName + '-previous.json'))
+            Copy-Item -LiteralPath $evidencePath -Destination (Join-Path (Split-Path -Parent $evidencePath) ($runId + '-' + $evidenceName + '-previous.json'))
         }
         $previousRpc=$env:PIXELPETS_TEST_RPC; $previousGenesis=$env:PIXELPETS_EXPECTED_GENESIS; $previousAdmin=$env:PIXELPETS_TEST_ADMIN
+        $previousScenario=$env:PIXELPETS_SERVICE_SCENARIO
         try {
             $env:PIXELPETS_TEST_RPC=$run.rpc; $env:PIXELPETS_EXPECTED_GENESIS=$run.genesis; $env:PIXELPETS_TEST_ADMIN=$adminPath
+            $env:PIXELPETS_SERVICE_SCENARIO=if ($RunOwnershipTests) { 'ownership' } else { 'checkpoint' }
             & (Get-Command node -ErrorAction Stop).Source (Join-Path $projectRoot ('chain\tests\' + $testName + '.mjs'))
             $run.testExitCode=$LASTEXITCODE; Save-Run
             if ($run.testExitCode -ne 0) { throw "$testName integration tests failed: exit $($run.testExitCode)." }
         } finally {
             $env:PIXELPETS_TEST_RPC=$previousRpc; $env:PIXELPETS_EXPECTED_GENESIS=$previousGenesis; $env:PIXELPETS_TEST_ADMIN=$previousAdmin
+            $env:PIXELPETS_SERVICE_SCENARIO=$previousScenario
         }
     }
 } finally {

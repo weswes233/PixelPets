@@ -25,14 +25,37 @@ node node_modules/typescript/bin/tsc -p server/tsconfig.json
 
 ## 钱包会话
 
-原游客 Bearer 始终保留用于原有伙伴。钱包令牌单独保存，默认 24 小时过期，数据库只存 SHA-256 哈希。
+原游客 Bearer 始终保留用于原有伙伴。钱包令牌单独保存，默认 24 小时过期，数据库只存 SHA-256 哈希。钱包会话可在多台设备同时存在，重新连接不会使另一台设备下线。
 
 1. `POST /api/v1/wallet/challenge`，游客 Bearer，`{address}` → `{challenge_id,message,expires_at}`。
 2. 钱包对返回 `message` 的完整 UTF-8 字节执行 `signMessage`。消息由受信 `PUBLIC_ORIGIN` 生成，包含地址、链、URI、随机 nonce、签发/过期时间和请求 ID，有效期 5 分钟。
 3. `POST /api/v1/wallet/verify`，同游客 Bearer，`{challenge_id,signature}`（标准 Base64 编码的 64 字节 Ed25519 签名）→ `{token,user_id,wallet_address,network,expires_at}`。
 4. `GET /api/v1/wallet/session` 使用钱包 Bearer。`DELETE` 同路径撤销当前钱包会话，保留游客身份和宠物。
 
-验证使用 Node crypto 的真实 Ed25519 验签；挑战限原游客、一次性、严格过期检查。重复登录撤销同用户之前的钱包会话。钱包和用户为一对一绑定，已绑定其他游客返回 409，不静默合并资产。**钱包恢复/换绑尚未提供；根项目需另外实现验证恢复流程。** 游客令牌丢失且无恢复流程时无法恢复原身份。不要把这一限制作为正式上线的既定体验。
+验证使用 Node crypto 的真实 Ed25519 验签；绑定挑战限原游客、一次性、严格过期检查。钱包和用户为一对一绑定，已绑定其他游客返回 `409 WALLET_ALREADY_LINKED`，提示改用找回档案，不静默合并资产。换绑钱包尚未提供；未绑定过钱包且丢失游客令牌的档案仍无法恢复。
+
+### 换设备找回档案
+
+找回流程独立于绑定流程，以下两个接口无需 Bearer，也不使用调用者现有游客身份。只有已绑定的钱包完成签名后，服务端才查找其原档案；不会按客户端传入的用户 ID 找回，不移动或合并任何游客宠物。
+
+1. `POST /api/v1/wallet/recovery/challenge`，`{address}` → `{challenge_id,message,expires_at}`。对于格式有效的地址，无论是否绑定过档案均返回相同结构，不泄露用户 ID 或绑定状态。
+2. 钱包签署返回消息的完整 UTF-8 字节。消息明确说明找回既有档案，并包含 `urn:pixelpets:account-recovery` 用途、受信域名、URI、网络、随机 nonce、请求 ID 和 5 分钟有效期。
+3. `POST /api/v1/wallet/recovery/verify`，`{challenge_id,signature}` → `{token,game_token,user_id,wallet_address,network,expires_at,game_expires_at}`。
+4. `token` 是 24 小时的 `wallet` 会话，供钱包专属接口使用；`game_token` 是 30 天的 `player` 会话，用于原档案的宠物与日记接口，不能替代钱包令牌访问领取、成长登记或交易请求。两个令牌均仅保存哈希。
+5. 客户端在找回成功后切换为返回的 `user_id` 和 `game_token`，保留原游客令牌以便用户返回原游客档案。取消、签名失败或验证失败不能覆盖本地游客会话。断开钱包仅撤销当前钱包令牌，养成会话以及其他设备不受影响。
+
+挑战保存在独立 `wallet_recovery_challenges` 表，显式绑定用途、域名和网络；服务重启不会丢失挑战或恢复令牌，配置切换后旧部署的挑战失效。已通过真实 Ed25519 验签的证明只可消费一次，包括未绑定钱包的证明；签名错误不会揭示绑定情况。数据库迁移只增加新表并将旧版本升级到 2，保留原游客、宠物、日记、会话及高于 2 的版本号。
+
+| 错误 | 含义 |
+| --- | --- |
+| `400 INVALID_INPUT / INVALID_ADDRESS / INVALID_CHALLENGE` | 字段、地址或请求 ID 无效；客户端不能附带目标用户 ID、域名或网络 |
+| `401 INVALID_SIGNATURE` | 签名无效或消息被修改，未查询绑定状态 |
+| `401 CHALLENGE_EXPIRED` | 挑战缺失、已使用、到期、用途不匹配，或服务域名/网络已经变化 |
+| `404 WALLET_NOT_LINKED` | 钱包已完成有效签名，但从未绑定档案；不会创建账户，需先免费领养并绑定 |
+| `403 ORIGIN_REJECTED` | 浏览器来源与受信 `PUBLIC_ORIGIN` 不一致 |
+| `429 RATE_LIMITED` | 同一 IP 的恢复挑战与验证共用每窗口 20 次额度，默认每分钟；同时受全局请求限流 |
+
+恢复专项 `server/tests/recovery.test.ts` 使用独立内存/临时 SQLite 与真实 Ed25519，覆盖同宠物与日记恢复、游客隔离、跨用途/域名/网络、签名伪造、到期/重放、未知钱包、不提升游戏令牌权限、多设备与局部撤销、并发单次消费、旧库迁移和重启。本机玩家数据库不参与测试。真实浏览器钱包签名与手机换设备操作仍需客户端端到端验收。
 
 ## 已实现验证与边界
 

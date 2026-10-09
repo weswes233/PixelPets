@@ -1,0 +1,175 @@
+{
+  "schema": 1,
+  "verifiedAt": "2026-10-09T08:45:38.7994525Z",
+  "sourceBaseCommit": "8a5f6812590290b3bd090288bdf981181dd21c08",
+  "scope": "wallet recovery, registered asset ownership and release foundation",
+  "tests": {
+    "javascript": {
+      "log": "runtime/test-2026-10-09.txt",
+      "failed": 0,
+      "passed": 136
+    },
+    "typescript": [
+      "server",
+      "wallet-web",
+      "chain-client"
+    ],
+    "godotClient": {
+      "failed": 0,
+      "passed": 49
+    },
+    "godotStorage": {
+      "isolatedFilesystem": true,
+      "failed": 0,
+      "passed": 26
+    },
+    "godotHttp": {
+      "database": "isolated in-memory",
+      "runner": "tools/test-godot-http.mjs",
+      "failed": 0,
+      "passed": 11
+    }
+  },
+  "actualLocalChain": [
+    {
+      "file": "chain/evidence/service-e2e.json",
+      "result": "passed",
+      "checks": 5,
+      "transactions": 3,
+      "genesis": "5Q3cPyVTXVjfaUk1M57P8rccqvTCpnoy7TtreeBP2d7j",
+      "completedAt": "2026-10-09T08:40:12.421Z",
+      "simulatedBrowserWallet": true,
+      "localFundsHaveNoValue": true
+    },
+    {
+      "file": "chain/evidence/ownership-service-e2e.json",
+      "result": "passed",
+      "checks": 6,
+      "transactions": 3,
+      "genesis": "7RE8XZ7KncKA1onUw5mdSvoA9c5T4LyySsekpiNsQFAK",
+      "completedAt": "2026-10-09T08:43:25.3Z",
+      "simulatedBrowserWallet": true,
+      "localFundsHaveNoValue": true
+    }
+  ],
+  "browser": {
+    "surface": "Codex in-app browser",
+    "viewport": {
+      "height": 640,
+      "width": 360
+    },
+    "language": "zh-CN",
+    "checks": [
+      "new export loaded",
+      "recovery explanation visible",
+      "no-wallet notice visible",
+      "cancel restored game controls",
+      "viewport matches canvas width"
+    ],
+    "screenshot": "docs/screenshots/recovery-360-2026-10-09.jpg",
+    "realWalletExtensionVerified": false,
+    "mobileDeviceVerified": false
+  },
+  "backup": {
+    "file": "runtime/backups/pets-2026-10-09T08-31-34.753Z-b4bcd406-6a18-4097-a5a1-967f83f9c639.sqlite",
+    "sha256": "f137177cd9bc2e9af73270082c9cdc5d3a37896b68bb162395b8220e117ceefb",
+    "integrity": "ok",
+    "foreignKeys": "ok",
+    "preMigrationSchema": 1,
+    "postMigrationSchema": 2,
+    "preservedCounts": {
+      "pets": 3,
+      "events": 21,
+      "journal": 9
+    }
+  },
+  "preview": {
+    "url": "http://127.0.0.1:9783/",
+    "chainConfigured": false
+  },
+  "artifacts": [
+    {
+      "path": "dist/web/index.html",
+      "bytes": 5520,
+      "sha256": "29a414799731d7800dc2921c5ecdf9ad0b6b35ad578388684d6e8b23045af90f"
+    },
+    {
+      "path": "dist/web/index.pck",
+      "bytes": 7714560,
+      "sha256": "ad3567a8f6d8dfe2168e278a9846bac052cc861bad92401a91fe1782f92a55fe"
+    },
+    {
+      "path": "dist/web/index.wasm",
+      "bytes": 38047590,
+      "sha256": "6ead2ac528d007fe9627aae650444f9187f89420d7603c22460d8f3279545240"
+    },
+    {
+      "path": "dist/web/bridge.js",
+      "bytes": 903942,
+      "sha256": "3cf72bbf78d5dcdbd4855ceceb9332634b3b17f41bff3a0d6bab1e1c56e75c2e"
+    },
+    {
+      "path": "dist/windows/PixelPets.exe",
+      "bytes": 104198928,
+      "sha256": "6391f433bc9a6194b055b49f48f128041fbe23b3ae531fa0b910e7e791db3662"
+    },
+    {
+      "path": "chain/target/deploy/pixel_pets.so",
+      "bytes": 569888,
+      "sha256": "f7808c45699515789d2b02c62d86c0fddaffb2fb6bff71236ac27ff08b186f82"
+    },
+    {
+      "path": "docs/screenshots/recovery-360-2026-10-09.jpg",
+      "bytes": 31040,
+      "sha256": "4c0406588329e149b862aac02566b79c3b68dc93429b4ab6a97647c38aeda77b"
+    }
+  ],
+  "sourceHashes": [
+    {
+      "path": "server/src/app.ts",
+      "sha256": "86f2b309ce3898b06e7aa2fd9b9e623bfacee8580b4159732c748fa80a93e8e4"
+    },
+    {
+      "path": "server/src/repository.ts",
+      "sha256": "42922cc676a8439e3092360b707da3628f1881f9afadf3041cb270947e3660bb"
+    },
+    {
+      "path": "server/src/ownership-service.ts",
+      "sha256": "48dd2d19f819d889924176746cf6f87f530bb54158ee60b30ae9887cd442d7ff"
+    },
+    {
+      "path": "server/src/chain-service.ts",
+      "sha256": "034cbf57bf1605d9b36a54a0fe5753224b77740642187d4b36577f6305e0b7ec"
+    },
+    {
+      "path": "game/scripts/main.gd",
+      "sha256": "f2ac667836a219454117197a41eec4534a992574dcbe1343c414047fafb9e78a"
+    },
+    {
+      "path": "game/scripts/api_client.gd",
+      "sha256": "438045155f4f67681acfb8904aab320e9ee33fab79955a5db46e6c30397514f4"
+    },
+    {
+      "path": "wallet-web/src/controller.ts",
+      "sha256": "d474c8d61edd5ddf66fc1d82aed8981ddffc1605fe47a68155f18b55df61cea1"
+    },
+    {
+      "path": "wallet-web/src/bridge.ts",
+      "sha256": "5e06f22b21d0df4404e750f2b7a32ac8c4b6a4625c4b18349fb960ad0e43e90a"
+    }
+  ],
+  "boundaries": [
+    "No public devnet or mainnet deployment",
+    "Docker/Caddy templates not executed on this host",
+    "Actual browser wallet and mobile signing not verified",
+    "Game market settlement UI not implemented",
+    "Ownership discovery covers at most 128 registered-here assets; no complete transfer history",
+    "Clock/context equality is a conservative filter, not an atomic RPC proof",
+    "Web IndexedDB persistence across browser failure is not established by native filesystem tests",
+    "Historical contract/market 16 checks and 36 transactions were not rerun in this phase"
+  ],
+  "observedFailures": [
+    "Initial concurrent HTTP unit run hit Node Fetch forbidden ephemeral ports; isolated rerun and final full run passed",
+    "One real checkpoint poll rejected OWNERSHIP_CLOCK_MISMATCH; failed evidence retained; strict snapshot validation and bounded complete rereads added"
+  ]
+}
