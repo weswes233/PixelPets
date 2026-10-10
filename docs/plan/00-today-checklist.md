@@ -6,16 +6,16 @@
 
 | 级别 | 内容 | 状态 | 证据 / 备注 |
 | --- | --- | --- | --- |
-| P0 | 公开 HTTPS 英文主流程 | 🟡 部分 | 英文主流程本地完成（`tools/demo-up.sh local`）；公开 HTTPS 未完成：本盒出站 7844/22 被封，cloudflared/localhost.run/serveo 均不可用，需 Wes 提供主机或域名 |
+| P0 | 公开 HTTPS 英文主流程 | 🟡 部分 | 英文主流程本地完成（`tools/demo-up.sh local`）；公开 HTTPS 未完成：本盒出站 7844/22 被封；GitHub Pages 未启用；静态 `dist/web` 可另上 Pages 但 API 仍需主机 |
 | P0 | 原有三宠（moss/puddle/wisp）保持兼容 | ✅ | 基线测试全绿（见 H0–H2） |
 | P0 | 一次免费、服务端权威、标注加速（45 s）的旅行 | ✅ | 服务端 CSPRNG + 补给账本；`npm test` 146/146；Godot travel 26/26 |
 | P0 | 故事与收藏反馈（2 地点、8 纪念物） | ✅ | 明信片 + 纪念物；Album 优先显示；截图 `docs/evidence/ui-smoke/` |
-| P0 | 真实 Solana Devnet 领取宠物 | ✅ Devnet（脚本钱包，10-10 10:15 UTC+8） | 程序 `2SCKfWsz…Qm2nT`、集合 `5BnUfTQ2…uoiS`、edition 1001/1002/1003 已部署；player-a claim 资产 `B8qGUnAs…RSs5`（sig `5RX2AWhv…7NcT`）。证据 `docs/evidence/devnet-demo-2026-10-10.json`。真实 Phantom/Backpack 弹窗仍需 Wes |
+| P0 | 真实 Solana Devnet 领取宠物 | ✅ Devnet（脚本钱包） | 程序/集合/editions 已部署；脚本 claim+赠送已通。真实 Phantom 仍需 Wes（见 `docs/plan/wes-verify.md`） |
 | P0 | 旅行结果摘要 checkpoint v2 存证 | ✅ localnet + ✅ Devnet | localnet：截图 37 + smoke 4 PASS。Devnet：`chain/tests/devnet-stack-smoke.mjs` 4 PASS；旅程收据 sig `2WtTemMx…5mix`，公开证明 `jr_eIE4lv-XhPMvy0bgFLcUTw`（独立验证器 10 项） |
 | P0 | 刷新及服务重启后恢复 | ✅ localnet | `chain/tests/restart-recovery-localnet.mjs` 4 PASS：旅行中 SIGKILL 重启，ready_at 不变；重启后揭晓；未签名旅程收据意图跨重启保留并确认（`chain/evidence/restart-recovery-localnet.json`） |
 | P0 | 真实浏览器钱包演练（扩展钱包弹窗） | 🟡 部分 | 在无头 Chrome 中用 Wallet Standard 测试钱包走通（SIWS、claim、receipt）；真实 Phantom/Backpack 弹窗需 Wes |
 | P0 | 可复核的交易与结果证据 | ✅ localnet + ✅ Devnet | Devnet 证明 `jr_eIE4lv-XhPMvy0bgFLcUTw` 经独立验证器 10 项；`docs/evidence/devnet-demo-2026-10-10.json` + `chain/evidence/deployed-stack-smoke-devnet.json`（含 explorer 链接） |
-| P1 | 两钱包赠送 + 接收后继续养成（UI） | ✅ localnet | Wallet 页「Send as a gift」：prepareGift 本地构建、审阅显示网络/资产/接收者/费用、旅行中禁用；finalized 后同步归属。`chain/tests/gift-two-wallet-localnet.mjs` 6 PASS（A 不能再照顾，B 同步后继续照顾）。未在真实扩展钱包中演练 |
+| P1 | 两钱包赠送 + 接收后继续养成（UI） | ✅ localnet + ✅ Devnet（脚本） | localnet 6 PASS；Devnet `chain/tests/gift-two-wallet-devnet.mjs` 6 PASS（gift sig `5ZNrPvAM…`）。真实扩展钱包仍需 Wes |
 | P2 | 中文全量校对、120 剪影目录、商店预览、更多动作 | 🟡 部分 | 旅行/收据/赠送中文切换有测试；120 图鉴剪影浏览（按家族分页，未发行仅剪影）已完成；全量校对、商店预览、更多动作未做 |
 
 ## H0–H24 时间盒与止损点
@@ -50,16 +50,16 @@
 | Devnet 连通 | ✅ | Helius devnet genesis `EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG` |
 | Devnet 资金 | ✅ | 10-10 上午 deployer 收到 5 SOL（转账 sig `38c6KpY5…XA4qp`）；部署后约 1.99 SOL 剩余；player-a/b 各 0.05 SOL |
 | 部署成本估算 | — | `pixel_pets.so` 569,888 B → ProgramData 租金约 3.97 SOL（加缓冲区与手续费按 ≈4.2 SOL 备）；config/collection/3 editions/首批 claim < 0.1 SOL；两名玩家各 0.05 SOL。总计建议 **5 SOL** |
-| 元数据通道 | 🟡 | 合约只认 `ipfs://` / `ar://`。可先在本机按内容计算 CID（不需账号，地址由内容决定），之后任何 pinning 服务上传相同字节即可让同一 URI 可取回；可用渠道见下 |
+| 元数据通道 | 🟡 已 pin（Lighthouse 同 CID + Irys 网关字节可取） | 链上仍为原 `ipfs://bafkrei…`（不可变）。Lighthouse 上传 CID 全匹配；Irys Devnet 网关 HTTP 200+sha256。公开 ipfs.io 对 curl 仍挑战。证据 `docs/evidence/lighthouse-pin-2026-10-10.json` / `irys-devnet-*.json` |
 
 ## 缺的依赖（需要 Wes）
 
 1. ~~**Devnet SOL ≈5 SOL**~~ ✅ 已到账并完成部署（deployer 现约 1.99 SOL）。
-2. **元数据上传账户**（任选一）：Pinata 免费层 JWT / Filebase 免费层 S3 key / Storacha(web3.storage) 邮箱账户。上传后核对 CID 与本地计算一致（当前 CID 仅在本地 kubo）。
+2. ~~**元数据上传账户**~~ 🟡 Lighthouse 已无账号 pin 同 CID；可选 Pinata/Filebase 仪表盘二次确认。
 3. **域名**（或接受临时 `trycloudflare.com` 演示地址）。
 4. **Linux 主机 + 持久卷**，用于 HTTPS 单实例（Caddy + Node 24 + SQLite）。本盒出站 7844/22 被封。
 5. **真实浏览器钱包**：在真机上安装 Phantom 或 Backpack，切到 Devnet，完成 claim + 保存旅程 + 刷新恢复的录屏（A06/A07/A10）。脚本钱包 Devnet 主流程已通。
-6. **第二个钱包**（P1 赠送验收，可同一台机器另建账户）；Devnet 上 gift 尚未演练。
+6. ~~**第二个钱包 / Devnet gift**~~ ✅ 脚本双钱包 Devnet 已通（`gift-two-wallet-devnet.json`）；真实 Phantom 第二账户仍建议你点一遍。
 7. **批准程序地址** `2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT` 替换代码中的 `2R4P5J6r…`（原密钥不在本机；已部署到 Devnet）。
 
 ## Devnet 部署核验（2026-10-10 10:12–10:16 UTC+8）

@@ -5,7 +5,6 @@
   "network": "devnet",
   "genesis": "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
   "rpc_public": "https://api.devnet.solana.com",
-  "commit": "e5435ae67c73183d58874a00479f5dd5dc529188",
   "program_id": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT",
   "program_id_note": "2SCKfWsz… replaces declared 2R4P5J6r…3iQR (original key not on this box). Needs Wes approval before any mainnet/merge.",
   "so_sha256": "3db1e8e79371be89a66a52a1fc3c48a77e96a0422fe68b83d609afe3c0562846",
@@ -25,7 +24,7 @@
     "deployer_before_deploy_sol": 5,
     "deployer_after_deploy_sol": 2.09119212,
     "deployer_after_fund_and_smoke_sol": 1.99118212,
-    "player_a_sol": 0.0435728,
+    "player_a_sol": 0.03716076,
     "player_b_sol": 0.05
   },
   "explorer": {
@@ -111,13 +110,83 @@
           "explorer": "https://explorer.solana.com/tx/2WtTemMxoS1jSFmQ6by5BE3jBmXNWdFsmezTEMqzuPS7qrPknbsCnu9WB5i2FTsjdvDcki8nbrANdGocYKZC5mix?cluster=devnet"
         }
       ]
+    },
+    "gift_two_wallet": {
+      "source": "chain/evidence/gift-two-wallet-devnet.json",
+      "checks": [
+        "A claims the companion on Devnet",
+        "Gift is refused while the companion is travelling (no transaction prepared)",
+        "Self-gift, invalid address and cancelled review all stop before signing",
+        "A gifts via owner-signed Core transfer; review showed network, asset, recipient and fee; finalized",
+        "A can no longer care after the gift (PET_NOT_FOUND)",
+        "B signs in, syncs, sees the same asset and continues care"
+      ],
+      "asset": "FNjCcimb9gSo2c7frYJDGq5NXVamVM8u2CHtgMzuJddm",
+      "transactions": [
+        {
+          "label": "claim",
+          "signature": "RPjfcig1P2kftNy4CE9JcWsBddSVHjtX7Yvxt7JwiWkxMattbgmT8kKBK9u2qo9b1wHvi4gMxgTKyhTqtEsmwjG",
+          "asset": "FNjCcimb9gSo2c7frYJDGq5NXVamVM8u2CHtgMzuJddm",
+          "explorer": "https://explorer.solana.com/tx/RPjfcig1P2kftNy4CE9JcWsBddSVHjtX7Yvxt7JwiWkxMattbgmT8kKBK9u2qo9b1wHvi4gMxgTKyhTqtEsmwjG?cluster=devnet",
+          "asset_explorer": "https://explorer.solana.com/address/FNjCcimb9gSo2c7frYJDGq5NXVamVM8u2CHtgMzuJddm?cluster=devnet"
+        },
+        {
+          "label": "gift",
+          "signature": "5ZNrPvAMSG7GxoXTQMTZc7AnerHSG4Ca5p9eXoTZHE9wBFnqbVFYpUWxFB4NtT3g7PxdZApvRUGXsW9XqHEe9UW2",
+          "slot": 509390237,
+          "from": "5wpnLLhKQhaLE5zYouZHQYmrrcwN3s2u9uPWLbFvjdow",
+          "to": "9WFW2Avm7qYmiMNuH78ftAbFct7ptgdFUmNZTGFyGX1P",
+          "asset": "FNjCcimb9gSo2c7frYJDGq5NXVamVM8u2CHtgMzuJddm",
+          "explorer": "https://explorer.solana.com/tx/5ZNrPvAMSG7GxoXTQMTZc7AnerHSG4Ca5p9eXoTZHE9wBFnqbVFYpUWxFB4NtT3g7PxdZApvRUGXsW9XqHEe9UW2?cluster=devnet"
+        }
+      ]
     }
   },
   "needs_wes": [
-    "Approve program id 2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT (original 2R4P5J6r… key not on box)",
-    "Metadata pinning account (CIDs currently only in local kubo)",
-    "Public HTTPS host/domain (box egress 7844/22 blocked)",
-    "Real Phantom/Backpack + second wallet run (incl. gift) on Devnet"
+    "Approve program id 2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT",
+    "Real Phantom/Backpack claim+trip+receipt (+ optional gift) on Devnet",
+    "Public HTTPS host/domain (box egress 7844/22 blocked; wrangler needs Wes login)",
+    "Optional: Pinata/Filebase JWT for dashboard-visible pins (Lighthouse already has same CIDs)"
   ],
-  "recorded_at": "2026-10-10T02:15:59.368Z"
+  "recorded_at": "2026-10-10T02:32:03.370Z",
+  "metadata_pinning": {
+    "status": "partial_public",
+    "on_chain_uris_unchanged": true,
+    "note": "Core collection/editions already point at ipfs://bafkrei… CIDs; assets immutable. Same CID bytes uploaded to Lighthouse; identical bytes on Irys Devnet HTTPS gateway. Public ipfs.io/dweb.link currently bot/SW-challenge curl clients.",
+    "lighthouse": {
+      "evidence": "docs/evidence/lighthouse-pin-2026-10-10.json",
+      "cid_match": true,
+      "files": 7
+    },
+    "irys_devnet": {
+      "evidence_upload": "docs/evidence/irys-devnet-upload-2026-10-10.json",
+      "evidence_gateway_proofs": "docs/evidence/irys-devnet-gateway-proofs-2026-10-10.json",
+      "gateway": "https://gateway.irys.xyz/<id>",
+      "http": 200,
+      "sha256_match": true,
+      "valid_ar_uri_for_chain_client": false,
+      "example_image_gateway": "https://gateway.irys.xyz/GSP2HBYmaaKZTN3nFW8rWTKbHtUiw8JbK242E35t9BrJ",
+      "example_collection_json_gateway": "https://gateway.irys.xyz/DF5VwjfkripCJexXAeiFPk2bcjwZE1d8UXftByAfNYWM"
+    },
+    "uris": {
+      "collection": "ipfs://bafkreidlapaczocd4zvg6hb62ov26f6wow27extrwdgwtfykbwhfq5u2ki",
+      "moss": {
+        "json": "ipfs://bafkreia32h5aktcj2ia3bpldar2embtmvxu3onn5nti6kvdfq4gzky7h3u",
+        "image": "ipfs://bafkreid6whvuf4rs74srb7s7rygxvj2q44ecku3epty5aghqrmfohuknee"
+      },
+      "puddle": {
+        "json": "ipfs://bafkreibscbjvqhbrojyk64dpibwe4747qu6wvfn7fvsqkz4cpfw7q24lqa",
+        "image": "ipfs://bafkreieskhf7warrqnnp5kxok7d2llccyjv3v7e3vkb45vsrmf5sygdaoa"
+      },
+      "wisp": {
+        "json": "ipfs://bafkreicfhv2s2awy3hp56ib3yrdwe7ytqimcrh6dwkbtqbarfqy4p2ia2y",
+        "image": "ipfs://bafkreia2dgvzqc3r6zpe52pnfbg7vyx7vave26pf3z3e2tsn7oxvsyor34"
+      }
+    }
+  },
+  "https": {
+    "status": "blocked",
+    "note": "Box outbound 7844/22 blocked for tunnels. GitHub Pages not enabled. dist/web ~45MB gitignored. Static Pages possible later; API still needs a host."
+  },
+  "commit": "772a9a15ec02ba05f6a3d17da8e98d9d27feff3b"
 }

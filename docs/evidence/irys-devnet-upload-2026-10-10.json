@@ -1,0 +1,62 @@
+{
+  "wallet": "294hmkx17KS7ww6CzA6ZeDx2F3o7zybo8txRYRvhW9BU",
+  "network": "irys-devnet",
+  "results": [
+    {
+      "path": "images/moss-seed.png",
+      "id": "GSP2HBYmaaKZTN3nFW8rWTKbHtUiw8JbK242E35t9BrJ",
+      "uri": "ar://GSP2HBYmaaKZTN3nFW8rWTKbHtUiw8JbK242E35t9BrJ",
+      "gateway": "https://gateway.irys.xyz/GSP2HBYmaaKZTN3nFW8rWTKbHtUiw8JbK242E35t9BrJ",
+      "sha256": "7eb1eb42f232ff2510fe5f8e0d7aa750e7082553647cf1d018f08b0ae3d14d21",
+      "bytes": 2261
+    },
+    {
+      "path": "images/puddle-seed.png",
+      "id": "Qn3MP3JfpU7QrQ92spU897rd6M8yTX227TqUkyKaaBf",
+      "uri": "ar://Qn3MP3JfpU7QrQ92spU897rd6M8yTX227TqUkyKaaBf",
+      "gateway": "https://gateway.irys.xyz/Qn3MP3JfpU7QrQ92spU897rd6M8yTX227TqUkyKaaBf",
+      "sha256": "9251cbfb0231835afeaaee57c7a5ac42c26bbafc9baa83ced651617b2c186070",
+      "bytes": 2244
+    },
+    {
+      "path": "images/wisp-seed.png",
+      "id": "B7Cw2Ww1nZiWrDcJcK6LBZZvQ98agEJAdawmwqtnQpB1",
+      "uri": "ar://B7Cw2Ww1nZiWrDcJcK6LBZZvQ98agEJAdawmwqtnQpB1",
+      "gateway": "https://gateway.irys.xyz/B7Cw2Ww1nZiWrDcJcK6LBZZvQ98agEJAdawmwqtnQpB1",
+      "sha256": "1a19ab980b71f65e4ee9ed284dfae2ffa82a4d79e5de764d4e4dfbaf5961d1df",
+      "bytes": 2252
+    },
+    {
+      "path": "json/moss.json",
+      "id": "97w6hRAEk9TFe9whjfQdfzVWhGtGmajJGC1mah3GGb5p",
+      "uri": "ar://97w6hRAEk9TFe9whjfQdfzVWhGtGmajJGC1mah3GGb5p",
+      "gateway": "https://gateway.irys.xyz/97w6hRAEk9TFe9whjfQdfzVWhGtGmajJGC1mah3GGb5p",
+      "sha256": "1bd1fa054c49d201b0bd63047446066cade9b735bd6cd1e55465870d9563e7dd",
+      "bytes": 967
+    },
+    {
+      "path": "json/puddle.json",
+      "id": "5DkrV1PAChEXfJRTivNAnsKb7J3D6t7jSV1othD3XN8G",
+      "uri": "ar://5DkrV1PAChEXfJRTivNAnsKb7J3D6t7jSV1othD3XN8G",
+      "gateway": "https://gateway.irys.xyz/5DkrV1PAChEXfJRTivNAnsKb7J3D6t7jSV1othD3XN8G",
+      "sha256": "321053581c317270af706f406c4e7f9f853d6a95bf2d65056782796df86b8b80",
+      "bytes": 980
+    },
+    {
+      "path": "json/wisp.json",
+      "id": "4TWNzufL9kbrfa4kBeo4tyi17gPJgrVX99WhnXh6dMAB",
+      "uri": "ar://4TWNzufL9kbrfa4kBeo4tyi17gPJgrVX99WhnXh6dMAB",
+      "gateway": "https://gateway.irys.xyz/4TWNzufL9kbrfa4kBeo4tyi17gPJgrVX99WhnXh6dMAB",
+      "sha256": "453d752d02d8d9dfdf203bc447627f138218289fc3b2833804112c31c7e900d6",
+      "bytes": 966
+    },
+    {
+      "path": "json/collection.json",
+      "id": "DF5VwjfkripCJexXAeiFPk2bcjwZE1d8UXftByAfNYWM",
+      "uri": "ar://DF5VwjfkripCJexXAeiFPk2bcjwZE1d8UXftByAfNYWM",
+      "gateway": "https://gateway.irys.xyz/DF5VwjfkripCJexXAeiFPk2bcjwZE1d8UXftByAfNYWM",
+      "sha256": "6b03c02cb843e66a6f1c3ed3abaf17d675b5f25e71b0cd69970a0d8e58769a52",
+      "bytes": 465
+    }
+  ]
+}

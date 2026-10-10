@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "kind": "gift-two-wallet",
+  "network": "devnet",
+  "genesis": "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
+  "program": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT",
+  "collection": "5BnUfTQ249v4v7sVAuohBEstsWF9JdzmaHwSbK7cuoiS",
+  "wallets": {
+    "A": "5wpnLLhKQhaLE5zYouZHQYmrrcwN3s2u9uPWLbFvjdow",
+    "B": "9WFW2Avm7qYmiMNuH78ftAbFct7ptgdFUmNZTGFyGX1P"
+  },
+  "balances_before": {
+    "A_sol": 0.0435728,
+    "B_sol": 0.05
+  },
+  "startedAt": "2026-10-10T02:28:56.261Z",
+  "checks": [
+    "A claims the companion on Devnet",
+    "Gift is refused while the companion is travelling (no transaction prepared)",
+    "Self-gift, invalid address and cancelled review all stop before signing",
+    "A gifts via owner-signed Core transfer; review showed network, asset, recipient and fee; finalized",
+    "A can no longer care after the gift (PET_NOT_FOUND)",
+    "B signs in, syncs, sees the same asset and continues care"
+  ],
+  "transactions": [
+    {
+      "label": "claim",
+      "signature": "RPjfcig1P2kftNy4CE9JcWsBddSVHjtX7Yvxt7JwiWkxMattbgmT8kKBK9u2qo9b1wHvi4gMxgTKyhTqtEsmwjG",
+      "asset": "FNjCcimb9gSo2c7frYJDGq5NXVamVM8u2CHtgMzuJddm",
+      "explorer": "https://explorer.solana.com/tx/RPjfcig1P2kftNy4CE9JcWsBddSVHjtX7Yvxt7JwiWkxMattbgmT8kKBK9u2qo9b1wHvi4gMxgTKyhTqtEsmwjG?cluster=devnet",
+      "asset_explorer": "https://explorer.solana.com/address/FNjCcimb9gSo2c7frYJDGq5NXVamVM8u2CHtgMzuJddm?cluster=devnet"
+    },
+    {
+      "label": "gift",
+      "signature": "5ZNrPvAMSG7GxoXTQMTZc7AnerHSG4Ca5p9eXoTZHE9wBFnqbVFYpUWxFB4NtT3g7PxdZApvRUGXsW9XqHEe9UW2",
+      "slot": 509390237,
+      "from": "5wpnLLhKQhaLE5zYouZHQYmrrcwN3s2u9uPWLbFvjdow",
+      "to": "9WFW2Avm7qYmiMNuH78ftAbFct7ptgdFUmNZTGFyGX1P",
+      "asset": "FNjCcimb9gSo2c7frYJDGq5NXVamVM8u2CHtgMzuJddm",
+      "explorer": "https://explorer.solana.com/tx/5ZNrPvAMSG7GxoXTQMTZc7AnerHSG4Ca5p9eXoTZHE9wBFnqbVFYpUWxFB4NtT3g7PxdZApvRUGXsW9XqHEe9UW2?cluster=devnet"
+    }
+  ],
+  "asset": "FNjCcimb9gSo2c7frYJDGq5NXVamVM8u2CHtgMzuJddm",
+  "recipientPetId": "597c9b83-4322-4919-8ede-d10bd95f191c",
+  "balances_after": {
+    "A_sol": 0.03716076,
+    "B_sol": 0.05
+  },
+  "finishedAt": "2026-10-10T02:29:37.239Z"
+}
