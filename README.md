@@ -122,6 +122,8 @@ powershell -ExecutionPolicy Bypass -File tools\start-devnet.ps1 -OpenBrowser
 
 See [docs/plan/windows-play.md](docs/plan/windows-play.md). Save file: `runtime/pets.sqlite` (do not delete to “restart” casually). Demo DB: `PIXELPETS_DB=runtime/demo/pets-demo-devnet.sqlite`.
 
+When moving to a new folder, use the SQLite backup command in that guide to copy your existing save before the first start. It keeps the browser's existing game profile usable without overwriting the original database.
+
 **RPC note:** on some CN networks `api.devnet.solana.com` is hijacked; `start-devnet.ps1` prefers Helius server-side and a keyless public RPC for the browser. On this Linux box, public Devnet RPC is fine.
 
 ---

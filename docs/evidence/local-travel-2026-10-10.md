@@ -20,6 +20,7 @@ Travel additions: personality-based departure notes; home away/return state; per
 | tools/build.ps1 -Target Web -ValidateOnly | PASS with PowerShell 7.4.6 on Linux |
 | tools/build.ps1 -Target Web | PASS with PowerShell 7.4.6 on Linux |
 | Export preset first bytes | [preset.0], no UTF-8 BOM |
+| Missing-export guard | Wallet build and start.ps1 both reject a missing PCK; startup does not report readiness |
 | Web export plus wallet bridge | HTML, JS, Wasm, PCK and bridge generated |
 | Chrome for Testing 151 browser flow, chain disabled | Adopt, pack, depart, home note, reload while waiting, reveal, album and historical read passed; no page/console errors |
 

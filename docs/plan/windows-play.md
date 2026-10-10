@@ -8,7 +8,7 @@ GitHub PR #1 是代码审阅页，浏览器能打开它并不代表游戏已启�
 
 ## 推荐从新文件夹运行
 
-这样保留原来的代码和 `runtime/pets.sqlite`。新文件夹默认创建新的游戏数据库；原存档不会自动迁移。不要在运行中复制 SQLite 文件或删除 runtime 目录。
+这样保留原来的代码和 `runtime/pets.sqlite`。下面使用项目已有的 SQLite 备份工具，在新文件夹中创建原存档的一致性副本，原文件不被覆盖。这样同一个本机网址下的浏览器通行证仍能找到原来的档案。
 
 先停止旧文件夹的服务，释放 9782、9783。以下路径按目前提供的电脑路径填写：
 
@@ -18,6 +18,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\stop.ps1
 cd C:\Users\86189
 git clone --branch codex/travel-companion-experience --single-branch https://github.com/weswes233/PixelPets.git PixelPets-Travel
 cd .\PixelPets-Travel
+node .\tools\backup.ts backup --source 'C:\Users\86189\PixelPets\runtime\pets.sqlite' --destination '.\runtime\pets.sqlite'
+if ($LASTEXITCODE -ne 0) { throw '存档复制失败，请先处理上面的错误。' }
 $env:PIXELPETS_GODOT_PATH = 'D:\Godot_v4.5.2-stable_win64.exe'
 $env:PIXELPETS_GODOT_TEMPLATES = 'C:\Users\86189\PixelPets\runtime'
 $env:CHAIN_ENABLED = 'false'
@@ -27,6 +29,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\play.ps1
 要求 Node.js **24.x**、Godot **4.5.2 stable**。原 runtime 目录需要存在同版 `web_nothreads_release.zip`，它是已解压的导出模板，不是 `.tpz` 本身。新分支的锁文件已补齐 `bufferutil` 和 `utf-8-validate`，正常使用 `npm ci`。
 
 `play.ps1` 依次安装依赖、生成图鉴、等待 Godot 完成导入和 Web 导出、构建钱包桥接代码、停止当前文件夹旧服务、启动 API 与网页，并自动打开浏览器。构建失败会停止，不会继续显示启动成功。导出预设使用无 BOM 的 UTF-8，兼容 Windows PowerShell 5.1。
+
+存档复制只在这个新文件夹第一次运行时做一次；目标数据库已存在时工具会拒绝覆盖。后续启动直接执行最后的 play.ps1，不再重复 clone 或复制。若原目录没有 runtime/pets.sqlite，可跳过复制两行，从新档案开始；旧浏览器若显示通行证失效，按页面提示点击重新连接即可创建新档案，原通行证会保留在本机历史中。
 
 启动完成后打开 **http://127.0.0.1:9783/**。如果还是旧页面，按 Ctrl+F5。后续不改代码时，可直接执行：
 
