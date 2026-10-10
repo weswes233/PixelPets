@@ -1,0 +1,15 @@
+{
+  "gift_sig": "2kYtGeuaphnTQtb4SnbaD9fgw3d3gfh6z5abzHEZ2chfjUJyG8dWkzUcUPnsuW5smcHCEfco4Z1AMeexK6zWiPpw",
+  "asset": "BbJDvrJYN6MR5Xtf1xBBe9FmqQCFANEPLZCu1sRW5mF9",
+  "recipient": "9WFW2Avm7qYmiMNuH78ftAbFct7ptgdFUmNZTGFyGX1P",
+  "finalized": true,
+  "recipient_sync": true,
+  "recipient_care": true,
+  "details": {
+    "connect": "Fresh guest -> Wallet -> Connect wallet -> Phantom (player-b) SIWS confirmed; 'Wallet connected 9WFW2Avm...FyGX1P', status 'Ownership synced. Carry on!'",
+    "sync": "Sync wallet companions -> 'Ownership synced. Carry on!'; Home shows 'Moss - First meeting - Moss / Claimed on Devnet', adopt slots 0/3 (received pet uses no slot)",
+    "care": "Feed succeeded: Bond 1/6->2/6, Energy 80->85, Mood 70->74, toast shown"
+  },
+  "errors": [],
+  "notes": ["Minor i18n: in English UI the feed toast used Chinese name '苔苔 finished the snack and gave you a little nuzzle.' while header says 'Moss'"]
+}

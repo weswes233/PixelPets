@@ -33,3 +33,16 @@ JSON: `phantom-p0-claim-trip-v3.json`. Screenshots: `screens/v3-*`.
 ## Gift UI web rebuild
 
 Stale `index.pck` (02:05 CST) lacked gift UI added to `main.gd` at 02:19. Rebuilt and redeployed at **17:03–17:17 CST**; live pck `Content-Length: 7798332`. Details: `web-rebuild-gift-ui.md`.
+
+## Two-wallet gift (P1)
+
+| Step | Result |
+| --- | --- |
+| Gift player-a → player-b (real Phantom) | PASS, finalized |
+| player-b connect + sync | PASS |
+| player-b care (Feed) | PASS (bond 1→2) |
+
+- Sig: `2kYtGeuaphnTQtb4SnbaD9fgw3d3gfh6z5abzHEZ2chfjUJyG8dWkzUcUPnsuW5smcHCEfco4Z1AMeexK6zWiPpw`
+- Explorer: https://explorer.solana.com/tx/2kYtGeuaphnTQtb4SnbaD9fgw3d3gfh6z5abzHEZ2chfjUJyG8dWkzUcUPnsuW5smcHCEfco4Z1AMeexK6zWiPpw?cluster=devnet
+- Fixes needed: rebuilt Web export (gift UI missing from old pck); wallet accepts Phantom-prepended ComputeBudget ixs by comparing compiled messages.
+- Known nit: English UI feed message shows Chinese pet name (苔苔).
