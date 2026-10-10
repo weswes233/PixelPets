@@ -79,3 +79,8 @@
 3. 仅看产品外观：打开 PRODUCT-PREVIEW.md 截图即可（无需 HTTPS）。
 
 **通过标准：** 你能用手机/另一网络打开一个 `https://…` 演示 URL 完成英文主流程（或明确接受「仅静态预览 + 本机 API」拆分）。
+
+## F) Phantom P0 on public demo (bot QA, 2026-10-10)
+
+Real Phantom extension on https://175.178.27.231/ with test wallet player-a:
+claim + journey receipt **PASS**. Evidence: `docs/evidence/phantom-p0-2026-10-10/`.

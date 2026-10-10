@@ -1,0 +1,123 @@
+{
+  "url": "https://175.178.27.231/",
+  "when": "2026-10-10T08:31:00Z",
+  "network": "solana:devnet",
+  "rpc": {
+    "expected": "https://mango.devnet.rpcpool.com/",
+    "csp_connect_src": "connect-src 'self' https://mango.devnet.rpcpool.com",
+    "csp_full": "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://mango.devnet.rpcpool.com; worker-src 'self' blob:; frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
+    "csp_source": "Content-Security-Policy response header on hard reload of https://175.178.27.231/ (HTTP 200)",
+    "console_csp_violation": false,
+    "observed_requests": "Multiple POST https://mango.devnet.rpcpool.com/ during claim build, responses HTTP 200",
+    "note": "No console CSP refusal for mango. connect-src lists https://mango.devnet.rpcpool.com and does not list a wss endpoint."
+  },
+  "wallet": {
+    "provider": "Phantom",
+    "account": "player-a",
+    "address": "5wpnLLhKQhaLE5zYouZHQYmrrcwN3s2u9uPWLbFvjdow",
+    "address_shown": "5wpnLLhK…Fvjdow",
+    "stayed_on_player_a": true,
+    "unlocked_without_typing_password": true,
+    "network_shown": "Devnet / Testnet Mode, SIWS Chain ID solana:devnet"
+  },
+  "pet": {
+    "species": "Moss",
+    "status_after_attempt": "House companion (not claimed on-chain)",
+    "bond": "1/6",
+    "energy": 75,
+    "mood": 76
+  },
+  "success": {
+    "connect": true,
+    "claim": false,
+    "receipt": false
+  },
+  "connect": {
+    "ok": true,
+    "method": "In-game Connect wallet → Phantom",
+    "popups_approved": [
+      "Phantom Sign In (SIWS) for 175.178.27.231, account player-a, Chain ID solana:devnet, Confirm clicked"
+    ],
+    "ui_after": "Wallet connected, address 5wpnLLhK…Fvjdow, footer 'Ownership synced. Carry on!'"
+  },
+  "claim": {
+    "ok": false,
+    "phantom_review_popup": true,
+    "attempts": [
+      {
+        "n": 1,
+        "result": "In-game review dialog appeared (Moss, estimated debit 0.00640704 SOL) then expired before continue was clicked. Footer: 'That request expired. Start again.' No Phantom tx popup."
+      },
+      {
+        "n": 2,
+        "result": "Claim on Devnet → review dialog → Looks right — continue in wallet → real Phantom 'Confirm Transaction' popup. Confirm clicked after it enabled. UI then stuck on 'Submitted · checking confirmation'. Chain never saw the signature."
+      }
+    ],
+    "review_dialog": {
+      "title": "Claim on Devnet · 给伙伴一份链上身份",
+      "companion": "Moss",
+      "network": "devnet",
+      "wallet": "5wpnLLhKQhaLE5zYouZHQYmrrcwN3s2u9uPWLbFvjdow",
+      "estimated_total_debit_sol": "0.00640704",
+      "network_fee_included_sol": "0.000015",
+      "asset_shown": "read from screenshot, not chain-verified; line-broken base58 roughly 3nZ9rMjBXVC1dHJj7g6FMSYEdu476899NdeBV5 + 5lr5z7 (small UI font, exact chars uncertain)"
+    },
+    "phantom_popup": {
+      "title": "Confirm Transaction",
+      "site": "175.178.27.231",
+      "account": "player-a",
+      "balance_change_shown": "-0.006392 SOL",
+      "network": "Solana",
+      "network_fee_at_first_paint": "Loading...",
+      "warning": "This domain is new. Only proceed if you trust this site.",
+      "confirm_clicked": true,
+      "confirm_was_disabled_until_fee_loaded": true
+    },
+    "tx_signature": "4gos3Nuh4g1w8T7cyWZAnefGyKYK28CWDA7W2AaZnw9wbJbAq7EXEBxUS7qEzcqamS1gLND8UUPBQpKkW2TaejwD",
+    "signature_source": "Phantom activity modal link (Pending Interaction, Unknown App, status Pending, date Oct 10 2026 4:25 pm local / ~08:25 UTC, network Solana Devnet)",
+    "explorer_urls": [
+      "https://solscan.io/tx/4gos3Nuh4g1w8T7cyWZAnefGyKYK28CWDA7W2AaZnw9wbJbAq7EXEBxUS7qEzcqamS1gLND8UUPBQpKkW2TaejwD?cluster=devnet",
+      "https://explorer.solana.com/tx/4gos3Nuh4g1w8T7cyWZAnefGyKYK28CWDA7W2AaZnw9wbJbAq7EXEBxUS7qEzcqamS1gLND8UUPBQpKkW2TaejwD?cluster=devnet"
+    ],
+    "chain_check": {
+      "rpc": "https://mango.devnet.rpcpool.com/",
+      "getSignatureStatuses": null,
+      "searchTransactionHistory": true,
+      "getTransaction": null,
+      "player_a_balance_lamports": 337160760,
+      "balance_unchanged_from_preclaim": true,
+      "checked_at": "2026-10-10T08:30:51Z",
+      "note": "Signature is unknown to mango devnet. Not confirmed. Pet still House companion."
+    },
+    "ui_status_at_stop": "Submitted · checking confirmation",
+    "ui_error": null,
+    "console_this_attempt": [
+      "No [PixelPets] transaction flow stopped log during this attempt (confirm promise still pending when stopped).",
+      "Claim build issued POST https://mango.devnet.rpcpool.com/ and got HTTP 200.",
+      "No CSP violation logged for mango."
+    ],
+    "console_older_loads_in_same_tab_not_this_attempt": [
+      "Failed to load resource: 401 https://devnet.helius-rpc.com/",
+      "[PixelPets] transaction flow stopped: Error 401 : Unauthorized",
+      "[PixelPets] transaction flow stopped: TimeoutError signal timed out"
+    ],
+    "note": "Stopped without a second submit while the UI still says checking confirmation, to avoid a double claim. Journey receipt was not offered and was not attempted."
+  },
+  "receipt": {
+    "ok": false,
+    "attempted": false,
+    "reason": "Claim did not confirm on-chain, so the journey receipt was not saved. No new travel was started.",
+    "tx_signature": null,
+    "explorer_url": null
+  },
+  "screenshots": [
+    "/workspace/p0-qa/screens/v2-01-siws-confirm.png",
+    "/workspace/p0-qa/screens/v2-02-wallet-connected.png",
+    "/workspace/p0-qa/screens/v2-03-claim-review.png",
+    "/workspace/p0-qa/screens/v2-03b-claim-review-continued.png",
+    "/workspace/p0-qa/screens/v2-04-phantom-confirm-loading.png",
+    "/workspace/p0-qa/screens/v2-05-phantom-pending-sig.png",
+    "/workspace/p0-qa/screens/v2-06-submitted-checking.png",
+    "/workspace/p0-qa/screens/v2-07-home-still-house-companion.png"
+  ]
+}
