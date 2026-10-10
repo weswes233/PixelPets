@@ -1,6 +1,6 @@
 # PixelPets — Hackathon submission text
 
-Copy/paste-ready fields for the Colosseum / Solana hackathon form. Update the demo video URL after upload.
+Copy/paste-ready fields for the Colosseum / Solana hackathon form. Demo videos published via GitHub Release `demo-videos-2026-10-10`.
 
 ## Project name
 
@@ -79,19 +79,24 @@ Evidence JSON: `docs/evidence/devnet-demo-2026-10-10.json`
 - Product preview: `docs/plan/PRODUCT-PREVIEW.md`
 - Program Explorer: https://explorer.solana.com/address/2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT?cluster=devnet
 - Collection Explorer: https://explorer.solana.com/address/5BnUfTQ249v4v7sVAuohBEstsWF9JdzmaHwSbK7cuoiS?cluster=devnet
-- Demo video: **[PLACEHOLDER — upload /workspace/PixelPets-demo.mp4 then paste public URL]**
+- Product demo video: https://github.com/weswes233/PixelPets/releases/download/demo-videos-2026-10-10/PixelPets-product-demo-en.mp4
+- Pitch video: https://github.com/weswes233/PixelPets/releases/download/demo-videos-2026-10-10/PixelPets-pitch-en.mp4
+- Demo videos release: https://github.com/weswes233/PixelPets/releases/tag/demo-videos-2026-10-10
 
 ## Team
 
 - **Wes** / [weswes233](https://github.com/weswes233) — owner, product, Windows/Devnet ops
 - Built with Grok coding agents on the one-day travel + Devnet track
 
-## Demo video placeholder
+## Demo videos
 
 ```
-Demo video URL: <PASTE AFTER UPLOAD to Streamable/YouTube/GitHub release>
-Local / repo: docs/evidence/demo/PixelPets-demo.mp4 · box: /workspace/PixelPets-demo.mp4
-Local path: /workspace/PixelPets-demo.mp4
+Product demo URL: https://github.com/weswes233/PixelPets/releases/download/demo-videos-2026-10-10/PixelPets-product-demo-en.mp4
+Pitch URL:        https://github.com/weswes233/PixelPets/releases/download/demo-videos-2026-10-10/PixelPets-pitch-en.mp4
+Release:          https://github.com/weswes233/PixelPets/releases/tag/demo-videos-2026-10-10
+Local / repo silent source: docs/evidence/demo/PixelPets-demo.mp4
+Local EN product: /workspace/pixelpets-demo-en/PixelPets-product-demo-en.mp4 (~2:38)
+Local EN pitch:   /workspace/pixelpets-demo-en/PixelPets-pitch-en.mp4 (~2:24)
 Notes in captions: scripted Wallet Standard test wallet; TRAVEL_DURATION_MS=10000 for recording; Devnet only
 ```
 
