@@ -1,56 +1,77 @@
-# Windows 本机游玩（travel / Devnet）
+# Windows 本机游玩
 
-更新时间：2026-10-10（Asia/Shanghai）
+更新于 2026-10-10。适用于旅行分支，以及在它之上增加明信片册和 Windows 构建修复的 `codex/travel-companion-experience` 分支。
 
-## 打开地址
+## 先区分两个网址
 
-在浏览器打开：**http://127.0.0.1:9783/**
+GitHub PR #1 是代码审阅页，浏览器能打开它并不代表游戏已启动。游戏运行在你电脑的 `http://127.0.0.1:9783/`。9783 提供游戏网页并代理 API；9782 提供养成和旅行 API。这两个端口都不是钱包连接端口。
 
-这是 travel 分支的 `dist/web`（含旅行 UI / bridge），经本机静态服务 + API 反代。
+## 推荐从新文件夹运行
 
-## 启动方式
+这样保留原来的代码和 `runtime/pets.sqlite`。下面使用项目已有的 SQLite 备份工具，在新文件夹中创建原存档的一致性副本，原文件不被覆盖。这样同一个本机网址下的浏览器通行证仍能找到原来的档案。
 
-在仓库根目录 `D:\05_AI\Codex\Web3\PixelPets`：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File tools\start-devnet.ps1
-# 或自动打开浏览器：
-powershell -ExecutionPolicy Bypass -File tools\start-devnet.ps1 -OpenBrowser
-```
-
-停止：
+先停止旧文件夹的服务，释放 9782、9783。以下路径按目前提供的电脑路径填写：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File tools\stop.ps1
+cd C:\Users\86189\PixelPets
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\stop.ps1
+cd C:\Users\86189
+git clone --branch codex/travel-companion-experience --single-branch https://github.com/weswes233/PixelPets.git PixelPets-Travel
+cd .\PixelPets-Travel
+node .\tools\backup.ts backup --source 'C:\Users\86189\PixelPets\runtime\pets.sqlite' --destination '.\runtime\pets.sqlite'
+if ($LASTEXITCODE -ne 0) { throw '存档复制失败，请先处理上面的错误。' }
+$env:PIXELPETS_GODOT_PATH = 'D:\Godot_v4.5.2-stable_win64.exe'
+$env:PIXELPETS_GODOT_TEMPLATES = 'C:\Users\86189\PixelPets\runtime'
+$env:CHAIN_ENABLED = 'false'
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\play.ps1
 ```
 
-`start.ps1` **不会**加载 `CHAIN_*` 环境变量；日常 Devnet 请用 `start-devnet.ps1`。
+要求 Node.js **24.x**、Godot **4.5.2 stable**。原 runtime 目录需要存在同版 `web_nothreads_release.zip`，它是已解压的导出模板，不是 `.tpz` 本身。新分支的锁文件已补齐 `bufferutil` 和 `utf-8-validate`，正常使用 `npm ci`。
 
-## 当前已验证
+`play.ps1` 依次安装依赖、生成图鉴、等待 Godot 完成导入和 Web 导出、构建钱包桥接代码、停止当前文件夹旧服务、启动 API 与网页，并自动打开浏览器。构建失败会停止，不会继续显示启动成功。导出预设使用无 BOM 的 UTF-8，兼容 Windows PowerShell 5.1。
 
-| 检查项 | 状态 |
-|--------|------|
-| `GET http://127.0.0.1:9783/` | travel 静态页（`dist/web`） |
-| `GET /api/v1/live`（经 9783） | ok |
-| `GET /api/v1/health`（经 9783） | ok（依赖链配置探测） |
-| `GET /api/v1/chain/config` | `enabled:true`（服务器走 Helius Devnet） |
-| `GET /api/v1/travel/catalog` | 旅行目录可用 |
+存档复制只在这个新文件夹第一次运行时做一次；目标数据库已存在时工具会拒绝覆盖。后续启动直接执行最后的 play.ps1，不再重复 clone 或复制。若原目录没有 runtime/pets.sqlite，可跳过复制两行，从新档案开始；旧浏览器若显示通行证失效，按页面提示点击重新连接即可创建新档案，原通行证会保留在本机历史中。
 
-## 网络说明（重要）
+启动完成后打开 **http://127.0.0.1:9783/**。如果还是旧页面，按 Ctrl+F5。后续不改代码时，可直接执行：
 
-- 本机解析 `api.devnet.solana.com` 常被劫持到 Facebook 段 IP，TCP 超时；**不要**依赖官方 Devnet RPC。
-- 服务器侧 `CHAIN_RPC_URL` 使用 `runtime/helius.local.env` 中的 Helius Devnet（带 api-key，仅服务端）。
-- 浏览器侧 `CHAIN_PUBLIC_RPC_URL` 使用 `https://mango.devnet.rpcpool.com`（无密钥）。curl/浏览器可用；Node 默认 UA 会被该端点 403，因此服务端不走 mango。
-- 反代：`SERVE_FORWARD_CLIENT_IP=1` + API `TRUSTED_PROXY_IPS=127.0.0.1`，避免 `INVALID_CLIENT_IP`。
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\start.ps1 -OpenBrowser
+```
 
-## 程序与配置
+## 先完成一次旅行
 
-- Program：`2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT`（Devnet）
-- Genesis：`EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG`
-- 发行密钥：`runtime/devnet-keys/issuer.json`（勿提交、勿打印）
+1. 在陪伴页免费领养伙伴。领养和旅行使用游戏档案，不要求钱包。
+2. 进入旅行页，选择阳光集市或月灯小径，再选择点心盒或小提灯。行囊影响故事，不影响掉落概率。
+3. 点击出发，消耗 1 份免费补给。默认演示旅行 45 秒；可以关掉网页，服务端保存出发与归来时间。
+4. 返回时打开明信片，阅读性格故事与伙伴留言。结果揭晓一次后保存，刷新不会再抽取。
+5. 到卡册回看明信片与纪念物。界面显示最近 50 次旅程中的明信片；纪念物是游戏记录，目前不提供交换。
 
-## 剩余注意
+故事现在是双语模板，按性格、目的地、行囊和结果组合。新明信片在揭晓时保存文案快照；旧数据没有快照时仍能读取。Solana 收据保存规范结果的摘要，规范结果包含事件代码与物品，不包含明信片文案，也不证明抽奖公平。
 
-- Windows 上 GitHub TCP 443 常失败；从 box 同步文件请落到 `C:\Users\Wes\Downloads\` 再拷进仓库。
-- 若 Helius key 失效，`chain/config` 会回到 `enabled:false` / `RPC_UNAVAILABLE`；旅行养成 API 仍可玩，链上登记会停。
-- 未切换 git 到 `feature/travel-devnet-demo` 时，以已覆盖的 `server/src` + `dist/web` 为准。
+## 可选的 Solana Devnet
+
+上面的步骤明确关闭链服务，只测试本地旅行。仓库里的程序地址和集合地址不足以启用领取，还需要队友提供这套部署对应的 **服务端配置**。发行密钥只能留在服务端本机，不能发到聊天、提交 GitHub 或放进网页。
+
+已有 `runtime/devnet-chain.env` 和它引用的发行密钥文件后，停止免费模式服务，再执行：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\stop.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\start-devnet.ps1 -OpenBrowser
+```
+
+钱包通过网页中的 Wallet Standard 桥接连接扩展钱包。链服务核验部署后，才开放领取与保存旅程收据。新机器上的 Phantom/Backpack 弹窗、网络 RPC 和真实签名仍需在该电脑验收。PR #1 对程序地址有待维护者审批，不要为了运行游戏先合并它。
+
+## 失败时看哪里
+
+| 情况 | 下一步 |
+| --- | --- |
+| GitHub 或 git clone 无访问权限 | 登录有仓库权限的 GitHub 账号，确认已接受队友邀请 |
+| 缺少 Web 模板 | 检查 PIXELPETS_GODOT_TEMPLATES 指向的目录里是否有同版 web_nothreads_release.zip |
+| 端口被占用 | 用原项目 tools/stop.ps1 停止原项目服务，保留其他应用 |
+| 网页服务能连接，但游戏没有生成 | 执行 tools/play.ps1，查看第一个构建错误 |
+| 服务启动失败 | 查看 runtime/api.err.log、runtime/web.err.log |
+| 钱包领取按钮不可用 | 先查看 /api/v1/chain/config；本地免费模式的 enabled:false 是预期结果 |
+
+## 本次验证范围
+
+已在开发环境验证 Node API/SDK/钱包逻辑、Godot 界面、HTTP 客户端，以及实际 Godot Web 导出。Windows PowerShell 5.1 和你的电脑未由远程运行，因此最终本机验收以上述命令的输出为准。开发环境中的私有字体附件无法由连接器下载，视觉验证使用同一 Noto Sans SC 字体系列；GitHub 交付分支保留原仓库字体资源。

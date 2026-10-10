@@ -142,19 +142,27 @@ texture_format/s3tc_bptc=true
 codesign/enable=false
 application/modify_resources=false
 '@
-Set-Content -LiteralPath (Join-Path $gamePath 'export_presets.cfg') -Value $presets -Encoding utf8
-& $godotPath --headless --path $gamePath --editor --import
-if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
+# Windows PowerShell 5.1 writes a BOM with Set-Content -Encoding utf8.
+# Godot's ConfigFile parser needs the first [preset.0] section without that prefix.
+[IO.File]::WriteAllText((Join-Path $gamePath 'export_presets.cfg'), $presets + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+& node (Join-Path $PSScriptRoot 'build-codex.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Codex generation failed.' }
+function Invoke-Godot([string[]]$Arguments) {
+    # The Windows GUI executable can return control before import/export finishes.
+    # Start-Process -Wait also works when the console executable is selected.
+    $argumentLine = ($Arguments | ForEach-Object { '"' + $_ + '"' }) -join ' '
+    $process = Start-Process -FilePath $godotPath -ArgumentList $argumentLine -NoNewWindow -Wait -PassThru
+    if ($process.ExitCode -ne 0) { throw "Godot failed with exit code $($process.ExitCode): $argumentLine" }
+}
+Invoke-Godot -Arguments @('--headless', '--path', $gamePath, '--editor', '--import')
 if ($Target -in @('All','Web')) {
     New-Item -ItemType Directory -Force -Path (Join-Path $projectRoot 'dist\web') | Out-Null
-    & $godotPath --headless --path $gamePath --export-release Web (Join-Path $projectRoot 'dist\web\index.html')
-    if ($LASTEXITCODE -ne 0) { throw 'Godot Web export failed.' }
-    & node (Join-Path $PSScriptRoot 'build-web.mjs')
+    Invoke-Godot -Arguments @('--headless', '--path', $gamePath, '--export-release', 'Web', (Join-Path $projectRoot 'dist\web\index.html'))
+    & node (Join-Path $PSScriptRoot 'build-web.mjs') --require-export
     if ($LASTEXITCODE -ne 0) { throw 'Wallet bundle failed.' }
 }
 if ($Target -in @('All','Windows')) {
     New-Item -ItemType Directory -Force -Path (Join-Path $projectRoot 'dist\windows') | Out-Null
-    & $godotPath --headless --path $gamePath --export-release 'Windows Desktop' (Join-Path $projectRoot 'dist\windows\PixelPets.exe')
-    if ($LASTEXITCODE -ne 0) { throw 'Godot Windows export failed.' }
+    Invoke-Godot -Arguments @('--headless', '--path', $gamePath, '--export-release', 'Windows Desktop', (Join-Path $projectRoot 'dist\windows\PixelPets.exe'))
 }
 Write-Host 'PixelPets build completed. Run tools/start.ps1 for the local services.'

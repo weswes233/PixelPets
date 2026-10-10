@@ -1,7 +1,7 @@
 # PixelPets · 掌心伙伴
 
 **A tiny companion. A world of stories. Collect the journey.**  
-会替你出门的像素伙伴，以及可以交换的旅途收藏。
+会替你出门的像素伙伴，带回明信片与旅途纪念物。
 
 Free-to-play pixel companions (Moss / Puddle / Wisp): adopt and care without a wallet, send them on short trips for postcards & keepsakes, then optionally claim a **Solana Devnet** Metaplex Core identity and save a verifiable journey receipt.
 
@@ -27,13 +27,13 @@ Draft PR: https://github.com/weswes233/PixelPets/pull/1 · Product preview: [doc
 
 - **Care loop:** feed / play / rest / short walk; bond → sun/moon forms (3 species × 3 forms).
 - **Travel (server-authoritative):** 2 routes, packing items, free supplies (3/day UTC), demo timer labelled in UI (default 45s; recording used 10s).
-- **Postcard + keepsakes + Album** (8 collectibles as server records, not NFTs).
+- **Postcard + keepsakes + Album** (8 collectibles as server records, not NFTs). Reopen postcards from the latest 50 journeys; personality notes and bilingual stories are saved at reveal.
 - **Solana Devnet:** Metaplex Core collection + 3 editions; claim; checkpoint **v2** journey receipt; two-wallet gift (scripted).
 - **Wallet Standard** bridge (SIWS, review dialog, register / receipt / gift).
 - **Restart recovery** (localnet evidence): mid-trip SIGKILL keeps `ready_at`; unsigned receipt intent survives restart.
 - **Bilingual UI** (English-first) + 120-codex silhouette browser (concepts only).
 
-**Not done / 未完成:** public HTTPS full stack; real extension-wallet popup QA; shop checkout; project token (intentionally none).
+**Not done / 未完成:** public HTTPS full stack; real extension-wallet popup QA; keepsake exchange; AI-generated stories (current stories use templates); shop checkout; project token (intentionally none).
 
 ---
 
@@ -106,15 +106,23 @@ CHAIN_ENV=runtime/devnet-chain.env TRAVEL_DURATION_MS=45000 ./tools/demo-up.sh l
 ### Windows
 
 ```powershell
-# Care-only (no CHAIN_*):
-.\tools\start.ps1 -OpenBrowser
+# Install Node 24.x, Godot 4.5.2, and matching export templates first.
+$env:PIXELPETS_GODOT_PATH = 'D:\Godot_v4.5.2-stable_win64.exe'
+$env:PIXELPETS_GODOT_TEMPLATES = 'C:\Users\86189\PixelPets\runtime'
+$env:CHAIN_ENABLED = 'false'
+# Install dependencies, generate the codex, export Web, and start care + travel:
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\play.ps1
+# Later starts can reuse the built Web files:
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\start.ps1 -OpenBrowser
 # Devnet travel stack (loads runtime\devnet-chain.env + helius.local.env):
 powershell -ExecutionPolicy Bypass -File tools\start-devnet.ps1 -OpenBrowser
-# Or double-click 开始游玩.cmd for the simple local start
+# Or double-click 开始游玩.cmd after the first successful build
 .\tools\stop.ps1
 ```
 
 See [docs/plan/windows-play.md](docs/plan/windows-play.md). Save file: `runtime/pets.sqlite` (do not delete to “restart” casually). Demo DB: `PIXELPETS_DB=runtime/demo/pets-demo-devnet.sqlite`.
+
+When moving to a new folder, use the SQLite backup command in that guide to copy your existing save before the first start. It keeps the browser's existing game profile usable without overwriting the original database.
 
 **RPC note:** on some CN networks `api.devnet.solana.com` is hijacked; `start-devnet.ps1` prefers Helius server-side and a keyless public RPC for the browser. On this Linux box, public Devnet RPC is fine.
 

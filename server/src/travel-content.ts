@@ -9,6 +9,7 @@ export type RouteId = 'sunny_market' | 'moonlit_lane';
 export type PackingId = 'snack_tin' | 'tiny_lantern';
 export type Tier = 'common' | 'repeat' | 'special' | 'clue';
 type Text = { en: string; zh: string };
+export type Postcard = { version: 1; story: Record<'en' | 'zh', { title: string; lines: string[] }>; message: Text };
 
 export const temperaments: Record<Temperament, Text> = {
   cautious: { en: 'Cautious', zh: '谨慎' },
@@ -93,7 +94,7 @@ const packingLines: Record<PackingId, Text> = {
 };
 const tierLines: Record<Tier, Text> = {
   common: { en: 'It brought back a postcard and a small keepsake.', zh: '它带回了一张明信片和一件小纪念物。' },
-  repeat: { en: 'It found another one of something you already have — good for a future swap.', zh: '它又找到一件你已经有的东西——以后可以拿去交换。' },
+  repeat: { en: 'It found another familiar keepsake and put it beside the first one.', zh: '它又找到一件熟悉的纪念物，把它放在了上次那件旁边。' },
   special: { en: 'It came home with something rare and glowing.', zh: '它带回了一件稀有又发着光的东西。' },
   clue: { en: 'No keepsake this time, but it saw {clue}. A new friend, maybe someday.', zh: '这次没有纪念物，但它看见了{clue}。也许以后会成为新朋友。' },
 };
@@ -115,6 +116,30 @@ export function renderStory(code: string, language: 'en' | 'zh'): { title: strin
   const departure = language === 'en' ? `Your companion ${departures[event.temperament].en}.` : `你的伙伴${departures[event.temperament].zh}。`;
   const tier = tierLines[event.tier][language].replace('{clue}', event.clue ? clues[event.clue][language] : '');
   return { title, lines: [departure, scenes[event.route][event.temperament][language], packingLines[event.packing][language], tier] };
+}
+
+/** A personal note, with no reward information, shown while the companion is away. */
+export function departureNote(route: RouteId, temperament: Temperament, packing: PackingId): Text {
+  const notes: Record<Temperament, Text> = {
+    cautious: { en: `I've marked the way home from ${routes[route].name.en}. I'll be careful.`, zh: `去${routes[route].name.zh}的回程已经画在地图上啦。我会小心的。` },
+    curious: { en: `I'm off to ${routes[route].name.en}! I'll bring a story back for you.`, zh: `我去${routes[route].name.zh}看看！等回来，把遇到的事讲给你听。` },
+    greedy: { en: `I'm visiting ${routes[route].name.en}. If I find a good snack, I'll remember it for you.`, zh: `我去${routes[route].name.zh}逛逛。要是发现好吃的，我会记住名字告诉你。` },
+  };
+  const packed: Text = packing === 'snack_tin'
+    ? { en: 'The snack tin is in my bag. Thank you for packing it.', zh: '点心盒已经装进包里啦，谢谢你帮我准备。' }
+    : { en: 'I have your tiny lantern. It makes the road feel less lonely.', zh: '带上你准备的小提灯了，有它照着，路上就不孤单。' };
+  return { en: `${notes[temperament].en} ${packed.en}`, zh: `${notes[temperament].zh}${packed.zh}` };
+}
+
+/** Saved once at reveal. Display prose is separate from the canonical result committed on Solana. */
+export function renderPostcard(code: string): Postcard {
+  const { temperament, route } = parseEventCode(code);
+  const messages: Record<Temperament, Text> = {
+    cautious: { en: 'I found my way home. Next time, I might try a slightly longer path.', zh: '我找到回家的路啦。下次，也许可以试着多走一小段。' },
+    curious: { en: route === 'sunny_market' ? 'I still have so many questions about the market. Would you pack my bag again?' : 'The lane went farther than I expected. I wonder what is past the last lantern.', zh: route === 'sunny_market' ? '集市里还有好多事没问完呢。下次还能帮我准备行囊吗？' : '那条小路比我想的还长。最后一盏灯后面，又有什么呢？' },
+    greedy: { en: 'The best part of a trip? Having someone at home to tell about the food.', zh: '旅行最开心的事？是回家以后，有人听我讲路上吃到了什么。' },
+  };
+  return { version: 1, story: { en: renderStory(code, 'en'), zh: renderStory(code, 'zh') }, message: messages[temperament] };
 }
 export function publicTravelCatalog(durationMs: number) {
   return {

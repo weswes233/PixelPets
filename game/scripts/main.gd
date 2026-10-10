@@ -235,6 +235,7 @@ func _boot() -> void:
 		chain_config = configured["data"]
 	if page == "trade":
 		_render()
+	travel.refresh(true)
 	if wallet.get("authenticated", false):
 		_sync_assets()
 
@@ -275,7 +276,7 @@ func _set_language(next: String) -> void:
 func _switch_page(next: String) -> void:
 	page = next
 	_render()
-	if page in ["travel", "collection"] and online:
+	if page in ["companion", "travel", "collection", "trade"] and online:
 		travel.refresh(true)
 	if page == "journal" and online:
 		_load_journal()
@@ -329,6 +330,7 @@ func _render_companion() -> void:
 		selector.item_selected.connect(func(index: int):
 			selected_pet = str(pets[index]["id"])
 			_render()
+			travel.refresh(true)
 		)
 		content.add_child(selector)
 	var pet: Dictionary = current_pet()
@@ -338,17 +340,31 @@ func _render_companion() -> void:
 	var card := _panel(layout)
 	card.add_child(_label(str(pet.get("nickname", "伙伴")), 27))
 	card.add_child(_label(_form_name(pet) + "  /  " + _chain_label(pet), 13, MUTED))
-	pet_art = ART_SCRIPT.new()
-	pet_art.species = str(pet.get("species_id", "moss"))
-	pet_art.form = str(pet.get("form", "seed"))
-	pet_art.custom_minimum_size.y = 228 if small_layout else 298
-	card.add_child(pet_art)
+	var trip: Dictionary = travel.trips.get(str(pet["id"]), {})
+	var travelling: bool = str(trip.get("state", "")) == "travelling"
+	var away: bool = travelling and travel.remaining_ms(trip) > 0
+	travel.home_was_away = away
+	if away:
+		card.add_child(_label("Away on a little adventure" if L10n.lang == "en" else "它出门旅行啦", 24))
+		card.add_child(_label("A note left at home" if L10n.lang == "en" else "留在家里的小纸条", 15, CORAL))
+		card.add_child(_label(L10n.pick(trip.get("departure_note", {})), 16))
+		card.add_child(_label("You can close the page. The postcard will wait for you." if L10n.lang == "en" else "可以先关掉网页，回来时再拆明信片。", 13, MUTED))
+	else:
+		pet_art = ART_SCRIPT.new()
+		pet_art.species = str(pet.get("species_id", "moss"))
+		pet_art.form = str(pet.get("form", "seed"))
+		pet_art.custom_minimum_size.y = 228 if small_layout else 298
+		card.add_child(pet_art)
+		if travelling:
+			card.add_child(_label("Your companion is back with a postcard." if L10n.lang == "en" else "伙伴回来了，还带着一张明信片。", 16, CORAL))
+			card.add_child(_button("Open the postcard" if L10n.lang == "en" else "去拆明信片", func(): _switch_page("travel"), true))
 	var quote: String = "今天也很高兴见到你。一起出去走走吧。"
 	if int(pet.get("energy", 0)) < 30:
 		quote = "想找个舒服的角落，和你一起歇一会儿。"
 	elif pet.get("form", "seed") != "seed":
 		quote = "这些一起度过的日子，已经成为我的模样。"
-	card.add_child(_label(quote, 15))
+	if not away:
+		card.add_child(_label(quote, 15))
 	var details := _panel(layout, Color("f0f1e5"))
 	details.add_child(_label("我们的日常", 20))
 	_meter(details, "亲密", int(pet.get("bond", 0)), 6, Color("c8937b"))
@@ -366,7 +382,7 @@ func _render_companion() -> void:
 		var action: String = str(item[0])
 		var button := _button(str(item[1]), _open_adventure if action == "explore" else _care.bind(action, ""), action == "explore")
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.disabled = busy or not online or not access_message.is_empty()
+		button.disabled = busy or not online or travelling or not access_message.is_empty()
 		actions.add_child(button)
 	details.add_child(_label("每种照顾都有自己的节奏。没有死亡，也不用担心落下一天。", 13, MUTED))
 	if not access_message.is_empty():

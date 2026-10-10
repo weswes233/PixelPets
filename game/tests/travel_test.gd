@@ -74,12 +74,20 @@ func run() -> void:
 	var local_now: float = Time.get_unix_time_from_system() * 1000.0
 	var server_now: float = local_now + 600000.0
 	view._accept({"trip": {"id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "pet_id": pet["id"], "route_id": "moonlit_lane", "state": "travelling",
-		"ready_at": iso(server_now + 30000.0), "server_time": iso(server_now), "public_receipt_id": "jr_TESTTESTTESTTESTTESTTE"}, "supplies": {"balance": 2, "daily_cap": 3, "server_time": iso(server_now)}})
+		"ready_at": iso(server_now + 30000.0), "server_time": iso(server_now), "departure_note": {"en": "I have your tiny lantern.", "zh": "带上小提灯了。"}, "public_receipt_id": "jr_TESTTESTTESTTESTTESTTE"}, "supplies": {"balance": 2, "daily_cap": 3, "server_time": iso(server_now)}})
 	var left: float = view.remaining_ms(view.trips[pet["id"]])
 	check(left > 25000.0 and left <= 31000.0, "Countdown uses the server clock offset (got %f ms)" % left)
 	client._render()
 	check(has_text(client, "On the way to Moonlit Lantern Lane"), "Away state names the destination")
 	check(not has_text(client, "Open the postcard"), "Postcard can't open before the server ready time")
+	check(has_text(client, "A note left at home") and has_text(client, "I have your tiny lantern."), "Away state shows the companion's note")
+	client.page = "companion"
+	client._render()
+	check(has_text(client, "Away on a little adventure"), "Home reflects that the companion has left")
+	for button in client.content.find_children("*", "Button", true, false):
+		if button.text == "Feed a bite":
+			check(button.disabled, "Care waits until the companion returns")
+	client.page = "travel"
 	view.trips[pet["id"]]["ready_at"] = iso(server_now - 1000.0)
 	client._render()
 	check(has_text(client, "Your companion is back") and has_text(client, "Open the postcard"), "Return state appears once the server time passes ready_at")
@@ -112,6 +120,26 @@ func run() -> void:
 	check(has_text(client, "Open public proof"), "Confirmed receipt links its public proof")
 	var english: String = " ".join(texts(client.content))
 	check(not L10n._has_cjk(english), "English travel screens contain no Chinese text")
+	# Historical reads must not replace an active journey or ask the wallet to save its hash.
+	view.history = [revealed]
+	var active: Dictionary = {"id": "next_trip", "pet_id": pet["id"], "state": "travelling", "started_at": iso(server_now + 1000), "ready_at": iso(server_now + 60000), "result": null}
+	view._remember_trip(active)
+	view._remember_trip(revealed)
+	check(str(view.trips[pet["id"]]["id"]) == "next_trip", "Reading an old postcard keeps the active trip")
+	check(view.receipt_request(pet["id"], revealed["id"]).get("result_hash") == "ab".repeat(32), "Historical receipt uses that postcard's hash")
+	check(view.receipt_request("another_pet", revealed["id"]).is_empty(), "Historical receipt cannot use a different pet")
+	check(view.receipt_request(pet["id"], "next_trip").is_empty(), "An active journey cannot prepare a receipt before reveal")
+	view.history_loaded = true
+	view.selected_postcard_id = revealed["id"]
+	client.page = "collection"
+	client._render()
+	check(has_text(client, "Back to postcard album") and has_text(client, "It watched a meteor."), "Album reopens a historical postcard")
+	client.pets = []
+	client._render()
+	check(has_text(client, "no longer in this profile"), "Gifted companion's postcard remains readable")
+	client._upsert_pet(pet)
+	view.selected_postcard_id = ""
+	view.trips[pet["id"]] = revealed
 	view.collections = {"discovered": 1, "total": 8, "disclosure": "Keepsakes are in-game collection records, not tokens or NFTs.", "collectibles": [
 		{"id": "last_lantern", "route": "moonlit_lane", "rarity": "special", "name": {"en": "The Last Lantern"}, "description": {"en": "Given by the vendor."}, "discovered": true, "quantity": 1},
 		{"id": "dew_bottle", "route": "moonlit_lane", "rarity": "common", "name": {"en": "Bottle of Dew"}, "description": {"en": "Drops."}, "discovered": false, "quantity": 0}]}

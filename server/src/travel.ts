@@ -4,14 +4,14 @@ import type { Pet } from './domain.ts';
 import type { Repository } from './repository.ts';
 import { canonicalJson, sha256Hex } from './canonical.ts';
 import type { Canonical } from './canonical.ts';
-import { CONTENT_VERSION, LOOT_TABLE_HASH, RULES_VERSION, clues, collectibles, eventCode, packings, renderStory, routes,
+import { CONTENT_VERSION, LOOT_TABLE_HASH, RULES_VERSION, clues, collectibles, departureNote, eventCode, packings, renderPostcard, routes,
   temperamentOf, tiers } from './travel-content.ts';
-import type { PackingId, RouteId, Tier } from './travel-content.ts';
+import type { PackingId, Postcard, RouteId, Temperament, Tier } from './travel-content.ts';
 
 export const DAILY_SUPPLIES = 3;
 type Row = Record<string, string | number | null>;
 export type TripState = 'travelling' | 'revealed' | 'cancelled';
-export type TripResult = { event_code: string; tier: Tier; items: [string, number][]; clue: string | null };
+export type TripResult = { event_code: string; tier: Tier; items: [string, number][]; clue: string | null; postcard?: Postcard };
 export type TripCheckpointSource = { trip_id: string; pet_id: string; public_receipt_id: string; result_hash: string };
 const ensure = (condition: unknown, status: number, code: string, message: string, details?: Record<string, unknown>): void => {
   if (!condition) throw new ApiError(status, code, message, details);
@@ -100,11 +100,13 @@ export class TravelService {
   view(row: Row) {
     const now = this.repository.clock();
     const result = row.result_json ? JSON.parse(String(row.result_json)) as TripResult : null;
+    const postcard = result ? result.postcard ?? renderPostcard(result.event_code) : null;
     const receipt = this.receipt(String(row.id));
     return {
       id: String(row.id), public_receipt_id: String(row.public_receipt_id), pet_id: String(row.pet_id),
       route_id: String(row.route_id), packing_id: String(row.packing_id), state: String(row.state) as TripState,
       temperament: String(row.temperament_snapshot), demo: true, duration_ms: Number(row.ready_at_ms) - Number(row.started_at_ms),
+      departure_note: departureNote(row.route_id as RouteId, row.temperament_snapshot as Temperament, row.packing_id as PackingId),
       started_at: iso(Number(row.started_at_ms)), ready_at: iso(Number(row.ready_at_ms)),
       settled_at: row.settled_at_ms === null ? null : iso(Number(row.settled_at_ms)),
       ready: String(row.state) === 'travelling' && now >= Number(row.ready_at_ms), server_time: iso(now),
@@ -113,7 +115,7 @@ export class TravelService {
       result: result && {
         event_code: result.event_code, tier: result.tier, clue: result.clue,
         items: result.items.map(([id, quantity]) => ({ id, quantity, name: collectibles[id].name, rarity: collectibles[id].rarity })),
-        story: { en: renderStory(result.event_code, 'en'), zh: renderStory(result.event_code, 'zh') },
+        story: postcard!.story, message: postcard!.message, postcard_version: postcard!.version,
         result_hash: String(row.result_hash), canonical_result: String(row.canonical_result_bytes),
       },
       receipt: receipt ? { status: String(receipt.status), chain_intent_id: String(receipt.chain_intent_id),
@@ -252,6 +254,7 @@ export class TravelService {
       const drawn = this.draw(userId, route);
       const result: TripResult = { tier: drawn.tier, items: drawn.items, clue: drawn.clue,
         event_code: eventCode(route, row!.temperament_snapshot as never, packing, drawn.tier, drawn.clue ?? undefined) };
+      result.postcard = renderPostcard(result.event_code);
       const canonical = canonicalJson(tripResultArray({ public_receipt_id: String(row!.public_receipt_id), route_id: route, packing_id: packing,
         rules_version: Number(row!.rules_version), loot_table_hash: String(row!.loot_table_hash), content_version: Number(row!.content_version),
         temperament_snapshot: String(row!.temperament_snapshot), started_at_ms: Number(row!.started_at_ms), ready_at_ms: Number(row!.ready_at_ms),
@@ -312,12 +315,13 @@ export class TravelService {
       schema: 'pixel-pets:journey-proof:v1', public_receipt_id: publicReceiptId,
       statement: 'Rewards are drawn by the server. The result is recorded on Solana.',
       trip_result: { canonical: String(row!.canonical_result_bytes), sha256: String(row!.result_hash) },
-      story: { en: renderStory(result.event_code, 'en'), zh: renderStory(result.event_code, 'zh') },
+      story: (result.postcard ?? renderPostcard(result.event_code)).story,
       items: result.items.map(([id, quantity]) => ({ id, quantity, name: collectibles[id].name.en })),
       checkpoints: receipts.map(receipt => ({ canonical: String(receipt.canonical_checkpoint_bytes), sha256: String(receipt.checkpoint_hash),
         network_genesis: String(receipt.network_genesis), program_id: String(receipt.program_id), asset_address: String(receipt.asset_address),
         expected_checkpoint: String(receipt.expected_checkpoint), signature: String(receipt.signature), finalized_slot: Number(receipt.finalized_slot) })),
       note: 'PetRecord keeps only the latest event_hash; later checkpoints overwrite it. Verify each receipt against its own transaction.',
+      story_note: 'Postcard prose is display content. The canonical trip result commits the event code and items, not the prose.',
     };
   }
 }
