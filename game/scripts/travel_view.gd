@@ -11,6 +11,9 @@ var catalog: Dictionary = {}
 var supplies: Dictionary = {}
 var collections: Dictionary = {}
 var trips: Dictionary = {}        # pet_id -> latest trip view from the server
+var history: Array = []           # the server's most recent 50 trips, across this profile's pets
+var selected_postcard_id: String = ""
+var history_loaded: bool = false
 var clock_offset_ms: float = 0.0  # server_time - local time, measured on each response
 var route_id: String = "sunny_market"
 var packing_id: String = "snack_tin"
@@ -18,6 +21,7 @@ var loading: bool = false
 var loaded_generation: int = -1
 var countdown_label: Label
 var countdown_ready: bool = false
+var home_was_away: bool = false
 var timer: Timer
 var pending_events: Dictionary = {}
 
@@ -31,6 +35,10 @@ func _init(owner: Control) -> void:
 
 func reset() -> void:
 	catalog.clear(); supplies.clear(); collections.clear(); trips.clear(); pending_events.clear()
+	history.clear()
+	selected_postcard_id = ""
+	history_loaded = false
+	home_was_away = false
 	loaded_generation = -1
 
 # ---------------------------------------------------------------- data
@@ -43,6 +51,7 @@ func refresh(force: bool = false) -> void:
 	var api: PetAPI = host.api
 	var got_catalog: Dictionary = await api.request("/travel/catalog")
 	var got_collections: Dictionary = await api.request("/collections")
+	var got_history: Dictionary = await api.request("/trips")
 	var pet: Dictionary = host.current_pet()
 	var got_current: Dictionary = {}
 	if not pet.is_empty():
@@ -54,6 +63,12 @@ func refresh(force: bool = false) -> void:
 		catalog = got_catalog["data"]
 	if got_collections.get("ok", false):
 		collections = got_collections["data"]
+	if got_history.get("ok", false):
+		history = got_history["data"].get("trips", [])
+		history_loaded = true
+		_accept(got_history["data"])
+		for entry in history:
+			_remember_trip(entry)
 	if got_current.get("ok", false):
 		if got_current["data"].get("trip") == null:
 			trips[str(pet["id"])] = {}
@@ -62,7 +77,7 @@ func refresh(force: bool = false) -> void:
 		host._set_status(PetAPI.error_message(got_current))
 	if not pet.is_empty() and not trips.has(str(pet["id"])):
 		trips[str(pet["id"])] = {}
-	if host.page in ["travel", "collection"] and got_catalog.get("ok", false):
+	if host.page in ["companion", "travel", "collection"] and got_catalog.get("ok", false):
 		host._render()
 
 func _accept(data: Dictionary) -> void:
@@ -71,10 +86,42 @@ func _accept(data: Dictionary) -> void:
 		_measure_clock(str(supplies.get("server_time", "")))
 	var trip: Variant = data.get("trip")
 	if trip is Dictionary:
-		trips[str(trip["pet_id"])] = trip
+		_remember_trip(trip)
 		_measure_clock(str(trip.get("server_time", "")))
 	if data.get("pet") is Dictionary:
 		host._upsert_pet(data["pet"])
+
+func _remember_trip(trip: Dictionary) -> void:
+	var pet_id: String = str(trip.get("pet_id", ""))
+	var previous: Dictionary = trips.get(pet_id, {})
+	# Reading or saving an old postcard must not replace the currently active trip.
+	if previous.is_empty() or str(previous.get("id", "")) == str(trip.get("id", "")) or iso_ms(str(trip.get("started_at", ""))) > iso_ms(str(previous.get("started_at", ""))):
+		if str(previous.get("id", "")) == str(trip.get("id", "")) and previous.get("_dismissed", false):
+			trip["_dismissed"] = true
+		trips[pet_id] = trip
+	for index in range(history.size()):
+		if str(history[index].get("id", "")) == str(trip.get("id", "")):
+			history[index] = trip
+			return
+	history.push_front(trip)
+	if history.size() > 50:
+		history.resize(50)
+
+func _trip_by_id(trip_id: String) -> Dictionary:
+	for entry in history:
+		if str(entry.get("id", "")) == trip_id:
+			return entry
+	for entry in trips.values():
+		if str(entry.get("id", "")) == trip_id:
+			return entry
+	return {}
+
+func receipt_request(pet_id: String, trip_id: String) -> Dictionary:
+	var trip: Dictionary = _trip_by_id(trip_id)
+	var hash: String = str(trip.get("result", {}).get("result_hash", ""))
+	if str(trip.get("pet_id", "")) != pet_id or str(trip.get("state", "")) != "revealed" or hash.is_empty():
+		return {}
+	return {"pet_id": pet_id, "trip_id": trip_id, "result_hash": hash}
 
 static func iso_ms(value: String) -> float:
 	if value.is_empty():
@@ -184,6 +231,10 @@ func _render_away(content: VBoxContainer, pet: Dictionary, trip: Dictionary) -> 
 	art.habitat = str(route.get("trait", "sun"))
 	art.custom_minimum_size.y = 200
 	box.add_child(art)
+	if not arrived:
+		box.add_child(host._label(_t("A note left at home", "留在家里的小纸条"), 15, host.CORAL))
+		box.add_child(host._label(L10n.pick(trip.get("departure_note", {})), 15))
+		box.add_child(host._label(_t("You can close the page. The journey continues, and the postcard will wait for you.", "可以先关掉网页，旅行会继续。明信片会等你回来再拆开。"), 13, host.MUTED))
 	box.add_child(host._label(demo_label(), 13, host.CORAL))
 	countdown_label = host._label("", 18)
 	box.add_child(countdown_label)
@@ -204,6 +255,12 @@ func _update_countdown(trip: Dictionary) -> void:
 	countdown_label.text = _t("Back in %d s", "还有 %d 秒") % ceili(left / 1000.0) if left > 0 else _t("Arrived home", "到家了")
 
 func _tick() -> void:
+	if host.page == "companion" and home_was_away:
+		var home_trip: Dictionary = trips.get(str(host.current_pet().get("id", "")), {})
+		if str(home_trip.get("state", "")) == "travelling" and remaining_ms(home_trip) <= 0:
+			home_was_away = false
+			host._render()
+		return
 	if host.page != "travel" or not is_instance_valid(countdown_label):
 		return
 	var trip: Dictionary = trips.get(str(host.current_pet().get("id", "")), {})
@@ -213,7 +270,7 @@ func _tick() -> void:
 	if not countdown_ready and remaining_ms(trip) <= 0:
 		host._render()
 
-func render_postcard(content: VBoxContainer, pet: Dictionary, trip: Dictionary) -> void:
+func render_postcard(content: VBoxContainer, pet: Dictionary, trip: Dictionary, archived: bool = false) -> void:
 	var result: Dictionary = trip.get("result", {})
 	var story: Dictionary = result.get("story", {}).get(L10n.lang, result.get("story", {}).get("en", {}))
 	var card: VBoxContainer = host._panel(content, Color("fff6e0"))
@@ -221,6 +278,10 @@ func render_postcard(content: VBoxContainer, pet: Dictionary, trip: Dictionary) 
 	card.add_child(host._label(str(story.get("title", "")), 21))
 	for line in story.get("lines", []):
 		card.add_child(host._label(str(line), 15))
+	if result.get("message") is Dictionary:
+		card.add_child(host._label(_t("A little message for you", "它想对你说"), 13, host.CORAL))
+		card.add_child(host._label(L10n.pick(result["message"]), 16))
+	card.add_child(host._label(_t("Written from your companion's personality and packing choices.", "故事使用性格与行囊模板生成。"), 12, host.MUTED))
 	for item in result.get("items", []):
 		var rarity: String = str(item.get("rarity", "common"))
 		card.add_child(host._label(_t("Keepsake: ", "纪念物：") + "%s  ·  %s" % [L10n.pick(item.get("name", {})), str(RARITY_EN.get(rarity, rarity)) if L10n.lang == "en" else ("特别" if rarity == "special" else "常见")], 16, host.CORAL if rarity == "special" else host.INK))
@@ -228,9 +289,17 @@ func render_postcard(content: VBoxContainer, pet: Dictionary, trip: Dictionary) 
 		card.add_child(host._label(_t("A clue about a companion that is coming later (%s).", "发现了一位未来伙伴的线索（%s，尚未开放）。") % str(result.get("clue")), 13, host.MUTED))
 	card.add_child(host._label(_t("Rewards are drawn by the server. The result is recorded on Solana when you save the journey receipt.", "奖励由服务器抽取；保存旅程收据时，结果摘要会记录在 Solana 上。"), 12, host.MUTED))
 	_render_receipt(card, pet, trip)
-	card.add_child(host._button(_t("Plan another trip", "再计划一次旅行"), func():
-		trip["_dismissed"] = true
-		host._render()))
+	if archived:
+		card.add_child(host._button(_t("Back to postcard album", "返回明信片册"), func():
+			selected_postcard_id = ""
+			host._render()))
+	else:
+		card.add_child(host._button(_t("Keep in my postcard album", "放进明信片册"), func():
+			selected_postcard_id = str(trip["id"])
+			host._switch_page("collection")))
+		card.add_child(host._button(_t("Plan another trip", "再计划一次旅行"), func():
+			trip["_dismissed"] = true
+			host._render()))
 
 func _render_receipt(card: VBoxContainer, pet: Dictionary, trip: Dictionary) -> void:
 	card.add_child(host._label(_t("Journey receipt", "旅程收据"), 17))
@@ -241,6 +310,8 @@ func _render_receipt(card: VBoxContainer, pet: Dictionary, trip: Dictionary) -> 
 		receipt = null
 	var registered: bool = host._requires_wallet(pet)
 	var devnet: bool = str(host.chain_config.get("network", "")).contains("devnet")
+	if pet.is_empty():
+		card.add_child(host._label(_t("This companion is no longer in this profile. Your postcard stays in the album.", "这位伙伴已不在当前档案中，你收到的明信片仍会保留。"), 13, host.MUTED))
 	if receipt is Dictionary and str(receipt.get("status", "")) == "confirmed":
 		card.add_child(host._label(_t("Confirmed on Solana Devnet", "已在 Solana Devnet 确认") if devnet else _t("Confirmed on Solana (%s)", "已在 Solana 确认（%s）") % str(host.chain_config.get("network", "")), 16, Color("3c7a52")))
 		var signature: String = str(receipt.get("signature", ""))
@@ -254,9 +325,13 @@ func _render_receipt(card: VBoxContainer, pet: Dictionary, trip: Dictionary) -> 
 		card.add_child(host._label(_t("The last save didn't land. You can try again.", "上次保存没有成功，可以再试一次。"), 13, host.CORAL))
 	elif receipt is Dictionary:
 		card.add_child(host._label(_t("Submitted · checking confirmation", "已提交 · 正在确认"), 15, host.CORAL))
+	if pet.is_empty():
+		return
 	if not registered:
 		card.add_child(host._label(_t("Claim this companion on Devnet to save the trip result on Solana. Optional — the postcard is already yours.", "在 Devnet 领取这位伙伴后，可以把旅程结果保存到 Solana。可选，明信片已经是你的了。"), 13, host.MUTED))
-		var claim: Button = host._button(_t("Claim on Devnet", "在 Devnet 领取"), func(): host._switch_page("trade"))
+		var claim: Button = host._button(_t("Claim on Devnet", "在 Devnet 领取"), func():
+			host.selected_pet = str(pet["id"])
+			host._switch_page("trade"))
 		claim.disabled = not bool(host.chain_config.get("enabled", false))
 		card.add_child(claim)
 		if not bool(host.chain_config.get("enabled", false)):
@@ -276,14 +351,17 @@ func _render_odds(content: VBoxContainer) -> void:
 	var info: VBoxContainer = host._panel(content, Color("f0f1e5"))
 	info.add_child(host._label(_t("How results work", "结果如何决定"), 16))
 	var parts: PackedStringArray = []
+	var tier_names: Dictionary = {"common": "Common keepsake", "repeat": "Repeat keepsake", "special": "Special keepsake", "clue": "Companion clue"} if L10n.lang == "en" else {"common": "普通纪念物", "repeat": "重复纪念物", "special": "特别纪念物", "clue": "伙伴线索"}
 	for tier in odds.get("tiers", []):
-		parts.append("%s %d%%" % [str(tier.get("tier", "")), int(tier.get("percent", 0))])
+		parts.append("%s %d%%" % [str(tier_names.get(str(tier.get("tier", "")), "")), int(tier.get("percent", 0))])
 	info.add_child(host._label(", ".join(parts), 13))
-	info.add_child(host._label(str(odds.get("note", "")), 12, host.MUTED))
-	info.add_child(host._label(str(catalog.get("disclosure", "")), 12, host.MUTED))
+	info.add_child(host._label(_t("If you have no common keepsake from this route yet, a repeat draw becomes a common draw.", "还没有这条路线的普通收藏时，重复结果会改为普通结果。"), 12, host.MUTED))
+	info.add_child(host._label(_t("Rewards are drawn by the server. The result is recorded on Solana when you save the journey receipt.", "奖励由服务器抽取。保存旅程收据时，结果摘要会记录到 Solana。"), 12, host.MUTED))
+	info.add_child(host._label(_t("Keepsakes are in-game collection records, not tokens or NFTs, and have no cash value.", "纪念物是游戏收藏记录，不是代币或 NFT，没有现金价值。"), 12, host.MUTED))
 
 # ---------------------------------------------------------------- keepsakes (Collection page)
 func render_keepsakes(content: VBoxContainer) -> void:
+	_render_album(content)
 	content.add_child(host._label(_t("Keepsakes", "旅途收藏"), 23))
 	if collections.is_empty():
 		content.add_child(host._label(_t("Loading keepsakes…", "正在载入收藏……") if host.online else _t("Connect to see keepsakes.", "连接后查看收藏。"), 14, host.MUTED))
@@ -304,7 +382,36 @@ func render_keepsakes(content: VBoxContainer) -> void:
 		card.add_child(host._label(L10n.pick(item.get("description", {})) if found else L10n.pick(_route(str(item.get("route", ""))).get("name", {})), 11, host.MUTED))
 		if found and int(item.get("quantity", 0)) > 1:
 			card.add_child(host._label("× %d" % int(item.get("quantity", 0)), 12, host.MUTED))
-	content.add_child(host._label(str(collections.get("disclosure", "")), 12, host.MUTED))
+	content.add_child(host._label(_t("Keepsakes are in-game collection records, not tokens or NFTs, and have no cash value.", "纪念物是游戏收藏记录，不是代币或 NFT，没有现金价值。"), 12, host.MUTED))
+
+func _render_album(content: VBoxContainer) -> void:
+	content.add_child(host._label(_t("Postcard album", "明信片册"), 23))
+	var selected: Dictionary = _trip_by_id(selected_postcard_id) if not selected_postcard_id.is_empty() else {}
+	if not selected.is_empty() and str(selected.get("state", "")) == "revealed":
+		var sender: Dictionary = {}
+		for pet in host.pets:
+			if str(pet.get("id", "")) == str(selected.get("pet_id", "")):
+				sender = pet
+				break
+		render_postcard(content, sender, selected, true)
+		return
+	var revealed: Array = history.filter(func(entry): return str(entry.get("state", "")) == "revealed")
+	content.add_child(host._label(_t("%d postcards in your latest 50 journeys. Saved with this game profile.", "最近 50 次旅程中有 %d 张明信片，保存在当前游戏档案里。") % revealed.size(), 13, host.MUTED))
+	if revealed.is_empty():
+		var empty: VBoxContainer = host._panel(content, Color("fff6e0"))
+		empty.add_child(host._label(_t("Your first postcard is still on the way.", "第一张明信片，就从一次小旅行开始。"), 16))
+		empty.add_child(host._button(_t("Plan a trip", "去准备旅行"), func(): host._switch_page("travel"), true))
+	if not history_loaded:
+		content.add_child(host._button(_t("Refresh postcard album", "刷新明信片册"), func(): refresh(true)))
+	for entry in revealed:
+		var trip: Dictionary = entry
+		var story: Dictionary = trip.get("result", {}).get("story", {}).get(L10n.lang, {})
+		var box: VBoxContainer = host._panel(content, Color("fff6e0"))
+		box.add_child(host._label(str(story.get("title", "")), 17))
+		box.add_child(host._label(str(trip.get("settled_at", "")).left(10), 12, host.MUTED))
+		box.add_child(host._button(_t("Read this postcard", "读这张明信片"), func():
+			selected_postcard_id = str(trip["id"])
+			host._render()))
 
 # ---------------------------------------------------------------- actions
 func start_trip() -> void:
@@ -354,14 +461,14 @@ func reveal_trip(trip_id: String) -> void:
 	host._render()
 
 func save_receipt(pet_id: String, trip_id: String) -> void:
-	var trip: Dictionary = trips.get(pet_id, {})
-	if host.busy or trip.is_empty():
+	var request: Dictionary = receipt_request(pet_id, trip_id)
+	if host.busy or request.is_empty():
 		return
 	host.busy = true
 	host._set_status(_t("Check your wallet: review the fee, then approve.", "请在钱包里核对费用后批准。"))
 	host._render()
 	var generation: int = host.account_generation
-	var result: Dictionary = await host._bridge_call("journey_receipt", {"pet_id": pet_id, "trip_id": trip_id, "result_hash": str(trip.get("result", {}).get("result_hash", ""))})
+	var result: Dictionary = await host._bridge_call("journey_receipt", request)
 	if generation != host.account_generation:
 		return
 	host.busy = false

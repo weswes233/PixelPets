@@ -40,6 +40,71 @@ test('public travel catalog discloses demo acceleration, odds, versions and non-
   } finally { await f.close(); }
 });
 
+test('away notes reflect the snapshotted personality and packing, without exposing a result', async () => {
+  const f = await fixture();
+  try {
+    const a = await f.guest();
+    const notes: string[] = [];
+    for (const [i, species] of ['moss', 'puddle', 'wisp'].entries()) {
+      const pet = await f.adopt(a.token, species, `adopt_note_000${i}`);
+      const trip = (await f.go(a.token, pet.id, `trip_note_000${i}`, 'sunny_market', i === 1 ? 'snack_tin' : 'tiny_lantern')).body.data.trip;
+      assert.equal(trip.result, null);
+      assert.match(trip.departure_note.zh, /阳光集市/);
+      assert.match(trip.departure_note.en, i === 1 ? /snack tin/ : /tiny lantern/);
+      notes.push(trip.departure_note.zh);
+      const row = f.repo.db.prepare('SELECT data FROM pets WHERE id=?').get(pet.id)!;
+      const changed = JSON.parse(String(row.data)); changed.temperament = 'greedy';
+      f.repo.db.prepare('UPDATE pets SET data=? WHERE id=?').run(JSON.stringify(changed), pet.id);
+      const read = (await f.request('GET', `/trips/${trip.id}`, undefined, a.token)).body.data.trip;
+      assert.deepEqual(read.departure_note, trip.departure_note);
+    }
+    assert.equal(new Set(notes).size, 3);
+  } finally { await f.close(); }
+});
+
+test('historical postcard prose stays as written; legacy rows still render without changing result evidence', async () => {
+  const f = await fixture();
+  try {
+    const a = await f.guest(); const pet = await f.adopt(a.token);
+    const trip = (await f.go(a.token, pet.id, 'trip_card_0001')).body.data.trip;
+    f.advance(45000);
+    const result = (await f.request('POST', `/trips/${trip.id}/reveal`, { event_id: 'reveal_card_0001' }, a.token)).body.data.trip.result;
+    const row = f.repo.db.prepare('SELECT result_json FROM trips WHERE id=?').get(trip.id)!;
+    const stored = JSON.parse(String(row.result_json));
+    assert.deepEqual(stored.postcard.story, result.story);
+    assert.deepEqual(stored.postcard.message, result.message);
+    // A saved postcard from an earlier release must not be regenerated from today's templates.
+    stored.postcard.story.en.lines[0] = 'A sentence saved by an earlier release.';
+    f.repo.db.prepare('UPDATE trips SET result_json=? WHERE id=?').run(JSON.stringify(stored), trip.id);
+    const saved = (await f.request('GET', `/trips/${trip.id}`, undefined, a.token)).body.data.trip.result;
+    assert.equal(saved.story.en.lines[0], 'A sentence saved by an earlier release.');
+    assert.equal(saved.result_hash, result.result_hash);
+    assert.equal(saved.canonical_result, result.canonical_result);
+    delete stored.postcard;
+    f.repo.db.prepare('UPDATE trips SET result_json=? WHERE id=?').run(JSON.stringify(stored), trip.id);
+    const legacy = (await f.request('GET', `/trips/${trip.id}`, undefined, a.token)).body.data.trip.result;
+    assert.deepEqual(legacy.story, { en: renderStory(result.event_code, 'en'), zh: renderStory(result.event_code, 'zh') });
+    assert.equal(legacy.result_hash, result.result_hash);
+  } finally { await f.close(); }
+});
+
+test('the postcard album returns only its profile\'s trips and keeps older cards beside a new active journey', async () => {
+  const f = await fixture();
+  try {
+    const a = await f.guest(); const b = await f.guest(); const pet = await f.adopt(a.token);
+    const first = (await f.go(a.token, pet.id, 'trip_album_0001')).body.data.trip;
+    f.advance(45000);
+    await f.request('POST', `/trips/${first.id}/reveal`, { event_id: 'reveal_album_0001' }, a.token);
+    f.advance(1);
+    const next = (await f.go(a.token, pet.id, 'trip_album_0002')).body.data.trip;
+    const album = (await f.request('GET', '/trips', undefined, a.token)).body.data.trips;
+    assert.deepEqual(album.map((t: { id: string }) => t.id), [next.id, first.id]);
+    assert.ok(album[1].result.message.zh.length > 0);
+    assert.deepEqual((await f.request('GET', '/trips', undefined, b.token)).body.data.trips, []);
+    assert.equal((await f.request('GET', `/trips/${first.id}`, undefined, b.token)).status, 404);
+  } finally { await f.close(); }
+});
+
 test('A01: concurrent starts debit one supply and create one active trip; same ID replays, changed params conflict', async () => {
   const f = await fixture();
   try {
