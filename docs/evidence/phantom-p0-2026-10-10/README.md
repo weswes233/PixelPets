@@ -29,3 +29,7 @@ Test wallet **player-a** (not Wes personal): `5wpnLLhKQhaLE5zYouZHQYmrrcwN3s2u9u
 Browser RPC uses same-origin `https://175.178.27.231/solana-rpc` (Caddy → Helius) because public Devnet endpoints were blocked or dropped txs from the QA browser egress.
 
 JSON: `phantom-p0-claim-trip-v3.json`. Screenshots: `screens/v3-*`.
+
+## Gift UI web rebuild
+
+Stale `index.pck` (02:05 CST) lacked gift UI added to `main.gd` at 02:19. Rebuilt and redeployed at **17:03–17:17 CST**; live pck `Content-Length: 7798332`. Details: `web-rebuild-gift-ui.md`.
