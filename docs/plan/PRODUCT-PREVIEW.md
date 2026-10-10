@@ -5,7 +5,9 @@
 **一句话：** 会替你出门的像素伙伴，以及可以交换的旅途收藏。  
 免费照顾三只原创宠物（苔苔 Moss / 啵啵 Puddle / 微光 Wisp），出游带回故事和纪念物；可选在 Solana Devnet 领取链上身份，并把旅途结果存证到 checkpoint v2。
 
-> 下面截图来自本机演示（英文主流程 + 中文切换）。脚本钱包 Devnet 领取/旅行/赠送已通；真实 Phantom 弹窗与公网 HTTPS 仍待你验收（见 [wes-verify.md](wes-verify.md)）。
+> 下面截图来自本机演示（英文主流程 + 中文切换）。脚本钱包 Devnet 领取/旅行/赠送已通。
+>
+> **公网演示：** [https://175.178.27.231/](https://175.178.27.231/)（自签证书，浏览器点「继续访问」；Phantom 切 Devnet）。真实 Phantom 弹窗验收见 [wes-verify.md](wes-verify.md)；部署说明 [cloud-deploy-2026-10-10.md](cloud-deploy-2026-10-10.md)。
 
 ## 主流程截图
 

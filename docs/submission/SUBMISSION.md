@@ -2,6 +2,12 @@
 
 Copy/paste-ready fields for the Colosseum / Solana hackathon form. Demo videos published via GitHub Release `demo-videos-2026-10-10`.
 
+## Live demo URL
+
+https://175.178.27.231/
+
+Self-signed TLS (browser warning). Solana **Devnet**. Prefer Phantom.
+
 ## Project name
 
 **PixelPets** (中文名：掌心伙伴)

@@ -5,7 +5,15 @@
 
 Free-to-play pixel companions (Moss / Puddle / Wisp): adopt and care without a wallet, send them on short trips for postcards & keepsakes, then optionally claim a **Solana Devnet** Metaplex Core identity and save a verifiable journey receipt.
 
-> **Honest status (2026-10-10):** travel loop + Devnet program/collection/editions are live; scripted Wallet Standard claim → trip → receipt → gift PASS. **Public HTTPS** and **real Phantom/Backpack** QA still need Wes. No project token.
+> **Honest status (2026-10-10):** travel loop + Devnet program/collection/editions are live; scripted Wallet Standard claim → trip → receipt → gift PASS. **Public demo:** [https://175.178.27.231/](https://175.178.27.231/) (self-signed TLS — browser warning expected; Phantom → Devnet). Real Phantom/Backpack QA still on Wes. No project token.
+
+## Play online / 在线游玩
+
+| | |
+| --- | --- |
+| **Public HTTPS demo** | [https://175.178.27.231/](https://175.178.27.231/) |
+| Notes | Self-signed certificate — click through the browser warning. Use **Phantom (Devnet)**. Deploy notes: [docs/plan/cloud-deploy-2026-10-10.md](docs/plan/cloud-deploy-2026-10-10.md) |
+| Local | `./tools/demo-up.sh local` → http://127.0.0.1:9783/ |
 
 Draft PR: https://github.com/weswes233/PixelPets/pull/1 · Product preview: [docs/plan/PRODUCT-PREVIEW.md](docs/plan/PRODUCT-PREVIEW.md) · Evidence: [docs/evidence/devnet-demo-2026-10-10.json](docs/evidence/devnet-demo-2026-10-10.json)
 
@@ -33,7 +41,7 @@ Draft PR: https://github.com/weswes233/PixelPets/pull/1 · Product preview: [doc
 - **Restart recovery** (localnet evidence): mid-trip SIGKILL keeps `ready_at`; unsigned receipt intent survives restart.
 - **Bilingual UI** (English-first) + 120-codex silhouette browser (concepts only).
 
-**Not done / 未完成:** public HTTPS full stack; real extension-wallet popup QA; shop checkout; project token (intentionally none).
+**Not done / 未完成:** real extension-wallet popup QA on the public URL; shop checkout; project token (intentionally none). Public HTTPS demo is up (self-signed).
 
 ---
 
