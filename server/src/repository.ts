@@ -12,6 +12,16 @@ export type RecoveredSession = {
   expires_at: string; game_expires_at: string;
 };
 type Row = Record<string, string | number | null>;
+
+const NICKNAME_EN: Record<string, string> = {
+  '苔苔': 'Moss', '向阳苔苔': 'Sunny Moss', '月影苔苔': 'Moonshade Moss',
+  '啵啵': 'Puddle', '晴天啵啵': 'Sunny Puddle', '夜露啵啵': 'Night-dew Puddle',
+  '微光': 'Wisp', '晨曦微光': 'Dawn Wisp', '星夜微光': 'Starlit Wisp',
+};
+function nicknameForEnglish(name: string): string {
+  return NICKNAME_EN[name] ?? name;
+}
+
 export class Repository {
   db: DatabaseSync; clock: () => number; publicOrigin: string; network: 'localnet' | 'devnet' | 'mainnet-beta';
   constructor(path: string, options: RepositoryOptions = {}) {
@@ -130,8 +140,10 @@ export class Repository {
       pet.energy = Math.max(0, Math.min(100, pet.energy + ({ feed: 5, play: -8, rest: 15, explore: -5 }[action])));
       pet.mood = Math.min(100, pet.mood + ({ feed: 4, play: 8, rest: 3, explore: 6 }[action]));
       pet.updated_at = iso(now);
-      let message = ({ feed: `${pet.nickname} 开心地吃光了点心，还悄悄蹭了蹭你。`, play: `${pet.nickname} 和你追逐了一小束光，玩得很开心。`, rest: `${pet.nickname} 在你身旁安心地打了个盹。`, explore: preference === 'sun' ? `${pet.nickname} 和你发现了一处暖洋洋的角落。` : `${pet.nickname} 和你收藏了一点安静的月光。` }[action]);
-      let messageEn = ({ feed: `${pet.nickname} finished the snack and gave you a little nuzzle.`, play: `${pet.nickname} chased a tiny beam of light with you.`, rest: `${pet.nickname} took a calm nap beside you.`, explore: preference === 'sun' ? `${pet.nickname} found a warm, sunny corner with you.` : `${pet.nickname} gathered a little quiet moonlight with you.` }[action]);
+      const nameZh = pet.nickname;
+      const nameEn = nicknameForEnglish(pet.nickname);
+      let message = ({ feed: `${nameZh} 开心地吃光了点心，还悄悄蹭了蹭你。`, play: `${nameZh} 和你追逐了一小束光，玩得很开心。`, rest: `${nameZh} 在你身旁安心地打了个盹。`, explore: preference === 'sun' ? `${nameZh} 和你发现了一处暖洋洋的角落。` : `${nameZh} 和你收藏了一点安静的月光。` }[action]);
+      let messageEn = ({ feed: `${nameEn} finished the snack and gave you a little nuzzle.`, play: `${nameEn} chased a tiny beam of light with you.`, rest: `${nameEn} took a calm nap beside you.`, explore: preference === 'sun' ? `${nameEn} found a warm, sunny corner with you.` : `${nameEn} gathered a little quiet moonlight with you.` }[action]);
       if (pet.form === 'seed' && pet.bond >= 6) {
         pet.form = pet.traits.sun === pet.traits.moon ? pet.favorite : pet.traits.sun > pet.traits.moon ? 'sun' : 'moon';
         message += ` 你们的陪伴让它成长为${pet.form === 'sun' ? '阳光' : '月色'}形态！`;
