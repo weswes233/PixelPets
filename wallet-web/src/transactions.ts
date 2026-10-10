@@ -202,30 +202,25 @@ function encodeBase58(bytes: Uint8Array): string {
 
 
 const COMPUTE_BUDGET_PROGRAM = new PublicKey('ComputeBudget111111111111111111111111111111');
-/** Phantom may prepend ComputeBudget ixs; core gift instructions must still match preparation. */
+/** Phantom may prepend ComputeBudget ixs; compare compiled messages, not decompiled metas. */
 function acceptWalletComputeBudget(expected: Transaction, returnedWire: Uint8Array | string, owner: string): Transaction {
   let returned: Transaction;
   try { returned = Transaction.from(typeof returnedWire === 'string' ? Buffer.from(returnedWire, 'base64') : returnedWire); }
   catch { throw new TransactionFlowError('INVALID_TRANSACTION', 'Expected a serialized legacy transaction.'); }
-  check(returned.feePayer?.equals(expected.feePayer!), 'TRANSACTION_REPLACED', 'Fee payer changed. Do not submit this gift.');
+  check(!!expected.feePayer && returned.feePayer?.equals(expected.feePayer), 'TRANSACTION_REPLACED', 'Fee payer changed. Do not submit this gift.');
   check(returned.recentBlockhash === expected.recentBlockhash, 'TRANSACTION_REPLACED', 'Blockhash changed. Prepare the gift again.');
-  const returnedIxs = returned.instructions;
-  let offset = 0;
-  while (offset < returnedIxs.length && returnedIxs[offset].programId.equals(COMPUTE_BUDGET_PROGRAM)) offset += 1;
-  check(offset < returnedIxs.length, 'TRANSACTION_REPLACED', 'Wallet returned only compute-budget instructions.');
-  const core = returnedIxs.slice(offset);
-  check(core.length === expected.instructions.length, 'TRANSACTION_REPLACED', 'Gift instructions were changed. Do not submit.');
-  for (let i = 0; i < core.length; i++) {
-    const a = core[i]; const b = expected.instructions[i];
-    check(a.programId.equals(b.programId), 'TRANSACTION_REPLACED', 'Gift program id changed.');
-    check(a.data.equals(b.data), 'TRANSACTION_REPLACED', 'Gift instruction data changed.');
-    check(a.keys.length === b.keys.length, 'TRANSACTION_REPLACED', 'Gift accounts changed.');
-    for (let k = 0; k < a.keys.length; k++) {
-      check(a.keys[k].pubkey.equals(b.keys[k].pubkey)
-        && a.keys[k].isSigner === b.keys[k].isSigner
-        && a.keys[k].isWritable === b.keys[k].isWritable, 'TRANSACTION_REPLACED', 'Gift account metas changed.');
-    }
+  const budget: typeof returned.instructions = [];
+  for (const ix of returned.instructions) {
+    if (!ix.programId.equals(COMPUTE_BUDGET_PROGRAM)) break;
+    budget.push(ix);
   }
+  check(budget.length < returned.instructions.length, 'TRANSACTION_REPLACED', 'Wallet returned only compute-budget instructions.');
+  const rebuilt = new Transaction();
+  rebuilt.feePayer = expected.feePayer;
+  rebuilt.recentBlockhash = expected.recentBlockhash;
+  for (const ix of budget) rebuilt.add(ix);
+  for (const ix of expected.instructions) rebuilt.add(ix);
+  check(Buffer.from(rebuilt.serializeMessage()).equals(returned.serializeMessage()), 'TRANSACTION_REPLACED', 'Gift message changed beyond compute-budget. Do not submit.');
   check(returned.verifySignatures(true), 'INVALID_SIGNATURE', 'Gift transaction signatures are invalid.');
   check(returned.signatures.some(s => s.publicKey.toBase58() === owner && s.signature !== null), 'MISSING_COSIGNATURE', 'Missing owner signature on gift.');
   return returned;
