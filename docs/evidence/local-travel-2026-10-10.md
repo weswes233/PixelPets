@@ -13,7 +13,7 @@ Travel additions: personality-based departure notes; home away/return state; per
 | Node 24.19.0 dependency install from repaired lock | PASS, npm ci --ignore-scripts |
 | npm test | 149 passed, 0 failed |
 | Server / SDK / wallet TypeScript checks | All passed |
-| Godot 4.5.2 travel UI, including historical receipts | 50 checks, 0 failures |
+| Godot 4.5.2 travel UI, including historical receipts | 51 checks, 0 failures |
 | Godot client UI | 52 checks, 0 failures |
 | Godot session storage | 26 checks, 0 failures |
 | Godot HTTP client against isolated API | 11 checks, 0 failures |

@@ -118,8 +118,13 @@ func _trip_by_id(trip_id: String) -> Dictionary:
 
 func receipt_request(pet_id: String, trip_id: String) -> Dictionary:
 	var trip: Dictionary = _trip_by_id(trip_id)
-	var hash: String = str(trip.get("result", {}).get("result_hash", ""))
-	if str(trip.get("pet_id", "")) != pet_id or str(trip.get("state", "")) != "revealed" or hash.is_empty():
+	if str(trip.get("pet_id", "")) != pet_id or str(trip.get("state", "")) != "revealed":
+		return {}
+	var result: Variant = trip.get("result")
+	if not result is Dictionary:
+		return {}
+	var hash: String = str(result.get("result_hash", ""))
+	if hash.is_empty():
 		return {}
 	return {"pet_id": pet_id, "trip_id": trip_id, "result_hash": hash}
 

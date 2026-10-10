@@ -128,6 +128,7 @@ func run() -> void:
 	check(str(view.trips[pet["id"]]["id"]) == "next_trip", "Reading an old postcard keeps the active trip")
 	check(view.receipt_request(pet["id"], revealed["id"]).get("result_hash") == "ab".repeat(32), "Historical receipt uses that postcard's hash")
 	check(view.receipt_request("another_pet", revealed["id"]).is_empty(), "Historical receipt cannot use a different pet")
+	check(view.receipt_request(pet["id"], "next_trip").is_empty(), "An active journey cannot prepare a receipt before reveal")
 	view.history_loaded = true
 	view.selected_postcard_id = revealed["id"]
 	client.page = "collection"
