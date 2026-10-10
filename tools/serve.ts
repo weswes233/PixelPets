@@ -14,6 +14,10 @@ const rpcSource = configuredRpc ? ` ${configuredRpc.origin}` : '';
 const publicHost = process.env.PUBLIC_ORIGIN ? new URL(process.env.PUBLIC_ORIGIN).hostname : null;
 // Behind a local tunnel every request arrives from loopback; forward the tunnel's client address so per-client limits still work.
 const forwardClientIp = process.env.SERVE_FORWARD_CLIENT_IP === '1';
+if (forwardClientIp && !(process.env.TRUSTED_PROXY_IPS || '').trim()) {
+  console.error('SERVE_FORWARD_CLIENT_IP=1 requires TRUSTED_PROXY_IPS (e.g. 127.0.0.1) on the API process.');
+  process.exit(1);
+}
 const mime: Record<string, string> = { '.html': 'text/html; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.wasm': 'application/wasm', '.pck': 'application/octet-stream', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json' };
 
 const server = createServer((req, res) => {
