@@ -10,11 +10,11 @@
 | P0 | 原有三宠（moss/puddle/wisp）保持兼容 | ✅ | 基线测试全绿（见 H0–H2） |
 | P0 | 一次免费、服务端权威、标注加速（45 s）的旅行 | ✅ | 服务端 CSPRNG + 补给账本；`npm test` 146/146；Godot travel 26/26 |
 | P0 | 故事与收藏反馈（2 地点、8 纪念物） | ✅ | 明信片 + 纪念物；Album 优先显示；截图 `docs/evidence/ui-smoke/` |
-| P0 | 真实 Solana Devnet 领取宠物 | 🟡 部分（10-10 03:30 仍 0 SOL；devnet-pow 所有水龙头余额为 0） | localnet 上浏览器内 claim 已确认（资产 `2bL2TGgg…BHvTA`）；Devnet 未部署：deployer 仍 0 SOL（airdrop 限流），`tools/devnet-deploy.ts --network devnet --execute` 已就绪 |
-| P0 | 旅行结果摘要 checkpoint v2 存证 | ✅ localnet | 浏览器中钱包签名并确认（截图 37）；`chain/tests/deployed-stack-smoke.mjs` 4 PASS |
+| P0 | 真实 Solana Devnet 领取宠物 | ✅ Devnet（脚本钱包，10-10 10:15 UTC+8） | 程序 `2SCKfWsz…Qm2nT`、集合 `5BnUfTQ2…uoiS`、edition 1001/1002/1003 已部署；player-a claim 资产 `B8qGUnAs…RSs5`（sig `5RX2AWhv…7NcT`）。证据 `docs/evidence/devnet-demo-2026-10-10.json`。真实 Phantom/Backpack 弹窗仍需 Wes |
+| P0 | 旅行结果摘要 checkpoint v2 存证 | ✅ localnet + ✅ Devnet | localnet：截图 37 + smoke 4 PASS。Devnet：`chain/tests/devnet-stack-smoke.mjs` 4 PASS；旅程收据 sig `2WtTemMx…5mix`，公开证明 `jr_eIE4lv-XhPMvy0bgFLcUTw`（独立验证器 10 项） |
 | P0 | 刷新及服务重启后恢复 | ✅ localnet | `chain/tests/restart-recovery-localnet.mjs` 4 PASS：旅行中 SIGKILL 重启，ready_at 不变；重启后揭晓；未签名旅程收据意图跨重启保留并确认（`chain/evidence/restart-recovery-localnet.json`） |
 | P0 | 真实浏览器钱包演练（扩展钱包弹窗） | 🟡 部分 | 在无头 Chrome 中用 Wallet Standard 测试钱包走通（SIWS、claim、receipt）；真实 Phantom/Backpack 弹窗需 Wes |
-| P0 | 可复核的交易与结果证据 | ✅ localnet | 公开证明 `jr_…` 经独立验证器 10 项检查；`chain/evidence/*.json` |
+| P0 | 可复核的交易与结果证据 | ✅ localnet + ✅ Devnet | Devnet 证明 `jr_eIE4lv-XhPMvy0bgFLcUTw` 经独立验证器 10 项；`docs/evidence/devnet-demo-2026-10-10.json` + `chain/evidence/deployed-stack-smoke-devnet.json`（含 explorer 链接） |
 | P1 | 两钱包赠送 + 接收后继续养成（UI） | ✅ localnet | Wallet 页「Send as a gift」：prepareGift 本地构建、审阅显示网络/资产/接收者/费用、旅行中禁用；finalized 后同步归属。`chain/tests/gift-two-wallet-localnet.mjs` 6 PASS（A 不能再照顾，B 同步后继续照顾）。未在真实扩展钱包中演练 |
 | P2 | 中文全量校对、120 剪影目录、商店预览、更多动作 | 🟡 部分 | 旅行/收据/赠送中文切换有测试；120 图鉴剪影浏览（按家族分页，未发行仅剪影）已完成；全量校对、商店预览、更多动作未做 |
 
@@ -23,13 +23,13 @@
 | 墙钟 | 预算 | 门槛 | 状态 |
 | --- | ---: | --- | --- |
 | H0–H2 | 1h | 备份、分支、工具链、密钥公钥、Devnet 连通、确认存储上传渠道 | 🟡 见下表 |
-| H2–H7 | 3h | 上传三角色图/元数据；部署程序、Core 集合、3 editions；真实浏览器 claim 一次 | 🟡 localnet 全部完成；Devnet 缺 SOL；元数据为本地 kubo 固定（开发用临时路径） |
+| H2–H7 | 3h | 上传三角色图/元数据；部署程序、Core 集合、3 editions；真实浏览器 claim 一次 | 🟡 Devnet 程序/集合/3 editions + 脚本 claim 已完成（10-10 10:15）；元数据仍仅本地 kubo；真实浏览器扩展钱包 claim 需 Wes |
 | H7–H11 | 3h | 旅行表/迁移/接口/一次性结算；2 地点 8 纪念物；重启后可揭晓 | ✅ |
 | H11–H14 | 2h | 旅行 manifest、checkpoint v2、证明接口、finalized 恢复；本地重算摘要 | ✅ localnet |
 | H14–H17 | 2h | 英文主流程、像素旅行反馈、收藏结果 | ✅ |
 | H17–H20 | 2h | 云端单实例 HTTPS、持久库、RPC/CSP、外部钱包与元数据访问 | 🟡 已做 PUBLIC_ORIGIN 白名单与服务端 RPC；HTTPS 隧道被封，未上线 |
 | H20–H22 | 1h | 关键异常演练；有余量才接 P1 赠送 | 🟡 已演练未签名意图恢复与 finalize 等待；赠送 UI 未做 |
-| H22–H24 | 2h | 录屏、交易与 manifest 核验、完成/未完成证据、发布说明 | ❌ |
+| H22–H24 | 2h | 录屏、交易与 manifest 核验、完成/未完成证据、发布说明 | 🟡 Devnet 交易与证明证据已写；公开 HTTPS 录屏与真实钱包录屏仍缺 |
 
 **止损：**H7 仍无真实 Devnet claim → 停止新玩法扩张，集中解决部署/钱包；H14 仍无法从 manifest 重算链上摘要 → 只保留一条旅行与一个结果模板；H20 仍无 HTTPS → 冻结功能处理公开访问。外部依赖拿不到时输出部分结果，不伪装成功。
 
@@ -45,19 +45,31 @@
 | Godot | ✅ | 4.5.2 stable（SHA-512 与官方一致）+ 模板 `web_nothreads_release.zip`/`windows_release_x86_64.exe`；`build.ps1 -Target Web -ValidateOnly` 用 pwsh 7.5.3 通过 |
 | Godot 测试 | ✅ | client 49/49，session storage 26/26，HTTP 11/11 |
 | 合约构建 | ✅ | `anchor build -- --tools-version v1.57`（默认 v1.51 的 cargo 1.84 不支持锁文件里的 edition2024 依赖）；`cargo test` 15/15；重新生成的 IDL 与仓库 IDL 完全一致 |
-| 程序地址 | 🟡 | 代码地址 `2R4P5J6r…3iQR` 的私钥不在本机，无法部署到该地址。已生成新程序密钥 `2SCKfWsz…Qm2nT`；切换需同步 `lib.rs declare_id!`、`Anchor.toml`、`chain/idl/pixel_pets.json`、`chain/idl/pixel_pets.ts`、`chain/INTERFACE.md`，再重新构建 |
+| 程序地址 | 🟡 已上 Devnet，待 Wes 批准 | Devnet 已部署到 `2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT`（原 `2R4P5J6r…3iQR` 私钥不在本机）。合并/主网前需 Wes 批准该程序 id |
 | Devnet 公钥 | ✅ | deployer `294hmkx1…W9BU`、issuer `Cf6QfJVb…oTxX`、player-a `5wpnLLhK…jdow`、player-b `9WFW2Avm…GX1P`（私钥在 `runtime/devnet-keys/`，gitignored） |
 | Devnet 连通 | ✅ | Helius devnet genesis `EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG` |
-| Devnet 资金 | ❌ | Helius 与公共 devnet airdrop 均限流，余额 0 |
+| Devnet 资金 | ✅ | 10-10 上午 deployer 收到 5 SOL（转账 sig `38c6KpY5…XA4qp`）；部署后约 1.99 SOL 剩余；player-a/b 各 0.05 SOL |
 | 部署成本估算 | — | `pixel_pets.so` 569,888 B → ProgramData 租金约 3.97 SOL（加缓冲区与手续费按 ≈4.2 SOL 备）；config/collection/3 editions/首批 claim < 0.1 SOL；两名玩家各 0.05 SOL。总计建议 **5 SOL** |
 | 元数据通道 | 🟡 | 合约只认 `ipfs://` / `ar://`。可先在本机按内容计算 CID（不需账号，地址由内容决定），之后任何 pinning 服务上传相同字节即可让同一 URI 可取回；可用渠道见下 |
 
 ## 缺的依赖（需要 Wes）
 
-1. **Devnet SOL ≈5 SOL** 打到 deployer `294hmkx17KS7ww6CzA6ZeDx2F3o7zybo8txRYRvhW9BU`（faucet.solana.com 用 GitHub 登录可领；或任意已有 devnet 余额的钱包转账）。
-2. **元数据上传账户**（任选一）：Pinata 免费层 JWT / Filebase 免费层 S3 key / Storacha(web3.storage) 邮箱账户。上传后核对 CID 与本地计算一致。
+1. ~~**Devnet SOL ≈5 SOL**~~ ✅ 已到账并完成部署（deployer 现约 1.99 SOL）。
+2. **元数据上传账户**（任选一）：Pinata 免费层 JWT / Filebase 免费层 S3 key / Storacha(web3.storage) 邮箱账户。上传后核对 CID 与本地计算一致（当前 CID 仅在本地 kubo）。
 3. **域名**（或接受临时 `trycloudflare.com` 演示地址）。
-4. **Linux 主机 + 持久卷**，用于 HTTPS 单实例（Caddy + Node 24 + SQLite）。
-5. **真实浏览器钱包**：在真机上安装 Phantom 或 Backpack，切到 Devnet，完成 claim + 保存旅程 + 刷新恢复的录屏（A06/A07/A10）。
-6. **第二个钱包**（P1 赠送验收，可同一台机器另建账户）。
-7. 确认是否允许用新程序地址 `2SCKfWsz…` 替换代码中的 `2R4P5J6r…`（原密钥不在本机）。
+4. **Linux 主机 + 持久卷**，用于 HTTPS 单实例（Caddy + Node 24 + SQLite）。本盒出站 7844/22 被封。
+5. **真实浏览器钱包**：在真机上安装 Phantom 或 Backpack，切到 Devnet，完成 claim + 保存旅程 + 刷新恢复的录屏（A06/A07/A10）。脚本钱包 Devnet 主流程已通。
+6. **第二个钱包**（P1 赠送验收，可同一台机器另建账户）；Devnet 上 gift 尚未演练。
+7. **批准程序地址** `2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT` 替换代码中的 `2R4P5J6r…`（原密钥不在本机；已部署到 Devnet）。
+
+## Devnet 部署核验（2026-10-10 10:12–10:16 UTC+8）
+
+| 项 | 结果 |
+| --- | --- |
+| 部署前余额 | 5.0000 SOL（转账 sig `38c6KpY5VmW6SCW18uZvtb4exuPzRCCt35ZptD7riUG3Tf9HeSwi8TXiQtwBVX2b638ALEuNmPCbGd5FQG1XA4qp`） |
+| 程序部署 | sig `5dtmhPyRYgwAqncdRbF5LY3QoNcAwPzADCRbUspBvRv5iyKMAkCnXApfLNmEuGo1D3U1BAyzAuyQB2RwNvPSxpWj`；bytes sha256 与本地一致 |
+| Config + Core 集合 | `5BnUfTQ249v4v7sVAuohBEstsWF9JdzmaHwSbK7cuoiS`；sig `4ZENShTMsjAuvSeRFPPoEmd9QYd8abk6pf78WkakJ54HBQUZ6qZc8gQVDtk18XnoGkVCahcDQcaUdesMHm1ESQmZ` |
+| Editions | moss/puddle/wisp = 1001/1002/1003 |
+| 部署花费 | ≈2.9088 SOL；部署后 deployer ≈2.0912 SOL；给 player-a/b 各 0.05 后 ≈1.9912 SOL |
+| 脚本主流程 | claim → trip → reveal → journey receipt → 独立验证 10/10（`chain/tests/devnet-stack-smoke.mjs`） |
+| 汇总证据 | `docs/evidence/devnet-demo-2026-10-10.json`（network=devnet，含 explorer 链接） |
