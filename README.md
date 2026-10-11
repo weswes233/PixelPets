@@ -132,6 +132,8 @@ See [docs/plan/windows-play.md](docs/plan/windows-play.md). Save file: `runtime/
 
 ```bash
 npm test                          # JS unit tests
+npm run test:godot                # Godot fixtures, async recovery, layout, storage and isolated HTTP
+# Set PIXELPETS_GODOT_PATH to the Godot 4.5.2 executable if it is not on PATH.
 npm run typecheck:server && npm run typecheck:sdk && npm run typecheck:wallet
 # Godot (needs Godot 4.5.2 on PATH):
 # godot --headless --path game --script tests/client_test.gd -- --client-test
@@ -140,6 +142,8 @@ node chain/tests/gift-two-wallet-devnet.mjs
 ```
 
 Checklist: [docs/plan/00-today-checklist.md](docs/plan/00-today-checklist.md).
+
+UI improvements and local verification: [docs/ui-polish-2026-10-11.md](docs/ui-polish-2026-10-11.md).
 
 ---
 

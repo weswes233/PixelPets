@@ -20,6 +20,10 @@ var countdown_label: Label
 var countdown_ready: bool = false
 var timer: Timer
 var pending_events: Dictionary = {}
+var last_error: String = ""
+var refresh_sequence: int = 0
+var refresh_queued: bool = false
+var refreshing_pet: String = ""
 
 func _init(owner: Control) -> void:
 	host = owner
@@ -32,38 +36,80 @@ func _init(owner: Control) -> void:
 func reset() -> void:
 	catalog.clear(); supplies.clear(); collections.clear(); trips.clear(); pending_events.clear()
 	loaded_generation = -1
+	refresh_sequence += 1
+	loading = false
+	refresh_queued = false
+	last_error = ""
+	countdown_label = null
+	clock_offset_ms = 0.0
+	countdown_ready = false
 
 # ---------------------------------------------------------------- data
 func refresh(force: bool = false) -> void:
-	if loading or not host.online or (not force and loaded_generation == host.account_generation):
+	if not host.online:
+		return
+	var pet_id: String = str(host.current_pet().get("id", ""))
+	if loading:
+		refresh_queued = refresh_queued or (force and pet_id != refreshing_pet)
+		return
+	if not force and loaded_generation == host.account_generation and (pet_id.is_empty() or trips.has(pet_id)):
 		return
 	loading = true
+	refreshing_pet = pet_id
+	last_error = ""
+	refresh_sequence += 1
+	var sequence: int = refresh_sequence
 	var generation: int = host.account_generation
-	loaded_generation = generation
 	var api: PetAPI = host.api
+	if host.page in ["travel", "collection", "trade"]:
+		host.call_deferred("_render")
 	var got_catalog: Dictionary = await api.request("/travel/catalog")
-	var got_collections: Dictionary = await api.request("/collections")
-	var pet: Dictionary = host.current_pet()
-	var got_current: Dictionary = {}
-	if not pet.is_empty():
-		got_current = await api.request("/pets/" + str(pet["id"]) + "/trips/current")
-	loading = false
-	if generation != host.account_generation:
+	if sequence != refresh_sequence or generation != host.account_generation:
 		return
+	var got_collections: Dictionary = await api.request("/collections")
+	if sequence != refresh_sequence or generation != host.account_generation:
+		return
+	var got_current: Dictionary = {}
+	if not pet_id.is_empty():
+		got_current = await api.request("/pets/" + pet_id + "/trips/current")
+	if sequence != refresh_sequence or generation != host.account_generation:
+		return
+	loading = false
 	if got_catalog.get("ok", false):
 		catalog = got_catalog["data"]
 	if got_collections.get("ok", false):
 		collections = got_collections["data"]
 	if got_current.get("ok", false):
 		if got_current["data"].get("trip") == null:
-			trips[str(pet["id"])] = {}
+			trips[pet_id] = {}
 		_accept(got_current["data"])
-	elif not got_current.is_empty():
-		host._set_status(PetAPI.error_message(got_current))
-	if not pet.is_empty() and not trips.has(str(pet["id"])):
-		trips[str(pet["id"])] = {}
-	if host.page in ["travel", "collection"] and got_catalog.get("ok", false):
+	for response in [got_catalog, got_collections, got_current]:
+		if not response.is_empty() and not response.get("ok", false):
+			last_error = PetAPI.error_message(response)
+			break
+	if last_error.is_empty():
+		loaded_generation = generation
+	else:
+		loaded_generation = -1
+		host._set_status(last_error)
+	# A selection made during a request gets its own authoritative trip lookup.
+	if refresh_queued or str(host.current_pet().get("id", "")) != pet_id:
+		refresh_queued = false
+		refresh(true)
+	if host.page in ["travel", "collection", "trade"]:
 		host._render()
+
+func _render_refresh_error(content: VBoxContainer) -> void:
+	if loading:
+		content.add_child(host._label(_t("Updating travel details…", "正在更新旅行信息……"), 13, host.MUTED))
+		return
+	if last_error.is_empty():
+		return
+	var notice: VBoxContainer = host._panel(content, Color("f6e3dc"))
+	notice.add_child(host._label(last_error, 14))
+	var retry: Button = host._button(_t("Try again", "重新加载"), func(): refresh(true), true)
+	retry.disabled = loading or not host.online
+	notice.add_child(retry)
 
 func _accept(data: Dictionary) -> void:
 	if data.get("supplies") is Dictionary:
@@ -105,9 +151,11 @@ func render(content: VBoxContainer) -> void:
 	countdown_label = null
 	content.add_child(host._label(_t("Pack & Travel", "收拾行囊去旅行"), 23))
 	content.add_child(host._label(_t("Send your companion on a short trip. It comes back with a postcard and maybe a keepsake.", "让伙伴出门走一小段路，带回一张明信片，也许还有一件纪念物。"), 14, host.MUTED))
+	_render_refresh_error(content)
 	if catalog.is_empty():
-		content.add_child(host._label(_t("Loading destinations…", "正在载入目的地……") if host.online else _t("Connect to the game server to travel.", "连接伙伴服务后才能旅行。"), 15))
-		if loaded_generation != host.account_generation:
+		if last_error.is_empty():
+			content.add_child(host._label(_t("Loading destinations…", "正在载入目的地……") if host.online else _t("Connect to the game server to travel.", "连接伙伴服务后才能旅行。"), 15))
+		if not loading and last_error.is_empty() and loaded_generation != host.account_generation:
 			refresh()
 		return
 	var pet: Dictionary = host.current_pet()
@@ -116,9 +164,12 @@ func render(content: VBoxContainer) -> void:
 		empty.add_child(host._label(_t("Adopt a companion first — it's free.", "先免费领养一位伙伴吧。"), 17))
 		empty.add_child(host._button(_t("Adopt a companion", "去领养"), func(): host._switch_page("companion"), true))
 		return
-	if not trips.has(str(pet["id"])) and not loading:
-		trips[str(pet["id"])] = {}
-		refresh(true)
+	if not trips.has(str(pet["id"])):
+		if last_error.is_empty():
+			content.add_child(host._label(_t("Checking this companion's trip…", "正在查看这位伙伴的旅行……"), 15, host.MUTED))
+			if not loading:
+				refresh()
+		return
 	var trip: Dictionary = trips.get(str(pet["id"]), {})
 	var state: String = str(trip.get("state", ""))
 	_render_supplies(content)
@@ -142,19 +193,28 @@ func _render_supplies(content: VBoxContainer) -> void:
 
 func _render_planner(content: VBoxContainer, pet: Dictionary) -> void:
 	var box: VBoxContainer = host._panel(content)
-	box.add_child(host._label(_t("Where to?", "去哪里？"), 19))
+	box.add_child(host._label(_t("Travelling with %s", "和 %s 一起出发") % str(pet.get("nickname", "")), 13, host.MUTED))
+	var sections: BoxContainer = VBoxContainer.new() if host.small_layout else HBoxContainer.new()
+	sections.add_theme_constant_override("separation", 18)
+	box.add_child(sections)
+	var destinations := VBoxContainer.new()
+	destinations.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	destinations.add_theme_constant_override("separation", 8)
+	sections.add_child(destinations)
+	destinations.add_child(host._label(_t("Where to?", "去哪里？"), 19))
 	for route in catalog.get("routes", []):
 		var id: String = str(route["id"])
 		var button: Button = host._button(L10n.pick(route["name"]), func():
 			route_id = id
 			host._render(), route_id == id)
-		box.add_child(button)
+		destinations.add_child(button)
 		if route_id == id:
-			box.add_child(host._label(L10n.pick(route["blurb"]), 13, host.MUTED))
-	box.add_child(host._label(_t("Pack something", "带点什么"), 17))
-	var packs := HBoxContainer.new()
+			destinations.add_child(host._label(L10n.pick(route.get("blurb", {})), 13, host.MUTED))
+	var packs := VBoxContainer.new()
+	packs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	packs.add_theme_constant_override("separation", 8)
-	box.add_child(packs)
+	sections.add_child(packs)
+	packs.add_child(host._label(_t("Pack something", "带点什么"), 19))
 	for packing in catalog.get("packings", []):
 		var pid: String = str(packing["id"])
 		var pick: Button = host._button(L10n.pick(packing["name"]), func():
@@ -162,11 +222,11 @@ func _render_planner(content: VBoxContainer, pet: Dictionary) -> void:
 			host._render(), packing_id == pid)
 		pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		packs.add_child(pick)
-	box.add_child(host._label(_t("Packing changes the story, not the odds.", "行囊只改变故事，不改变概率。"), 12, host.MUTED))
+	packs.add_child(host._label(_t("Packing changes the story, not the odds.", "行囊只改变故事，不改变概率。"), 12, host.MUTED))
 	box.add_child(host._label(demo_label(), 14, host.CORAL))
 	var access: String = host._pet_access_message(pet)
 	var go: Button = host._button(_t("Pack & go", "出发"), start_trip, true)
-	go.disabled = host.busy or not host.online or int(supplies.get("balance", 0)) < 1 or not access.is_empty()
+	go.disabled = host.busy or loading or not last_error.is_empty() or not host.online or int(supplies.get("balance", 0)) < 1 or not access.is_empty()
 	box.add_child(go)
 	if not access.is_empty():
 		box.add_child(host._label(access, 13, host.CORAL))
@@ -285,9 +345,11 @@ func _render_odds(content: VBoxContainer) -> void:
 # ---------------------------------------------------------------- keepsakes (Collection page)
 func render_keepsakes(content: VBoxContainer) -> void:
 	content.add_child(host._label(_t("Keepsakes", "旅途收藏"), 23))
+	_render_refresh_error(content)
 	if collections.is_empty():
-		content.add_child(host._label(_t("Loading keepsakes…", "正在载入收藏……") if host.online else _t("Connect to see keepsakes.", "连接后查看收藏。"), 14, host.MUTED))
-		if loaded_generation != host.account_generation:
+		if last_error.is_empty():
+			content.add_child(host._label(_t("Loading keepsakes…", "正在载入收藏……") if host.online else _t("Connect to see keepsakes.", "连接后查看收藏。"), 14, host.MUTED))
+		if not loading and last_error.is_empty() and loaded_generation != host.account_generation:
 			refresh()
 		return
 	content.add_child(host._label(_t("%d / %d found. Separate from your companion cards.", "已找到 %d / %d 件，与伙伴卡册分开记录。") % [int(collections.get("discovered", 0)), int(collections.get("total", 8))], 14, host.MUTED))
@@ -309,7 +371,7 @@ func render_keepsakes(content: VBoxContainer) -> void:
 # ---------------------------------------------------------------- actions
 func start_trip() -> void:
 	var pet: Dictionary = host.current_pet()
-	if host.busy or pet.is_empty() or not host._pet_access_message(pet).is_empty():
+	if host.busy or loading or not host.online or not last_error.is_empty() or pet.is_empty() or not trips.has(str(pet.get("id", ""))) or not host._pet_access_message(pet).is_empty():
 		return
 	var key: String = "trip:%s:%s:%s" % [str(pet["id"]), route_id, packing_id]
 	var body := {"event_id": _event(key), "route_id": route_id, "packing_id": packing_id}

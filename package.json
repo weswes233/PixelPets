@@ -7,6 +7,8 @@
     "node": ">=24.0.0 <25"
   },
   "scripts": {
+    "build:codex": "node tools/build-codex.mjs",
+    "test:godot": "node tools/test-godot.mjs",
     "test": "node --test wallet-web/tests/*.test.ts chain-client/tests/*.test.ts server/tests/*.test.ts",
     "build:web": "node tools/build-web.mjs",
     "dev:web": "node tools/serve.ts",

@@ -7,7 +7,7 @@ signal bridge_settled(request_id: String, result: Dictionary)
 const ART_SCRIPT = preload("res://scripts/pet_art.gd")
 const FONT = preload("res://assets/fonts/NotoSansSC-Medium.ttf")
 const INK := Color("344a48")
-const MUTED := Color("75817a")
+const MUTED := Color("626f65")
 const CREAM := Color("f8f4e8")
 const MINT := Color("d5e7d4")
 const CORAL := Color("c77660")
@@ -55,6 +55,10 @@ var bridge_requests: Dictionary = {}
 var pet_list_generation: int = 0
 var travel: TravelView
 var shell_texts: Array = []
+var shell_margin: MarginContainer
+var page_scroll: ScrollContainer
+var adoption_draft: String = ""
+var language_button: Button
 
 func _ready() -> void:
 	testing = "--client-test" in OS.get_cmdline_user_args()
@@ -101,13 +105,19 @@ func _build_shell() -> void:
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
 	var margin := MarginContainer.new()
+	shell_margin = margin
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in ["left", "right", "top", "bottom"]:
 		margin.add_theme_constant_override("margin_" + side, 18)
 	add_child(margin)
+	_update_shell_margins()
 	var shell := VBoxContainer.new()
 	shell.add_theme_constant_override("separation", 12)
 	margin.add_child(shell)
+	var brand := _label("你的掌心小世界", 11, MUTED)
+	brand.set_meta("source", "你的掌心小世界")
+	shell_texts.append(brand)
+	shell.add_child(brand)
 	var heading := HBoxContainer.new()
 	shell.add_child(heading)
 	var title := _label("掌心伙伴", 27)
@@ -116,12 +126,11 @@ func _build_shell() -> void:
 	shell_texts.append(title)
 	heading.add_child(title)
 	var language := Button.new()
+	language_button = language
 	language.text = "中文" if L10n.lang == "en" else "EN"
 	language.tooltip_text = "Language / 语言"
 	language.custom_minimum_size = Vector2(56, 36)
-	language.pressed.connect(func():
-		_set_language("zh" if L10n.lang == "en" else "en")
-		language.text = "中文" if L10n.lang == "en" else "EN")
+	language.pressed.connect(func(): _set_language("zh" if L10n.lang == "en" else "en"))
 	heading.add_child(language)
 	var tagline := _label("小小的陪伴，慢慢成为独一无二。", 14, MUTED)
 	tagline.set_meta("source", "小小的陪伴，慢慢成为独一无二。")
@@ -140,6 +149,7 @@ func _build_shell() -> void:
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		navigation.add_child(button)
 	var scroll := ScrollContainer.new()
+	page_scroll = scroll
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	shell.add_child(scroll)
@@ -147,15 +157,19 @@ func _build_shell() -> void:
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.add_theme_constant_override("separation", 16)
 	scroll.add_child(content)
-	status_label = _label(status_text, 13, MUTED)
-	status_label.custom_minimum_size.y = 36
-	shell.add_child(status_label)
+	var status_panel := PanelContainer.new()
+	status_panel.add_theme_stylebox_override("panel", _box(Color("eceee2"), 0))
+	shell.add_child(status_panel)
+	status_label = _label(status_text, 12, MUTED)
+	status_label.custom_minimum_size.y = 30
+	status_panel.add_child(status_label)
 
 func _box(color: Color, border: int = 1, border_color: Color = Color("ced3c4")) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = color
 	style.set_border_width_all(border)
 	style.border_color = border_color
+	style.set_corner_radius_all(8)
 	style.content_margin_left = 12
 	style.content_margin_right = 12
 	style.content_margin_top = 10
@@ -174,6 +188,7 @@ func _label(value: String, font_size: int = 16, color: Color = INK) -> Label:
 func _button(value: String, callback: Callable, primary: bool = false) -> Button:
 	var button := Button.new()
 	button.text = L10n.t(value)
+	button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	button.custom_minimum_size.y = 45
 	button.pressed.connect(callback)
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -184,7 +199,9 @@ func _button(value: String, callback: Callable, primary: bool = false) -> Button
 func _panel(parent: Node, tint: Color = Color("fffdf5")) -> VBoxContainer:
 	var panel := PanelContainer.new()
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", _box(tint, 2))
+	var surface := _box(tint, 1)
+	surface.set_corner_radius_all(12)
+	panel.add_theme_stylebox_override("panel", surface)
 	parent.add_child(panel)
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 10)
@@ -250,10 +267,17 @@ func _set_status(value: String) -> void:
 		status_label.text = status_text
 
 func _on_resized() -> void:
+	_update_shell_margins()
 	var now_small: bool = size.x < 650
 	if small_layout != now_small:
 		small_layout = now_small
 		_render()
+
+func _update_shell_margins() -> void:
+	if is_instance_valid(shell_margin):
+		var inset: int = maxi(18, int((size.x - 1040) / 2))
+		for side in ["left", "right"]:
+			shell_margin.add_theme_constant_override("margin_" + side, inset)
 
 func _clear_content() -> void:
 	pet_art = null
@@ -263,6 +287,8 @@ func _clear_content() -> void:
 
 func _set_language(next: String) -> void:
 	L10n.lang = next
+	if is_instance_valid(language_button):
+		language_button.text = "中文" if next == "en" else "EN"
 	if not testing:
 		var settings := ConfigFile.new()
 		settings.set_value("ui", "lang", next)
@@ -274,8 +300,9 @@ func _set_language(next: String) -> void:
 
 func _switch_page(next: String) -> void:
 	page = next
+	page_scroll.scroll_vertical = 0
 	_render()
-	if page in ["travel", "collection"] and online:
+	if page in ["travel", "collection", "trade"] and online:
 		travel.refresh(true)
 	if page == "journal" and online:
 		_load_journal()
@@ -288,11 +315,17 @@ func _render() -> void:
 	_clear_content()
 	for child in navigation.get_children():
 		var nav_button := child as Button
+		var active: bool = str(nav_button.get_meta("page")) == page
 		for state in ["normal", "hover", "pressed", "focus"]:
-			var tab := _box((MINT if str(nav_button.get_meta("page")) == page else Color("eeeadd")) if state == "normal" else (MINT if state != "focus" else Color(0, 0, 0, 0)), 2, CORAL if state == "focus" else Color("ced3c4"))
+			var tab := _box((INK if active else Color("eeeadd")) if state == "normal" else (Color("49625a") if active else MINT), 1)
+			if state == "focus":
+				tab = _box(Color(0, 0, 0, 0), 2, CORAL)
 			tab.content_margin_left = 2
 			tab.content_margin_right = 2
 			nav_button.add_theme_stylebox_override(state, tab)
+		for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
+			nav_button.add_theme_color_override(state, CREAM if active else INK)
+		nav_button.accessibility_name = nav_button.text
 	if not online:
 		var notice := _panel(content)
 		notice.add_child(_label("让相遇被记住", 21))
@@ -300,6 +333,8 @@ func _render() -> void:
 		var retry := _button("正在连接……" if busy else "重新连接", _boot, true)
 		retry.disabled = busy
 		notice.add_child(retry)
+	if page in ["companion", "travel", "trade"]:
+		_render_pet_selector()
 	match page:
 		"companion": _render_companion()
 		"travel": travel.render(content)
@@ -315,22 +350,48 @@ func current_pet() -> Dictionary:
 			return pet
 	return pets[0] if not pets.is_empty() else {}
 
+func _render_pet_selector() -> void:
+	if pets.size() < 2:
+		return
+	var row := VBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	content.add_child(row)
+	row.add_child(_label("今天和谁一起？", 12, MUTED))
+	var selector := OptionButton.new()
+	selector.name = "CompanionSelector"
+	selector.custom_minimum_size.y = 44
+	selector.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	selector.clip_text = true
+	selector.disabled = busy
+	selector.accessibility_name = L10n.t("切换伙伴")
+	for i in range(pets.size()):
+		selector.add_item(str(pets[i].get("nickname", L10n.t("伙伴"))))
+		selector.set_item_metadata(i, str(pets[i]["id"]))
+		if str(pets[i]["id"]) == str(current_pet().get("id", "")):
+			selector.select(i)
+	selector.item_selected.connect(func(index: int): _select_pet(str(selector.get_item_metadata(index))))
+	row.add_child(selector)
+
+func _select_pet(pet_id: String) -> void:
+	if busy or selected_pet == pet_id:
+		return
+	var owned: bool = false
+	for pet in pets:
+		if str(pet["id"]) == pet_id:
+			owned = true
+	if not owned:
+		return
+	selected_pet = pet_id
+	_close_modal()
+	page_scroll.scroll_vertical = 0
+	_render()
+	if online and page in ["travel", "trade"]:
+		travel.refresh(true)
+
 func _render_companion() -> void:
 	if pets.is_empty():
 		_render_adoption()
 		return
-	if pets.size() > 1:
-		var selector := OptionButton.new()
-		selector.custom_minimum_size.y = 44
-		for i in range(pets.size()):
-			selector.add_item(str(pets[i].get("nickname", L10n.t("伙伴"))))
-			if str(pets[i]["id"]) == selected_pet:
-				selector.select(i)
-		selector.item_selected.connect(func(index: int):
-			selected_pet = str(pets[index]["id"])
-			_render()
-		)
-		content.add_child(selector)
 	var pet: Dictionary = current_pet()
 	var layout: BoxContainer = VBoxContainer.new() if small_layout else HBoxContainer.new()
 	layout.add_theme_constant_override("separation", 18)
@@ -351,6 +412,7 @@ func _render_companion() -> void:
 	card.add_child(_label(quote, 15))
 	var details := _panel(layout, Color("f0f1e5"))
 	details.add_child(_label("我们的日常", 20))
+	details.add_child(_label("一点照顾，一点靠近。", 13, MUTED))
 	_meter(details, "亲密", int(pet.get("bond", 0)), 6, Color("c8937b"))
 	_meter(details, "精神", int(pet.get("energy", 0)), 100, Color("93b397"))
 	_meter(details, "心情", int(pet.get("mood", 0)), 100, Color("bdad76"))
@@ -407,9 +469,14 @@ func _meter(parent: Node, title: String, value: int, maximum: int, color: Color)
 	meter.max_value = maximum
 	meter.value = mini(maximum, value)
 	meter.show_percentage = false
-	meter.custom_minimum_size.y = 8
-	meter.add_theme_stylebox_override("background", _box(Color("dedfd0"), 0))
-	meter.add_theme_stylebox_override("fill", _box(color, 0))
+	meter.custom_minimum_size.y = 10
+	var track := _box(Color("dedfd0"), 0)
+	var fill := _box(color, 0)
+	for style in [track, fill]:
+		style.content_margin_top = 0
+		style.content_margin_bottom = 0
+	meter.add_theme_stylebox_override("background", track)
+	meter.add_theme_stylebox_override("fill", fill)
 	parent.add_child(meter)
 
 func _render_adoption(parent: Node = null) -> void:
@@ -432,9 +499,10 @@ func _render_adoption(parent: Node = null) -> void:
 		choice.add_child(_button(str(SPECIES[species_id]["name"]), _choose_species.bind(str(species_id)), selected_species == species_id))
 	intro.add_child(_label(str(SPECIES[selected_species]["description"]), 15))
 	name_input = LineEdit.new()
-	name_input.placeholder_text = "给伙伴起个名字（最多 16 字）"
+	name_input.placeholder_text = L10n.t("给伙伴起个名字（最多 16 字）")
 	name_input.max_length = 16
-	name_input.text = L10n.t(str(SPECIES[selected_species]["name"]))
+	name_input.text = adoption_draft if not adoption_draft.is_empty() else L10n.t(str(SPECIES[selected_species]["name"]))
+	name_input.text_changed.connect(func(value: String): adoption_draft = value)
 	name_input.custom_minimum_size.y = 45
 	intro.add_child(name_input)
 	var adopt := _button("带它回家", _adopt, true)
@@ -443,6 +511,9 @@ func _render_adoption(parent: Node = null) -> void:
 	intro.add_child(_label("日光与月色会留下不同的成长印记。每种伙伴都有两条成长分支。", 13, MUTED))
 
 func _choose_species(value: String) -> void:
+	if is_instance_valid(name_input):
+		var default_name: String = L10n.t(str(SPECIES[selected_species]["name"]))
+		adoption_draft = "" if name_input.text == default_name else name_input.text
 	selected_species = value
 	if is_instance_valid(modal):
 		_open_adoption()
@@ -472,6 +543,7 @@ func _adopt() -> void:
 	busy = false
 	if result.get("ok", false):
 		pending_actions.erase(key)
+		adoption_draft = ""
 		var pet: Dictionary = result["data"]["pet"]
 		_upsert_pet(pet)
 		selected_pet = str(pet["id"])
@@ -676,6 +748,7 @@ func _render_journal() -> void:
 func _render_trade() -> void:
 	content.add_child(_label("让喜欢，遇见另一个喜欢", 23))
 	content.add_child(_label("先一起生活，再决定是否把它变成可转让的链上宠物。", 14, MUTED))
+	travel._render_refresh_error(content)
 	var card := _panel(content)
 	var address: String = str(wallet.get("address", wallet.get("publicKey", "")))
 	var connected: bool = not address.is_empty() and bool(wallet.get("connected", true))
@@ -729,6 +802,8 @@ func gift_block_reason(pet: Dictionary, connected: bool) -> String:
 		return "只有已登记到链上的伙伴可以赠送。"
 	if not connected or not bool(chain_config.get("enabled", false)):
 		return "请先连接并验证钱包。"
+	if travel.loading or not travel.trips.has(str(pet.get("id", ""))) or not travel.last_error.is_empty():
+		return "请先确认伙伴的旅行状态，再赠送给朋友。"
 	if str(travel.trips.get(str(pet.get("id", "")), {}).get("state", "")) == "travelling":
 		return "伙伴正在旅行，回来后才能赠送。"
 	if pet.get("ownership") is Dictionary and not bool(pet["ownership"].get("can_interact", true)):
@@ -978,6 +1053,7 @@ func _switch_profile() -> void:
 	pending_actions.clear()
 	travel.reset()
 	selected_pet = ""
+	adoption_draft = ""
 	wallet.clear()
 	busy = false
 	online = false

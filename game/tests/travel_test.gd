@@ -157,6 +157,12 @@ func run() -> void:
 	var unverified: Dictionary = gift_pet.duplicate(true)
 	unverified["ownership"] = {"status": "unverified", "can_interact": false}
 	check(not client.gift_block_reason(unverified, true).is_empty(), "Unverified ownership blocks gifting")
+	var unchecked: Dictionary = gift_pet.duplicate(true)
+	unchecked["id"] = "trip-not-loaded"
+	check(not client.gift_block_reason(unchecked, true).is_empty(), "Unknown trip state cannot enable gifting")
+	view.loading = true
+	check(not client.gift_block_reason(gift_pet, true).is_empty(), "Gifting waits for the trip lookup to finish")
+	view.loading = false
 	check(not L10n._has_cjk(" ".join(texts(client.content))), "English wallet screen with gift contains no Chinese text")
 	L10n.lang = "zh"
 	client.page = "travel"

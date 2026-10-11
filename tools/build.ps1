@@ -143,6 +143,8 @@ codesign/enable=false
 application/modify_resources=false
 '@
 Set-Content -LiteralPath (Join-Path $gamePath 'export_presets.cfg') -Value $presets -Encoding utf8
+& node (Join-Path $PSScriptRoot 'build-codex.mjs')
+if ($LASTEXITCODE -ne 0) { throw 'Codex generation failed.' }
 & $godotPath --headless --path $gamePath --editor --import
 if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
 if ($Target -in @('All','Web')) {

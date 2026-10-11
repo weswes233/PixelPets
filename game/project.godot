@@ -11,7 +11,8 @@ window/size/viewport_width=360
 window/size/viewport_height=640
 window/size/window_width_override=1100
 window/size/window_height_override=780
-window/stretch/mode="canvas_items"
+; Controls and PetArt adapt to the available window instead of scaling a 640px phone canvas.
+window/stretch/mode="disabled"
 window/stretch/aspect="expand"
 
 [rendering]
