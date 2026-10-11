@@ -6,6 +6,11 @@ class_name L10n
 static var lang: String = "en"
 
 const EN := {
+	"你的掌心小世界": "YOUR LITTLE WORLD",
+	"今天和谁一起？": "Who is coming along today?",
+	"切换伙伴": "Switch companion",
+	"一点照顾，一点靠近。": "Small moments. A little closer.",
+	"请先确认伙伴的旅行状态，再赠送给朋友。": "Check this companion's trip status before sending a gift.",
 	"苔苔": "Moss", "会把每一片落叶当作礼物的小猫。": "A little cat who treats every fallen leaf as a gift.",
 	"向阳苔苔": "Sunny Moss", "月影苔苔": "Moonshade Moss",
 	"啵啵": "Puddle", "喜欢坐在水边，陪你发一会儿呆。": "Likes sitting by the water and daydreaming with you.",

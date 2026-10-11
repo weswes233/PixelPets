@@ -4,6 +4,7 @@ class_name PetArt
 var species: String = "moss"
 var form: String = "seed"
 var habitat: String = ""
+var scene: String = "garden"
 var show_habitat: bool = true
 var animated: bool = true
 var reaction: String = ""
@@ -40,14 +41,8 @@ func _draw() -> void:
 		bob -= absf(sin(time * 9.0)) * s * 2.0
 	var origin: Vector2 = (size - Vector2(32, 32) * s) * 0.5 + Vector2(0, bob + s)
 	if show_habitat:
-		draw_rect(Rect2(Vector2.ZERO, size), Color("e5e7f1") if habitat == "moon" or (habitat.is_empty() and form == "moon") else Color("e5eee3"))
-		for i in range(6):
-			var x: float = fmod(float(i * 113 + 22) + time * 3.0, size.x + 40) - 20
-			draw_rect(Rect2(x, 30 + (i % 3) * 19, 20 + (i % 2) * 22, 4), Color("f6f7ec"))
-		draw_rect(Rect2(0, size.y * 0.8, size.x, size.y * 0.2), Color("cfdac4"))
-		for i in range(13):
-			draw_rect(Rect2(float(i) * size.x / 12.0, size.y * 0.8 - 3, 3, 7), Color("a8bea1"))
-		draw_rect(Rect2(size.x * 0.5 - s * 12, origin.y + s * 27, s * 24, s * 3), Color("b5c8af"))
+		_draw_landscape()
+		draw_rect(Rect2(size.x * 0.5 - s * 11, origin.y + s * 27, s * 22, s * 2), Color("8ca793", 0.45))
 	var body: Color = MINT
 	var light: Color = Color("c7dec3")
 	if form == "sun":
@@ -123,3 +118,77 @@ func _draw() -> void:
 			var point: Vector2 = origin + Vector2(3 + j * 11, 3 - int(time * 4 + j) % 4) * s
 			draw_rect(Rect2(point, Vector2(s, s * 3)), PEACH)
 			draw_rect(Rect2(point + Vector2(-s, s), Vector2(s * 3, s)), PEACH)
+
+func _tile(x: float, y: float, w: float, h: float, color: String) -> void:
+	# A fixed pixel grid keeps scenery crisp at every viewport size.
+	var scale_xy := Vector2(size.x / 160.0, size.y / 96.0)
+	var start := (Vector2(x, y) * scale_xy).round()
+	var end := (Vector2(x + w, y + h) * scale_xy).round()
+	draw_rect(Rect2(start, end - start), Color(color))
+
+func _draw_landscape() -> void:
+	var night: bool = habitat == "moon" or (habitat.is_empty() and form == "moon")
+	draw_rect(Rect2(Vector2.ZERO, size), Color("343e67") if night else Color("dcece1"))
+	_tile(0, 52, 160, 44, "59658a" if night else "b7d2b8")
+	for i in range(6):
+		var x: float = float(i * 31 - 12)
+		_tile(x, 44 - i % 3 * 6, 37, 25, "4c5c7d" if night else "c5dabb")
+		_tile(x + 5, 39 - i % 3 * 6, 25, 12, "4c5c7d" if night else "c5dabb")
+	_tile(0, 69, 160, 27, "657c7c" if night else "9fbd99")
+	_tile(0, 73, 160, 23, "718a84" if night else "b6cda7")
+	_tile(51, 79, 62, 17, "8b9991" if night else "d6d5b1")
+	_tile(59, 73, 46, 8, "8b9991" if night else "d6d5b1")
+	if night:
+		_tile(126, 10, 11, 13, "fbebbb")
+		_tile(130, 8, 8, 16, "fbebbb")
+		_tile(134, 7, 7, 12, "343e67")
+		for i in range(15):
+			var x: int = (i * 43 + 9) % 154
+			var y: int = (i * 17 + 8) % 39
+			_tile(x, y, 1, 2 if sin(time * 1.4 + i) > 0.5 else 1, "e6debe")
+	else:
+		_tile(126, 11, 14, 14, "efd18d")
+		_tile(123, 14, 20, 8, "efd18d")
+		for i in range(3):
+			var x: float = fmod(float(i * 61) + time * 1.5, 190.0) - 25
+			_tile(x, 14 + i % 2 * 13, 21, 4, "f6f5de")
+			_tile(x + 5, 11 + i % 2 * 13, 12, 3, "f6f5de")
+	if scene == "sunny_market":
+		for x in [7, 119]:
+			_tile(x + 2, 44, 28, 28, "b49374")
+			_tile(x, 40, 32, 8, "f2dfad")
+			for j in range(4):
+				_tile(x + j * 8, 40, 4, 10, "c87e65")
+			_tile(x + 5, 51, 22, 12, "5c7263")
+			_tile(x, 65, 33, 5, "d7b087")
+			for j in range(3):
+				_tile(x + 5 + j * 8, 61, 5, 4, "efcb76")
+	elif scene == "moonlit_lane":
+		for x in [18, 43, 118, 143]:
+			_tile(x, 28, 2, 47, "424d64")
+			_tile(x - 5, 31, 12, 13, "b49078")
+			_tile(x - 3, 33, 8, 9, "f0d592")
+			_tile(x - 1, 44, 4, 2, "eab177")
+		_tile(18, 28, 127, 1, "8b98a4")
+	else:
+		# Your little cottage and the pond remain visible around the companion.
+		_tile(8, 49, 29, 23, "d8c7a0" if not night else "a1a28e")
+		_tile(5, 45, 35, 6, "ac7e68")
+		_tile(10, 40, 25, 5, "ac7e68")
+		_tile(15, 36, 15, 4, "ac7e68")
+		_tile(13, 55, 7, 7, "f2d894")
+		_tile(25, 56, 8, 16, "7e8a75")
+		_tile(120, 78, 33, 8, "86afb0" if not night else "627b94")
+		_tile(124, 75, 24, 14, "86afb0" if not night else "627b94")
+		_tile(130, 78, 12, 1, "c1dad1")
+	for x in [4, 39, 117, 151]:
+		_tile(x, 63, 2, 12, "667c61")
+		_tile(x - 4, 57, 10, 9, "728e71" if not night else "435e66")
+		_tile(x - 2, 53, 7, 8, "87a17b" if not night else "4f6d71")
+	for i in range(18):
+		var x: int = (i * 29 + 5) % 157
+		var y: int = 81 + (i * 7) % 13
+		if x > 52 and x < 113:
+			continue
+		_tile(x, y, 1, 3, "789674")
+		_tile(x - 1, y, 3, 1, "e5c2a1" if i % 2 == 0 else "e9dfb2")

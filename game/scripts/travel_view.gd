@@ -4,6 +4,7 @@ class_name TravelView
 ## the countdown only displays the server's ready_at, and the server decides when the postcard can open.
 
 const ART_SCRIPT = preload("res://scripts/pet_art.gd")
+const ITEM_ART = preload("res://scripts/keepsake_art.gd")
 const RARITY_EN := {"common": "Common", "special": "Special"}
 
 var host: Control
@@ -20,6 +21,16 @@ var countdown_label: Label
 var countdown_ready: bool = false
 var timer: Timer
 var pending_events: Dictionary = {}
+var last_error: String = ""
+var refresh_sequence: int = 0
+var refresh_queued: bool = false
+var refreshing_pet: String = ""
+var postcards: Array = []
+var album_loading: bool = false
+var album_error: String = ""
+var album_sequence: int = 0
+var odds_open: bool = false
+var receipt_open: bool = false
 
 func _init(owner: Control) -> void:
 	host = owner
@@ -32,38 +43,84 @@ func _init(owner: Control) -> void:
 func reset() -> void:
 	catalog.clear(); supplies.clear(); collections.clear(); trips.clear(); pending_events.clear()
 	loaded_generation = -1
+	refresh_sequence += 1
+	loading = false
+	refresh_queued = false
+	last_error = ""
+	countdown_label = null
+	clock_offset_ms = 0.0
+	countdown_ready = false
+	postcards.clear()
+	album_sequence += 1
+	album_loading = false
+	album_error = ""
 
 # ---------------------------------------------------------------- data
 func refresh(force: bool = false) -> void:
-	if loading or not host.online or (not force and loaded_generation == host.account_generation):
+	if not host.online:
+		return
+	var pet_id: String = str(host.current_pet().get("id", ""))
+	if loading:
+		refresh_queued = refresh_queued or (force and pet_id != refreshing_pet)
+		return
+	if not force and loaded_generation == host.account_generation and (pet_id.is_empty() or trips.has(pet_id)):
 		return
 	loading = true
+	refreshing_pet = pet_id
+	last_error = ""
+	refresh_sequence += 1
+	var sequence: int = refresh_sequence
 	var generation: int = host.account_generation
-	loaded_generation = generation
 	var api: PetAPI = host.api
+	if host.page in ["travel", "collection", "trade"]:
+		host.call_deferred("_render")
 	var got_catalog: Dictionary = await api.request("/travel/catalog")
-	var got_collections: Dictionary = await api.request("/collections")
-	var pet: Dictionary = host.current_pet()
-	var got_current: Dictionary = {}
-	if not pet.is_empty():
-		got_current = await api.request("/pets/" + str(pet["id"]) + "/trips/current")
-	loading = false
-	if generation != host.account_generation:
+	if sequence != refresh_sequence or generation != host.account_generation:
 		return
+	var got_collections: Dictionary = await api.request("/collections")
+	if sequence != refresh_sequence or generation != host.account_generation:
+		return
+	var got_current: Dictionary = {}
+	if not pet_id.is_empty():
+		got_current = await api.request("/pets/" + pet_id + "/trips/current")
+	if sequence != refresh_sequence or generation != host.account_generation:
+		return
+	loading = false
 	if got_catalog.get("ok", false):
 		catalog = got_catalog["data"]
 	if got_collections.get("ok", false):
 		collections = got_collections["data"]
 	if got_current.get("ok", false):
 		if got_current["data"].get("trip") == null:
-			trips[str(pet["id"])] = {}
+			trips[pet_id] = {}
 		_accept(got_current["data"])
-	elif not got_current.is_empty():
-		host._set_status(PetAPI.error_message(got_current))
-	if not pet.is_empty() and not trips.has(str(pet["id"])):
-		trips[str(pet["id"])] = {}
-	if host.page in ["travel", "collection"] and got_catalog.get("ok", false):
+	for response in [got_catalog, got_collections, got_current]:
+		if not response.is_empty() and not response.get("ok", false):
+			last_error = PetAPI.error_message(response)
+			break
+	if last_error.is_empty():
+		loaded_generation = generation
+	else:
+		loaded_generation = -1
+		host._set_status(last_error)
+	# A selection made during a request gets its own authoritative trip lookup.
+	if refresh_queued or str(host.current_pet().get("id", "")) != pet_id:
+		refresh_queued = false
+		refresh(true)
+	if host.page in ["travel", "collection", "trade"]:
 		host._render()
+
+func _render_refresh_error(content: VBoxContainer) -> void:
+	if loading:
+		content.add_child(host._label(_t("Updating travel details…", "正在更新旅行信息……"), 13, host.MUTED))
+		return
+	if last_error.is_empty():
+		return
+	var notice: VBoxContainer = host._panel(content, Color("f6e3dc"))
+	notice.add_child(host._label(last_error, 14))
+	var retry: Button = host._button(_t("Try again", "重新加载"), func(): refresh(true), true)
+	retry.disabled = loading or not host.online
+	notice.add_child(retry)
 
 func _accept(data: Dictionary) -> void:
 	if data.get("supplies") is Dictionary:
@@ -105,9 +162,11 @@ func render(content: VBoxContainer) -> void:
 	countdown_label = null
 	content.add_child(host._label(_t("Pack & Travel", "收拾行囊去旅行"), 23))
 	content.add_child(host._label(_t("Send your companion on a short trip. It comes back with a postcard and maybe a keepsake.", "让伙伴出门走一小段路，带回一张明信片，也许还有一件纪念物。"), 14, host.MUTED))
+	_render_refresh_error(content)
 	if catalog.is_empty():
-		content.add_child(host._label(_t("Loading destinations…", "正在载入目的地……") if host.online else _t("Connect to the game server to travel.", "连接伙伴服务后才能旅行。"), 15))
-		if loaded_generation != host.account_generation:
+		if last_error.is_empty():
+			content.add_child(host._label(_t("Loading destinations…", "正在载入目的地……") if host.online else _t("Connect to the game server to travel.", "连接伙伴服务后才能旅行。"), 15))
+		if not loading and last_error.is_empty() and loaded_generation != host.account_generation:
 			refresh()
 		return
 	var pet: Dictionary = host.current_pet()
@@ -116,9 +175,12 @@ func render(content: VBoxContainer) -> void:
 		empty.add_child(host._label(_t("Adopt a companion first — it's free.", "先免费领养一位伙伴吧。"), 17))
 		empty.add_child(host._button(_t("Adopt a companion", "去领养"), func(): host._switch_page("companion"), true))
 		return
-	if not trips.has(str(pet["id"])) and not loading:
-		trips[str(pet["id"])] = {}
-		refresh(true)
+	if not trips.has(str(pet["id"])):
+		if last_error.is_empty():
+			content.add_child(host._label(_t("Checking this companion's trip…", "正在查看这位伙伴的旅行……"), 15, host.MUTED))
+			if not loading:
+				refresh()
+		return
 	var trip: Dictionary = trips.get(str(pet["id"]), {})
 	var state: String = str(trip.get("state", ""))
 	_render_supplies(content)
@@ -142,19 +204,35 @@ func _render_supplies(content: VBoxContainer) -> void:
 
 func _render_planner(content: VBoxContainer, pet: Dictionary) -> void:
 	var box: VBoxContainer = host._panel(content)
-	box.add_child(host._label(_t("Where to?", "去哪里？"), 19))
+	box.add_child(host._label(_t("Travelling with %s", "和 %s 一起出发") % str(pet.get("nickname", "")), 13, host.MUTED))
+	var preview: PetArt = ART_SCRIPT.new()
+	preview.species = str(pet.get("species_id", "moss"))
+	preview.form = str(pet.get("form", "seed"))
+	preview.scene = route_id
+	preview.habitat = str(_route(route_id).get("trait", "sun"))
+	preview.custom_minimum_size.y = 145 if host.small_layout else 180
+	box.add_child(preview)
+	var sections: BoxContainer = VBoxContainer.new() if host.small_layout else HBoxContainer.new()
+	sections.add_theme_constant_override("separation", 18)
+	box.add_child(sections)
+	var destinations := VBoxContainer.new()
+	destinations.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	destinations.add_theme_constant_override("separation", 8)
+	sections.add_child(destinations)
+	destinations.add_child(host._label(_t("Where to?", "去哪里？"), 19))
 	for route in catalog.get("routes", []):
 		var id: String = str(route["id"])
 		var button: Button = host._button(L10n.pick(route["name"]), func():
 			route_id = id
 			host._render(), route_id == id)
-		box.add_child(button)
+		destinations.add_child(button)
 		if route_id == id:
-			box.add_child(host._label(L10n.pick(route["blurb"]), 13, host.MUTED))
-	box.add_child(host._label(_t("Pack something", "带点什么"), 17))
-	var packs := HBoxContainer.new()
+			destinations.add_child(host._label(L10n.pick(route.get("blurb", {})), 13, host.MUTED))
+	var packs := VBoxContainer.new()
+	packs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	packs.add_theme_constant_override("separation", 8)
-	box.add_child(packs)
+	sections.add_child(packs)
+	packs.add_child(host._label(_t("Pack something", "带点什么"), 19))
 	for packing in catalog.get("packings", []):
 		var pid: String = str(packing["id"])
 		var pick: Button = host._button(L10n.pick(packing["name"]), func():
@@ -162,11 +240,11 @@ func _render_planner(content: VBoxContainer, pet: Dictionary) -> void:
 			host._render(), packing_id == pid)
 		pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		packs.add_child(pick)
-	box.add_child(host._label(_t("Packing changes the story, not the odds.", "行囊只改变故事，不改变概率。"), 12, host.MUTED))
+	packs.add_child(host._label(_t("Packing changes the story, not the odds.", "行囊只改变故事，不改变概率。"), 12, host.MUTED))
 	box.add_child(host._label(demo_label(), 14, host.CORAL))
 	var access: String = host._pet_access_message(pet)
 	var go: Button = host._button(_t("Pack & go", "出发"), start_trip, true)
-	go.disabled = host.busy or not host.online or int(supplies.get("balance", 0)) < 1 or not access.is_empty()
+	go.disabled = host.busy or loading or not last_error.is_empty() or not host.online or int(supplies.get("balance", 0)) < 1 or not access.is_empty()
 	box.add_child(go)
 	if not access.is_empty():
 		box.add_child(host._label(access, 13, host.CORAL))
@@ -182,6 +260,7 @@ func _render_away(content: VBoxContainer, pet: Dictionary, trip: Dictionary) -> 
 	art.species = str(pet.get("species_id", "moss"))
 	art.form = str(pet.get("form", "seed"))
 	art.habitat = str(route.get("trait", "sun"))
+	art.scene = str(trip.get("route_id", "garden"))
 	art.custom_minimum_size.y = 200
 	box.add_child(art)
 	box.add_child(host._label(demo_label(), 13, host.CORAL))
@@ -213,24 +292,47 @@ func _tick() -> void:
 	if not countdown_ready and remaining_ms(trip) <= 0:
 		host._render()
 
-func render_postcard(content: VBoxContainer, pet: Dictionary, trip: Dictionary) -> void:
+func render_postcard(content: VBoxContainer, pet: Dictionary, trip: Dictionary, archived: bool = false) -> void:
 	var result: Dictionary = trip.get("result", {})
 	var story: Dictionary = result.get("story", {}).get(L10n.lang, result.get("story", {}).get("en", {}))
 	var card: VBoxContainer = host._panel(content, Color("fff6e0"))
 	card.add_child(host._label(_t("Postcard", "明信片"), 13, host.MUTED))
 	card.add_child(host._label(str(story.get("title", "")), 21))
+	var art: PetArt = ART_SCRIPT.new()
+	art.species = str(pet.get("species_id", "moss"))
+	art.form = str(pet.get("form", "seed"))
+	art.scene = str(trip.get("route_id", "garden"))
+	art.habitat = str(_route(art.scene).get("trait", "sun"))
+	art.custom_minimum_size.y = 180
+	card.add_child(art)
+	card.add_child(host._label(str(trip.get("settled_at", "")).replace("T", " ").left(16) + " UTC", 12, host.MUTED))
 	for line in story.get("lines", []):
 		card.add_child(host._label(str(line), 15))
 	for item in result.get("items", []):
 		var rarity: String = str(item.get("rarity", "common"))
+		var keepsake := ITEM_ART.new()
+		keepsake.item_id = str(item.get("id", ""))
+		keepsake.custom_minimum_size.y = 88
+		card.add_child(keepsake)
 		card.add_child(host._label(_t("Keepsake: ", "纪念物：") + "%s  ·  %s" % [L10n.pick(item.get("name", {})), str(RARITY_EN.get(rarity, rarity)) if L10n.lang == "en" else ("特别" if rarity == "special" else "常见")], 16, host.CORAL if rarity == "special" else host.INK))
 	if result.get("clue") != null:
 		card.add_child(host._label(_t("A clue about a companion that is coming later (%s).", "发现了一位未来伙伴的线索（%s，尚未开放）。") % str(result.get("clue")), 13, host.MUTED))
-	card.add_child(host._label(_t("Rewards are drawn by the server. The result is recorded on Solana when you save the journey receipt.", "奖励由服务器抽取；保存旅程收据时，结果摘要会记录在 Solana 上。"), 12, host.MUTED))
-	_render_receipt(card, pet, trip)
-	card.add_child(host._button(_t("Plan another trip", "再计划一次旅行"), func():
-		trip["_dismissed"] = true
-		host._render()))
+	card.add_child(host._label(_t("Saved in your postcard album. Come back to this memory any time.", "已放进明信片相册，随时可以回来翻看这段回忆。"), 13, host.MUTED))
+	# Optional chain details stay available without crowding the reward reveal.
+	var receipt_toggle: Button = host._button(_t("Journey receipt", "旅程收据") + (" −" if receipt_open else " +"), func():
+		receipt_open = not receipt_open
+		if archived:
+			open_postcard(trip)
+		else:
+			host._render())
+	card.add_child(receipt_toggle)
+	if receipt_open:
+		_render_receipt(card, pet, trip)
+	if not archived:
+		card.add_child(host._button(_t("View postcard album", "翻看明信片相册"), func(): host._switch_page("collection")))
+		card.add_child(host._button(_t("Plan another trip", "再计划一次旅行"), func():
+			trip["_dismissed"] = true
+			host._render(), true))
 
 func _render_receipt(card: VBoxContainer, pet: Dictionary, trip: Dictionary) -> void:
 	card.add_child(host._label(_t("Journey receipt", "旅程收据"), 17))
@@ -272,22 +374,29 @@ func _render_receipt(card: VBoxContainer, pet: Dictionary, trip: Dictionary) -> 
 		card.add_child(host._label(access, 12, host.CORAL))
 
 func _render_odds(content: VBoxContainer) -> void:
+	content.add_child(host._button(_t("How results work", "结果如何决定") + (" −" if odds_open else " +"), func():
+		odds_open = not odds_open
+		host._render()))
+	if not odds_open:
+		return
 	var odds: Dictionary = catalog.get("odds", {})
 	var info: VBoxContainer = host._panel(content, Color("f0f1e5"))
 	info.add_child(host._label(_t("How results work", "结果如何决定"), 16))
 	var parts: PackedStringArray = []
 	for tier in odds.get("tiers", []):
-		parts.append("%s %d%%" % [str(tier.get("tier", "")), int(tier.get("percent", 0))])
+		var names: Dictionary = {"common": _t("Common", "常见"), "repeat": _t("Duplicate", "重复"), "special": _t("Special", "特别"), "clue": _t("Clue", "线索")}
+		parts.append("%s %d%%" % [str(names.get(str(tier.get("tier", "")), "")), int(tier.get("percent", 0))])
 	info.add_child(host._label(", ".join(parts), 13))
-	info.add_child(host._label(str(odds.get("note", "")), 12, host.MUTED))
-	info.add_child(host._label(str(catalog.get("disclosure", "")), 12, host.MUTED))
+	info.add_child(host._label(_t("Rewards are drawn by the server. Packing changes the story, not the odds. Keepsakes have no cash value.", "奖励由服务器抽取；行囊改变故事，不改变概率。纪念物是游戏内收藏，没有现金价值。"), 12, host.MUTED))
 
 # ---------------------------------------------------------------- keepsakes (Collection page)
 func render_keepsakes(content: VBoxContainer) -> void:
 	content.add_child(host._label(_t("Keepsakes", "旅途收藏"), 23))
+	_render_refresh_error(content)
 	if collections.is_empty():
-		content.add_child(host._label(_t("Loading keepsakes…", "正在载入收藏……") if host.online else _t("Connect to see keepsakes.", "连接后查看收藏。"), 14, host.MUTED))
-		if loaded_generation != host.account_generation:
+		if last_error.is_empty():
+			content.add_child(host._label(_t("Loading keepsakes…", "正在载入收藏……") if host.online else _t("Connect to see keepsakes.", "连接后查看收藏。"), 14, host.MUTED))
+		if not loading and last_error.is_empty() and loaded_generation != host.account_generation:
 			refresh()
 		return
 	content.add_child(host._label(_t("%d / %d found. Separate from your companion cards.", "已找到 %d / %d 件，与伙伴卡册分开记录。") % [int(collections.get("discovered", 0)), int(collections.get("total", 8))], 14, host.MUTED))
@@ -300,16 +409,68 @@ func render_keepsakes(content: VBoxContainer) -> void:
 		var found: bool = bool(item.get("discovered", false))
 		var card: VBoxContainer = host._panel(grid, Color("fffdf5") if found else Color("efeee5"))
 		card.get_parent().size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var art := ITEM_ART.new()
+		art.item_id = str(item.get("id", ""))
+		art.discovered = found
+		art.custom_minimum_size.y = 82
+		card.add_child(art)
 		card.add_child(host._label(("★ " if str(item.get("rarity", "")) == "special" else "") + (L10n.pick(item.get("name", {})) if found else "???"), 14, host.INK if found else host.MUTED))
 		card.add_child(host._label(L10n.pick(item.get("description", {})) if found else L10n.pick(_route(str(item.get("route", ""))).get("name", {})), 11, host.MUTED))
 		if found and int(item.get("quantity", 0)) > 1:
 			card.add_child(host._label("× %d" % int(item.get("quantity", 0)), 12, host.MUTED))
-	content.add_child(host._label(str(collections.get("disclosure", "")), 12, host.MUTED))
+	_render_album(content)
+
+func refresh_album() -> void:
+	if album_loading or not host.online:
+		return
+	album_loading = true
+	album_error = ""
+	album_sequence += 1
+	var sequence: int = album_sequence
+	var generation: int = host.account_generation
+	var response: Dictionary = await host.api.request("/trips")
+	if sequence != album_sequence or generation != host.account_generation:
+		return
+	album_loading = false
+	if response.get("ok", false):
+		postcards = response["data"].get("trips", []).filter(func(trip: Dictionary): return trip.get("state") == "revealed")
+	else:
+		album_error = PetAPI.error_message(response)
+	if host.page == "collection":
+		host._render()
+
+func _render_album(content: VBoxContainer) -> void:
+	content.add_child(host._label(_t("Postcard album", "明信片相册"), 23))
+	content.add_child(host._label(_t("Your last 50 journeys, newest first. Tap a postcard to read it again.", "最近 50 次旅程，按时间排列。轻点明信片，再读一次小故事。"), 13, host.MUTED))
+	if album_loading:
+		content.add_child(host._label(_t("Opening the album…", "正在翻开相册……"), 14))
+	if not album_error.is_empty():
+		content.add_child(host._label(album_error, 14, host.CORAL))
+		content.add_child(host._button(_t("Try again", "重新加载"), refresh_album))
+	if postcards.is_empty() and not album_loading and album_error.is_empty():
+		var empty: VBoxContainer = host._panel(content)
+		empty.add_child(host._label(_t("A little world is waiting", "小小的世界正在等你"), 18))
+		empty.add_child(host._label(_t("Finish a trip and open its postcard. It will be kept here.", "完成一次旅行、揭晓明信片，它就会珍藏在这里。"), 14, host.MUTED))
+		empty.add_child(host._button(_t("Take a trip", "去旅行"), func(): host._switch_page("travel"), true))
+	for trip in postcards:
+		var story: Dictionary = trip.get("result", {}).get("story", {}).get(L10n.lang, {})
+		var row: VBoxContainer = host._panel(content, Color("fff6e0"))
+		row.add_child(host._label(str(trip.get("settled_at", "")).replace("T", " ").left(16) + " UTC", 12, host.MUTED))
+		row.add_child(host._button(str(story.get("title", "Postcard")), open_postcard.bind(trip)))
+
+func open_postcard(trip: Dictionary) -> void:
+	var pet: Dictionary = {}
+	for companion in host.pets:
+		if companion.get("id") == trip.get("pet_id"):
+			pet = companion
+			break
+	var body: VBoxContainer = host._open_modal(_t("A memory to keep", "珍藏的小回忆"))
+	render_postcard(body, pet, trip, true)
 
 # ---------------------------------------------------------------- actions
 func start_trip() -> void:
 	var pet: Dictionary = host.current_pet()
-	if host.busy or pet.is_empty() or not host._pet_access_message(pet).is_empty():
+	if host.busy or loading or not host.online or not last_error.is_empty() or pet.is_empty() or not trips.has(str(pet.get("id", ""))) or not host._pet_access_message(pet).is_empty():
 		return
 	var key: String = "trip:%s:%s:%s" % [str(pet["id"]), route_id, packing_id]
 	var body := {"event_id": _event(key), "route_id": route_id, "packing_id": packing_id}

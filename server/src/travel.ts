@@ -164,8 +164,8 @@ export class TravelService {
     if (changed.changes !== 1) return;
     this.repository.db.prepare('INSERT OR IGNORE INTO supplies_ledger(user_id,event_id,delta,reason,trip_id,utc_day,created_at) VALUES (?,?,?,?,?,?,?)')
       .run(String(row.user_id), `refund:${row.id}`, Number(row.supplies_cost), 'trip_cancelled_refund', String(row.id), utcDay(now), iso(now));
-    this.repository.db.prepare('INSERT INTO journal VALUES (?,?,?,?,?)').run(randomUUID(), String(row.user_id), String(row.pet_id),
-      'The trip was cancelled because this companion changed hands. One free supply was returned.', iso(now));
+    this.repository.entry(String(row.user_id), String(row.pet_id), '旅行因伙伴归属变化而取消，一份免费补给已退回。', now,
+      'The trip was cancelled because this companion changed hands. One free supply was returned.');
   }
   /** Ownership moved away (transfer or escrow) while travelling: cancel the starter's trip. Returns true if cancelled. */
   cancelIfOwnershipChanged(tripUserId: string, tripId: string): boolean {
@@ -212,8 +212,8 @@ export class TravelService {
         .run(tripId, receiptId, userId, petId, ownership?.wallet ?? null, ownership?.asset ?? null, ownership?.version ?? null,
           String(body.route_id), String(body.packing_id), RULES_VERSION, LOOT_TABLE_HASH, CONTENT_VERSION, temperamentOf(pet),
           now, now + this.durationMs, id, digest);
-      this.repository.db.prepare('INSERT INTO journal VALUES (?,?,?,?,?)').run(randomUUID(), userId, petId,
-        `${pet.nickname} set off for ${routes[body.route_id as RouteId].name.en}.`, iso(now));
+      this.repository.entry(userId, petId, `${pet.nickname} 出发去${routes[body.route_id as RouteId].name.zh}了。`, now,
+        `${pet.nickname} set off for ${routes[body.route_id as RouteId].name.en}.`);
       return { trip: this.view(this.tripRow('id=?', tripId)!), supplies: this.supplies(userId), replayed: false };
     });
   }
@@ -274,8 +274,9 @@ export class TravelService {
       if (pet.temperament === undefined) pet.temperament = temperamentOf(pet);
       this.repository.db.prepare('UPDATE pets SET data=? WHERE id=? AND user_id=?').run(JSON.stringify(pet), pet.id, userId);
       const found = result.items.map(([item]) => collectibles[item].name.en).join(', ');
-      this.repository.db.prepare('INSERT INTO journal VALUES (?,?,?,?,?)').run(randomUUID(), userId, pet.id,
-        `${pet.nickname} came back from ${routes[route].name.en}${found ? ` with ${found}` : ''}.${grew ? ` It grew into its ${pet.form} form!` : ''}`, iso(now));
+      const foundZh = result.items.map(([item]) => collectibles[item].name.zh).join('、');
+      this.repository.entry(userId, pet.id, `${pet.nickname} 从${routes[route].name.zh}回来了${foundZh ? `，带回了${foundZh}` : ''}。${grew ? ` 它长成了${pet.form === 'sun' ? '日光' : '月色'}形态！` : ''}`, now,
+        `${pet.nickname} came back from ${routes[route].name.en}${found ? ` with ${found}` : ''}.${grew ? ` It grew into its ${pet.form} form!` : ''}`);
       return { trip: this.view(this.tripRow('id=?', tripId)!), pet, replayed: false };
     });
   }

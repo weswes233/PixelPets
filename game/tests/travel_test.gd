@@ -89,7 +89,9 @@ func run() -> void:
 	view.trips[pet["id"]] = revealed
 	client._render()
 	check(has_text(client, "A trip to Moonlit Lantern Lane") and has_text(client, "The Last Lantern"), "Postcard shows story and keepsake")
-	check(has_text(client, "Rewards are drawn by the server"), "Postcard carries the server-draw disclosure")
+	check(has_text(client, "Saved in your postcard album") and not has_text(client, "Claim on Devnet"), "Reward reveal leads to the album with optional receipt details collapsed")
+	view.receipt_open = true
+	client._render()
 	check(has_text(client, "Claim on Devnet"), "Unclaimed pets are offered Claim on Devnet before saving a receipt")
 	check(not has_text(client, "Provably fair") and not has_text(client, "Fully on-chain"), "No forbidden fairness claims")
 	pet["chain"] = {"status": "registered"}
@@ -157,6 +159,12 @@ func run() -> void:
 	var unverified: Dictionary = gift_pet.duplicate(true)
 	unverified["ownership"] = {"status": "unverified", "can_interact": false}
 	check(not client.gift_block_reason(unverified, true).is_empty(), "Unverified ownership blocks gifting")
+	var unchecked: Dictionary = gift_pet.duplicate(true)
+	unchecked["id"] = "trip-not-loaded"
+	check(not client.gift_block_reason(unchecked, true).is_empty(), "Unknown trip state cannot enable gifting")
+	view.loading = true
+	check(not client.gift_block_reason(gift_pet, true).is_empty(), "Gifting waits for the trip lookup to finish")
+	view.loading = false
 	check(not L10n._has_cjk(" ".join(texts(client.content))), "English wallet screen with gift contains no Chinese text")
 	L10n.lang = "zh"
 	client.page = "travel"
