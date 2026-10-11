@@ -48,8 +48,8 @@ func run() -> void:
 	client._upsert_pet(pet)
 	client.selected_pet = pet["id"]
 	view.catalog = {"demo": {"duration_ms": 45000}, "routes": [
-		{"id": "sunny_market", "name": {"en": "Sunny Market", "zh": "阳光集市"}, "blurb": {"en": "Warm stones.", "zh": "暖石"}, "trait": "sun"},
-		{"id": "moonlit_lane", "name": {"en": "Moonlit Lantern Lane", "zh": "月灯小径"}, "blurb": {"en": "Lanterns.", "zh": "灯笼"}, "trait": "moon"}],
+		{"id": "sunny_market", "name": {"en": "Sunny Market", "zh": "阳光集市"}, "blurb": {"en": "Warm stones.", "zh": "暖石"}, "trait": "sun", "collectibles": ["warm_pebble", "golden_bell"]},
+		{"id": "moonlit_lane", "name": {"en": "Moonlit Lantern Lane", "zh": "月灯小径"}, "blurb": {"en": "Lanterns.", "zh": "灯笼"}, "trait": "moon", "collectibles": ["last_lantern", "dew_bottle"]}],
 		"packings": [{"id": "snack_tin", "name": {"en": "Snack tin", "zh": "点心盒"}}, {"id": "tiny_lantern", "name": {"en": "Tiny lantern", "zh": "小提灯"}}],
 		"odds": {"tiers": [{"tier": "common", "percent": 60}, {"tier": "repeat", "percent": 25}, {"tier": "special", "percent": 10}, {"tier": "clue", "percent": 5}], "note": "Rewards are drawn by the server."},
 		"disclosure": "Keepsakes are in-game collection records, not tokens or NFTs."}
@@ -60,6 +60,17 @@ func run() -> void:
 	client._render()
 	await process_frame
 	check(has_text(client, "Pack & go"), "Planner shows Pack & go")
+	check(has_text(client, "Sunny Market") and has_text(client, "Moonlit Lantern Lane"), "Planner shows both destination cards")
+	check(has_text(client, "Keepsakes found: 0 / 2"), "Route cards show discovery progress from the catalog")
+	check(has_text(client, "Destination selected") and has_text(client, "Choose destination"), "Route cards clearly distinguish selected and available destinations")
+	var route_choice: Button = null
+	for button in client.content.find_children("*", "Button", true, false):
+		if button.text == "Choose destination":
+			route_choice = button
+	check(route_choice != null, "Unselected destination has a working selection button")
+	if route_choice != null:
+		route_choice.pressed.emit()
+		check(view.route_id == "moonlit_lane", "Selecting the second destination changes the planner route")
 	check(has_text(client, "Demo trip · 45 seconds"), "Accelerated demo label is always shown")
 	check(has_text(client, "Free supplies: 3 / 3"), "Supplies come from the server ledger")
 	check(has_text(client, "Changes the story") or has_text(client, "changes the story"), "Packing is disclosed as story-only")
@@ -79,16 +90,24 @@ func run() -> void:
 	check(left > 25000.0 and left <= 31000.0, "Countdown uses the server clock offset (got %f ms)" % left)
 	client._render()
 	check(has_text(client, "On the way to Moonlit Lantern Lane"), "Away state names the destination")
+	check(has_text(client, "Journey scene"), "Away state shows a staged travel vignette")
+	var journey_bar: ProgressBar = null
+	for progress_node in client.content.find_children("*", "ProgressBar", true, false):
+		journey_bar = progress_node
+	check(journey_bar != null and journey_bar.value > 0.0 and journey_bar.value < 100.0, "Journey progress uses the server-adjusted clock")
 	check(not has_text(client, "Open the postcard"), "Postcard can't open before the server ready time")
 	view.trips[pet["id"]]["ready_at"] = iso(server_now - 1000.0)
 	client._render()
 	check(has_text(client, "Your companion is back") and has_text(client, "Open the postcard"), "Return state appears once the server time passes ready_at")
-	var revealed := {"id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "pet_id": pet["id"], "route_id": "moonlit_lane", "state": "revealed", "public_receipt_id": "jr_TESTTESTTESTTESTTESTTE",
+	check(has_text(client, "Journey scene 3/3"), "Journey progress reaches its final scene on arrival")
+	var revealed := {"id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "pet_id": pet["id"], "route_id": "moonlit_lane", "state": "revealed", "public_receipt_id": "jr_TESTTESTTESTTESTTESTTE", "settled_at": "2026-10-10T13:23:00.000Z",
 		"result": {"tier": "special", "clue": null, "result_hash": "ab".repeat(32), "items": [{"id": "last_lantern", "quantity": 1, "rarity": "special", "name": {"en": "The Last Lantern", "zh": "最后一盏灯"}}],
 		"story": {"en": {"title": "A trip to Moonlit Lantern Lane", "lines": ["It watched a meteor."]}, "zh": {"title": "去月灯小径", "lines": ["看了流星。"]}}}, "receipt": null}
 	view.trips[pet["id"]] = revealed
 	client._render()
 	check(has_text(client, "A trip to Moonlit Lantern Lane") and has_text(client, "The Last Lantern"), "Postcard shows story and keepsake")
+	check(has_text(client, "POSTCARD · JOURNEY MEMORY") and has_text(client, "Postmarked 2026-10-10"), "Postcard has a visual heading and postmark")
+	check(has_text(client, "A note from W") and has_text(client, "★ RARE FIND"), "Postcard personalizes the note and highlights rare finds")
 	check(has_text(client, "Rewards are drawn by the server"), "Postcard carries the server-draw disclosure")
 	check(has_text(client, "Claim on Devnet"), "Unclaimed pets are offered Claim on Devnet before saving a receipt")
 	check(not has_text(client, "Provably fair") and not has_text(client, "Fully on-chain"), "No forbidden fairness claims")
@@ -126,6 +145,7 @@ func run() -> void:
 			await process_frame
 			check(client.content.get_combined_minimum_size().x <= dimensions.x - 36, "%s fits %d px (got %f)" % [next_page, dimensions.x, client.content.get_combined_minimum_size().x])
 	check(has_text(client, "1 / 8 found") and has_text(client, "The Last Lantern") and has_text(client, "???"), "Keepsakes show found and unknown entries separately from pet cards")
+	check(has_text(client, "Moonlit Lantern Lane · 1 / 2 keepsakes"), "Collection page shows discoveries per destination")
 	# P1 gift: rendered only for registered pets; disabled while travelling (Astra §5).
 	viewport.size = Vector2i(360, 640)
 	client.size = Vector2(360, 640)
@@ -163,6 +183,7 @@ func run() -> void:
 	view.trips[gift_pet["id"]] = {}
 	client._render()
 	check(has_text(client, "收拾行囊去旅行") and has_text(client, "出发"), "中文 toggle covers travel planner strings")
+	check(has_text(client, "已找到纪念物："), "Chinese route cards show discovery progress")
 	client.page = "trade"
 	client._render()
 	check(has_text(client, "作为礼物送出"), "中文 toggle covers gift strings")

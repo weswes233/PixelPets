@@ -17,6 +17,8 @@ var packing_id: String = "snack_tin"
 var loading: bool = false
 var loaded_generation: int = -1
 var countdown_label: Label
+var journey_progress: ProgressBar
+var journey_phase: Label
 var countdown_ready: bool = false
 var timer: Timer
 var pending_events: Dictionary = {}
@@ -31,6 +33,9 @@ func _init(owner: Control) -> void:
 
 func reset() -> void:
 	catalog.clear(); supplies.clear(); collections.clear(); trips.clear(); pending_events.clear()
+	countdown_label = null
+	journey_progress = null
+	journey_phase = null
 	loaded_generation = -1
 
 # ---------------------------------------------------------------- data
@@ -103,6 +108,8 @@ func _event(key: String) -> String:
 # ---------------------------------------------------------------- travel page
 func render(content: VBoxContainer) -> void:
 	countdown_label = null
+	journey_progress = null
+	journey_phase = null
 	content.add_child(host._label(_t("Pack & Travel", "收拾行囊去旅行"), 23))
 	content.add_child(host._label(_t("Send your companion on a short trip. It comes back with a postcard and maybe a keepsake.", "让伙伴出门走一小段路，带回一张明信片，也许还有一件纪念物。"), 14, host.MUTED))
 	if catalog.is_empty():
@@ -140,17 +147,47 @@ func _render_supplies(content: VBoxContainer) -> void:
 	row.add_child(host._label(_t("Free supplies: %d / %d", "免费补给：%d / %d") % [balance, cap], 16))
 	row.add_child(host._label(_t("Each trip uses 1. Refills to %d every day at 00:00 UTC. No cash value.", "每次旅行用 1 份。每天 UTC 0 点补满 %d 份，没有现金价值。") % cap, 12, host.MUTED))
 
+func _route_discovery(route: Dictionary) -> Vector2i:
+	var route_id_value: String = str(route.get("id", ""))
+	var ids: Array = route.get("collectibles", [])
+	var found: int = 0
+	for collectible in collections.get("collectibles", []):
+		if str(collectible.get("route", "")) == route_id_value and bool(collectible.get("discovered", false)):
+			found += 1
+	return Vector2i(found, ids.size())
+
+func _render_route_card(parent: VBoxContainer, route: Dictionary, pet: Dictionary) -> void:
+	var id: String = str(route.get("id", ""))
+	var selected: bool = route_id == id
+	var box: VBoxContainer = host._panel(parent, Color("e8f0dd") if selected else Color("fffdf5"))
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 5)
+	box.add_child(top)
+	top.add_child(host._label(L10n.pick(route.get("name", {})), 17))
+	var tag: Label = host._label(_t("SELECTED", "已选择") if selected else _t("DISCOVER", "去探索"), 11, host.CORAL if selected else host.MUTED)
+	tag.size_flags_horizontal = Control.SIZE_SHRINK_END
+	top.add_child(tag)
+	var preview: PetArt = ART_SCRIPT.new()
+	preview.species = str(pet.get("species_id", "moss"))
+	preview.form = str(pet.get("form", "seed"))
+	preview.habitat = str(route.get("trait", "sun"))
+	preview.custom_minimum_size.y = 105
+	preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_child(preview)
+	box.add_child(host._label(L10n.pick(route.get("blurb", {})), 13, host.MUTED))
+	var discovered: Vector2i = _route_discovery(route)
+	box.add_child(host._label(_t("Keepsakes found: %d / %d", "已找到纪念物：%d / %d") % [discovered.x, discovered.y], 12, host.MUTED))
+	var choose: Button = host._button(_t("Destination selected", "已选择此地") if selected else _t("Choose destination", "选择此目的地"), func():
+		route_id = id
+		host._render(), selected)
+	box.add_child(choose)
+
 func _render_planner(content: VBoxContainer, pet: Dictionary) -> void:
-	var box: VBoxContainer = host._panel(content)
-	box.add_child(host._label(_t("Where to?", "去哪里？"), 19))
+	content.add_child(host._label(_t("Where to?", "去哪里？"), 19))
+	content.add_child(host._label(_t("Pick a place to explore. Each place has its own stories and keepsakes.", "选择想探索的地方，每个地方都有不同的故事和纪念物。"), 13, host.MUTED))
 	for route in catalog.get("routes", []):
-		var id: String = str(route["id"])
-		var button: Button = host._button(L10n.pick(route["name"]), func():
-			route_id = id
-			host._render(), route_id == id)
-		box.add_child(button)
-		if route_id == id:
-			box.add_child(host._label(L10n.pick(route["blurb"]), 13, host.MUTED))
+		_render_route_card(content, route, pet)
+	var box: VBoxContainer = host._panel(content, Color("f5f0e7"))
 	box.add_child(host._label(_t("Pack something", "带点什么"), 17))
 	var packs := HBoxContainer.new()
 	packs.add_theme_constant_override("separation", 8)
@@ -174,10 +211,11 @@ func _render_planner(content: VBoxContainer, pet: Dictionary) -> void:
 		box.add_child(host._label(_t("No supplies left today. They refill at 00:00 UTC.", "今天的补给用完了，UTC 0 点补满。"), 13, host.CORAL))
 
 func _render_away(content: VBoxContainer, pet: Dictionary, trip: Dictionary) -> void:
-	var box: VBoxContainer = host._panel(content)
+	var box: VBoxContainer = host._panel(content, Color("eef1e5"))
 	var route: Dictionary = _route(str(trip.get("route_id", "")))
 	var arrived: bool = remaining_ms(trip) <= 0
 	box.add_child(host._label((_t("Back from %s", "从%s回来了") if arrived else _t("On the way to %s", "正在前往%s")) % L10n.pick(route.get("name", {})), 19))
+	box.add_child(host._label(L10n.pick(route.get("blurb", {})), 13, host.MUTED))
 	var art: PetArt = ART_SCRIPT.new()
 	art.species = str(pet.get("species_id", "moss"))
 	art.form = str(pet.get("form", "seed"))
@@ -187,7 +225,15 @@ func _render_away(content: VBoxContainer, pet: Dictionary, trip: Dictionary) -> 
 	box.add_child(host._label(demo_label(), 13, host.CORAL))
 	countdown_label = host._label("", 18)
 	box.add_child(countdown_label)
-	countdown_ready = remaining_ms(trip) <= 0
+	journey_progress = ProgressBar.new()
+	journey_progress.max_value = 100.0
+	journey_progress.show_percentage = false
+	journey_progress.custom_minimum_size.y = 13
+	box.add_child(journey_progress)
+	journey_phase = host._label("", 13, host.MUTED)
+	box.add_child(journey_phase)
+	box.add_child(host._label(_t("Journey scenes are illustrative. The server controls the return time.", "旅途画面仅为演出，归来时间由服务器决定。"), 12, host.MUTED))
+	countdown_ready = arrived
 	_update_countdown(trip)
 	if countdown_ready:
 		box.add_child(host._label(_t("Your companion is back", "伙伴回来了"), 21))
@@ -195,13 +241,26 @@ func _render_away(content: VBoxContainer, pet: Dictionary, trip: Dictionary) -> 
 		open.disabled = host.busy
 		box.add_child(open)
 	else:
-		box.add_child(host._label(_t("The server decides when it's back; refreshing won't change the result.", "归来时间由服务器决定，刷新不会改变结果。"), 12, host.MUTED))
+		box.add_child(host._label(_t("Refreshing will not change the result.", "刷新页面不会改变旅行结果。"), 12, host.MUTED))
 
 func _update_countdown(trip: Dictionary) -> void:
 	if not is_instance_valid(countdown_label):
 		return
 	var left: float = remaining_ms(trip)
 	countdown_label.text = _t("Back in %d s", "还有 %d 秒") % ceili(left / 1000.0) if left > 0 else _t("Arrived home", "到家了")
+	var duration: float = maxf(1000.0, float(trip.get("duration_ms", 45000)))
+	var percent: float = 100.0 * (1.0 - clampf(left / duration, 0.0, 1.0))
+	if is_instance_valid(journey_progress):
+		journey_progress.value = percent
+	if is_instance_valid(journey_phase):
+		if percent >= 100.0:
+			journey_phase.text = _t("Journey scene 3/3 · Home again", "旅途画面 3/3 · 顺利到家")
+		elif percent >= 66.0:
+			journey_phase.text = _t("Journey scene 3/3 · On the way back", "旅途画面 3/3 · 正在返程")
+		elif percent >= 33.0:
+			journey_phase.text = _t("Journey scene 2/3 · Exploring the destination", "旅途画面 2/3 · 正在探索目的地")
+		else:
+			journey_phase.text = _t("Journey scene 1/3 · Setting off", "旅途画面 1/3 · 准备出发")
 
 func _tick() -> void:
 	if host.page != "travel" or not is_instance_valid(countdown_label):
@@ -216,14 +275,29 @@ func _tick() -> void:
 func render_postcard(content: VBoxContainer, pet: Dictionary, trip: Dictionary) -> void:
 	var result: Dictionary = trip.get("result", {})
 	var story: Dictionary = result.get("story", {}).get(L10n.lang, result.get("story", {}).get("en", {}))
-	var card: VBoxContainer = host._panel(content, Color("fff6e0"))
-	card.add_child(host._label(_t("Postcard", "明信片"), 13, host.MUTED))
+	var route: Dictionary = _route(str(trip.get("route_id", "")))
+	var moon: bool = str(route.get("trait", "sun")) == "moon"
+	var card: VBoxContainer = host._panel(content, Color("eef0fc") if moon else Color("fff6e0"))
+	card.add_child(host._label(_t("POSTCARD · JOURNEY MEMORY", "旅行明信片 · 旅途记忆"), 12, host.MUTED))
 	card.add_child(host._label(str(story.get("title", "")), 21))
+	var stamp_date: String = str(trip.get("settled_at", ""))
+	if stamp_date.length() >= 10:
+		card.add_child(host._label(_t("Postmarked %s", "旅行邮戳 %s") % stamp_date.left(10), 12, host.MUTED))
+	var art: PetArt = ART_SCRIPT.new()
+	art.species = str(pet.get("species_id", "moss"))
+	art.form = str(pet.get("form", "seed"))
+	art.habitat = str(route.get("trait", "sun"))
+	art.custom_minimum_size.y = 158
+	card.add_child(art)
+	card.add_child(host._label(_t("A note from %s", "来自%s的小纸条") % str(pet.get("nickname", _t("your companion", "你的伙伴"))), 16, host.INK))
+	var story_box: VBoxContainer = host._panel(card, Color("fffdf6") if not moon else Color("f8f8ff"))
 	for line in story.get("lines", []):
-		card.add_child(host._label(str(line), 15))
+		story_box.add_child(host._label(str(line), 14))
 	for item in result.get("items", []):
 		var rarity: String = str(item.get("rarity", "common"))
-		card.add_child(host._label(_t("Keepsake: ", "纪念物：") + "%s  ·  %s" % [L10n.pick(item.get("name", {})), str(RARITY_EN.get(rarity, rarity)) if L10n.lang == "en" else ("特别" if rarity == "special" else "常见")], 16, host.CORAL if rarity == "special" else host.INK))
+		var gift: VBoxContainer = host._panel(card, Color("ffebc9") if rarity == "special" else Color("edf1e4"))
+		gift.add_child(host._label(_t("★ RARE FIND", "★ 稀有发现") if rarity == "special" else _t("A little keepsake", "带回的小纪念物"), 13, host.CORAL if rarity == "special" else host.MUTED))
+		gift.add_child(host._label(_t("Keepsake: ", "纪念物：") + L10n.pick(item.get("name", {})), 16))
 	if result.get("clue") != null:
 		card.add_child(host._label(_t("A clue about a companion that is coming later (%s).", "发现了一位未来伙伴的线索（%s，尚未开放）。") % str(result.get("clue")), 13, host.MUTED))
 	card.add_child(host._label(_t("Rewards are drawn by the server. The result is recorded on Solana when you save the journey receipt.", "奖励由服务器抽取；保存旅程收据时，结果摘要会记录在 Solana 上。"), 12, host.MUTED))
@@ -291,6 +365,9 @@ func render_keepsakes(content: VBoxContainer) -> void:
 			refresh()
 		return
 	content.add_child(host._label(_t("%d / %d found. Separate from your companion cards.", "已找到 %d / %d 件，与伙伴卡册分开记录。") % [int(collections.get("discovered", 0)), int(collections.get("total", 8))], 14, host.MUTED))
+	for route in catalog.get("routes", []):
+		var progress: Vector2i = _route_discovery(route)
+		content.add_child(host._label(_t("%s · %d / %d keepsakes", "%s · 已收集 %d / %d 件") % [L10n.pick(route.get("name", {})), progress.x, progress.y], 12, host.MUTED))
 	var grid := GridContainer.new()
 	grid.columns = 2 if host.small_layout else 4
 	grid.add_theme_constant_override("h_separation", 8)
@@ -305,6 +382,7 @@ func render_keepsakes(content: VBoxContainer) -> void:
 		if found and int(item.get("quantity", 0)) > 1:
 			card.add_child(host._label("× %d" % int(item.get("quantity", 0)), 12, host.MUTED))
 	content.add_child(host._label(str(collections.get("disclosure", "")), 12, host.MUTED))
+
 
 # ---------------------------------------------------------------- actions
 func start_trip() -> void:
