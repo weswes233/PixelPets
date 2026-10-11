@@ -65,6 +65,22 @@ test('concurrent adoption replay creates one pet and one journal entry; changed 
   } finally { await f.close(); }
 });
 
+test('journal keeps both languages, legacy entries and account isolation; care publishes authoritative cooldown time', async () => {
+  const f = await fixture();
+  try {
+    const a = await f.guest(); const b = await f.guest(); const pet = await f.adopt(a.token);
+    const care = (await f.request('POST', `/pets/${pet.id}/care`, { action: 'feed', event_id: 'journal_care_01' }, a.token)).body.data;
+    assert.equal(Date.parse(care.event.next_allowed_at) - Date.parse(care.event.server_time), 12000);
+    f.repo.entry(a.user_id, pet.id, '旧版存档的日记', 1700000000000);
+    const entries = (await f.request('GET', '/journal', undefined, a.token)).body.data.entries;
+    assert.equal(entries.length, 3);
+    assert.match(entries[0].message, /点心/); assert.match(entries[0].message_en, /snack/);
+    assert.match(entries[1].message_en, /came home/);
+    assert.equal(entries[2].message, '旧版存档的日记'); assert.equal(entries[2].message_en, null);
+    assert.deepEqual((await f.request('GET', '/journal', undefined, b.token)).body.data.entries, []);
+  } finally { await f.close(); }
+});
+
 test('all care actions share server clock cooldown; moon growth takes six distinct actions', async () => {
   const f = await fixture();
   try {

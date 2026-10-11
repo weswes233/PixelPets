@@ -6,6 +6,7 @@ const TRAVEL_SCRIPT = preload("res://scripts/travel_view.gd")
 signal bridge_settled(request_id: String, result: Dictionary)
 const ART_SCRIPT = preload("res://scripts/pet_art.gd")
 const FONT = preload("res://assets/fonts/NotoSansSC-Medium.ttf")
+const SOUND_SCRIPT = preload("res://scripts/sound_fx.gd")
 const INK := Color("344a48")
 const MUTED := Color("626f65")
 const CREAM := Color("f8f4e8")
@@ -26,6 +27,7 @@ var page: String = "companion"
 var online: bool = false
 var busy: bool = false
 var status_text: String = "正在寻找你的伙伴……"
+var status_source: String = "正在寻找你的伙伴……"
 var chain_config: Dictionary = {"enabled": false, "network": "未配置"}
 var wallet: Dictionary = {}
 var market_page: Dictionary = {}
@@ -44,6 +46,7 @@ var codex_entries: Array = []
 var codex_open: bool = false
 var codex_family: int = 1
 var modal: Control
+var modal_margin: MarginContainer
 var adventure_count: int = 0
 var adventure_choice: String = "sun"
 var adventure_field: Control
@@ -59,6 +62,14 @@ var shell_margin: MarginContainer
 var page_scroll: ScrollContainer
 var adoption_draft: String = ""
 var language_button: Button
+var care_deadlines: Dictionary = {}
+var care_countdown: Label
+var care_timer: Timer
+var adventure_progress: Label
+var sounds: AudioStreamPlayer
+var sound_enabled: bool = true
+var sound_button: Button
+const MEMORY_GOAL: int = 6
 
 func _ready() -> void:
 	testing = "--client-test" in OS.get_cmdline_user_args()
@@ -66,12 +77,21 @@ func _ready() -> void:
 		var settings := ConfigFile.new()
 		if settings.load("user://settings.cfg") == OK and str(settings.get_value("ui", "lang", "en")) in ["en", "zh"]:
 			L10n.lang = str(settings.get_value("ui", "lang", "en"))
+			sound_enabled = bool(settings.get_value("ui", "sound", true))
+	sounds = SOUND_SCRIPT.new()
+	sounds.enabled = sound_enabled
+	add_child(sounds)
 	small_layout = size.x < 650
 	_build_shell()
 	api = API_SCRIPT.new()
 	api.test_mode = testing
 	add_child(api)
 	travel = TRAVEL_SCRIPT.new(self)
+	care_timer = Timer.new()
+	care_timer.wait_time = 0.25
+	care_timer.timeout.connect(_tick_care)
+	add_child(care_timer)
+	care_timer.start()
 	_setup_bridge()
 	resized.connect(_on_resized)
 	if testing:
@@ -132,6 +152,15 @@ func _build_shell() -> void:
 	language.custom_minimum_size = Vector2(56, 36)
 	language.pressed.connect(func(): _set_language("zh" if L10n.lang == "en" else "en"))
 	heading.add_child(language)
+	sound_button = _button("", _toggle_sound)
+	sound_button.custom_minimum_size = Vector2(38, 36)
+	heading.add_child(sound_button)
+	_update_sound_button()
+	var help := _button("?", _open_help)
+	help.custom_minimum_size = Vector2(38, 36)
+	help.tooltip_text = "How to play / 玩法"
+	help.accessibility_name = help.tooltip_text
+	heading.add_child(help)
 	var tagline := _label("小小的陪伴，慢慢成为独一无二。", 14, MUTED)
 	tagline.set_meta("source", "小小的陪伴，慢慢成为独一无二。")
 	shell_texts.append(tagline)
@@ -262,12 +291,14 @@ func _boot_failed(result: Dictionary) -> void:
 	_render()
 
 func _set_status(value: String) -> void:
+	status_source = value
 	status_text = L10n.t(value)
 	if is_instance_valid(status_label):
 		status_label.text = status_text
 
 func _on_resized() -> void:
 	_update_shell_margins()
+	_update_modal_margins()
 	var now_small: bool = size.x < 650
 	if small_layout != now_small:
 		small_layout = now_small
@@ -287,16 +318,59 @@ func _clear_content() -> void:
 
 func _set_language(next: String) -> void:
 	L10n.lang = next
+	_set_status(status_source)
+	_update_sound_button()
 	if is_instance_valid(language_button):
 		language_button.text = "中文" if next == "en" else "EN"
 	if not testing:
 		var settings := ConfigFile.new()
 		settings.set_value("ui", "lang", next)
+		settings.set_value("ui", "sound", sound_enabled)
 		settings.save("user://settings.cfg")
 	for node in shell_texts:
 		if is_instance_valid(node):
 			node.text = L10n.t(str(node.get_meta("source")))
 	_render()
+
+func _toggle_sound() -> void:
+	sound_enabled = not sound_enabled
+	sounds.enabled = sound_enabled
+	_update_sound_button()
+	if not testing:
+		var settings := ConfigFile.new()
+		settings.set_value("ui", "lang", L10n.lang)
+		settings.set_value("ui", "sound", sound_enabled)
+		settings.save("user://settings.cfg")
+	sounds.chime("pick")
+
+func _update_sound_button() -> void:
+	if not is_instance_valid(sound_button):
+		return
+	sound_button.text = L10n.pick({"en": "ON" if sound_enabled else "OFF", "zh": "音" if sound_enabled else "静"})
+	sound_button.tooltip_text = L10n.pick({"en": "Sound on" if sound_enabled else "Sound off", "zh": "音效开启" if sound_enabled else "音效关闭"})
+	sound_button.accessibility_name = sound_button.tooltip_text
+	for state in ["normal", "hover", "pressed", "focus"]:
+		var style := _box(Color("eeeadd") if state == "normal" else MINT, 1)
+		style.content_margin_left = 5
+		style.content_margin_right = 5
+		sound_button.add_theme_stylebox_override(state, style)
+
+func _update_modal_margins() -> void:
+	if is_instance_valid(modal_margin):
+		for side in ["left", "right"]:
+			modal_margin.add_theme_constant_override("margin_" + side, 14 if size.x < 650 else maxi(24, int(size.x * 0.2)))
+
+func _open_help() -> void:
+	var body := _open_modal(L10n.pick({"en": "A little guide to your world", "zh": "掌心小世界 · 玩法指南"}))
+	for entry in [
+		{"en": "CARE & GROW\nShare a snack, play or rest. Six moments of care shape your companion. Sunlight and moonlight marks decide its form. Wait 12 seconds between care actions.", "zh": "照顾与成长\n喂食、玩耍和休息都会留下成长印记。六次有效陪伴后成长为日光或月色形态，印记较多的一方决定模样。每次照顾间隔 12 秒。"},
+		{"en": "CATCH A MEMORY\nTake a short walk and collect six twinkling lights. Click, tap, or use Enter / Space. There is no rush and no penalty.", "zh": "一起寻找微光\n选择日光草地或月色小径，收集六束闪烁微光。点击、轻点或按回车 / 空格都可以，不用赶时间。"},
+		{"en": "PACK & TRAVEL\nPick a destination and a packing. This accelerated journey takes 45 seconds. Open the postcard when your companion returns. Packing changes the story, not the odds.", "zh": "收拾行囊去旅行\n选好目的地和行囊，体验 45 秒加速旅程。伙伴回来后揭晓明信片，带回故事和收藏。行囊改变故事，不改变概率。"},
+		{"en": "KEEP YOUR MEMORIES\nYour album keeps postcards and eight keepsakes. Free supplies refill to three at 00:00 UTC each day. You can always care, play and read memories after supplies run out.", "zh": "珍藏每段回忆\n卡册里有明信片相册和八件旅途收藏。每天 UTC 0 点补满三份免费补给。补给用完后，照顾、小游戏和翻看回忆依然开放。"},
+		{"en": "YOUR SAVE\nKeep this browser's site data and the game's runtime folder. Use the same browser and address to continue. No wallet is needed for the free game.", "zh": "关于存档\n保留当前浏览器的站点数据和游戏 runtime 文件夹，使用同一浏览器、同一地址继续游玩。免费玩法无需钱包。"}]:
+		var card := _panel(body)
+		card.add_child(_label(L10n.pick(entry), 14))
+	body.add_child(_label("Made with Godot 4.5.2 (MIT) · Noto Sans SC (OFL)\nPixelPets · weswes233/PixelPets", 11, MUTED))
 
 func _switch_page(next: String) -> void:
 	page = next
@@ -304,6 +378,8 @@ func _switch_page(next: String) -> void:
 	_render()
 	if page in ["travel", "collection", "trade"] and online:
 		travel.refresh(true)
+	if page == "collection" and online:
+		travel.refresh_album()
 	if page == "journal" and online:
 		_load_journal()
 	elif page == "trade":
@@ -393,6 +469,10 @@ func _render_companion() -> void:
 		_render_adoption()
 		return
 	var pet: Dictionary = current_pet()
+	if int(pet.get("care_count", 0)) < 3:
+		var welcome := _panel(content, MINT)
+		welcome.add_child(_label(L10n.pick({"en": "Make yourself at home", "zh": "和伙伴一起，把小日子过慢一点"}), 19))
+		welcome.add_child(_label(L10n.pick({"en": "1. Share a snack  ·  2. Catch six memory lights  ·  3. Bring home your first postcard", "zh": "① 喂一口点心  ② 一起寻找六束记忆微光  ③ 旅行带回第一张明信片"}), 13))
 	var layout: BoxContainer = VBoxContainer.new() if small_layout else HBoxContainer.new()
 	layout.add_theme_constant_override("separation", 18)
 	content.add_child(layout)
@@ -418,6 +498,11 @@ func _render_companion() -> void:
 	_meter(details, "心情", int(pet.get("mood", 0)), 100, Color("bdad76"))
 	var bond: int = int(pet.get("bond", 0))
 	details.add_child(_label(L10n.t("再积累 %d 点亲密，就会迎来新的模样。") % maxi(0, 6 - bond) if pet.get("form", "seed") == "seed" else "已经长成独特的模样。陪伴还会继续。", 14, MUTED))
+	var traits: Dictionary = pet.get("traits", {})
+	details.add_child(_label(L10n.pick({"en": "Sunlight %d  ·  Moonlight %d", "zh": "日光印记 %d  ·  月色印记 %d"}) % [int(traits.get("sun", 0)), int(traits.get("moon", 0))], 13, MUTED))
+	care_countdown = _label("", 13, CORAL)
+	details.add_child(care_countdown)
+	_update_care_countdown()
 	var actions := GridContainer.new()
 	actions.columns = 2
 	actions.add_theme_constant_override("h_separation", 8)
@@ -428,7 +513,7 @@ func _render_companion() -> void:
 		var action: String = str(item[0])
 		var button := _button(str(item[1]), _open_adventure if action == "explore" else _care.bind(action, ""), action == "explore")
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.disabled = busy or not online or not access_message.is_empty()
+		button.disabled = busy or not online or not access_message.is_empty() or _care_remaining() > 0
 		actions.add_child(button)
 	details.add_child(_label("每种照顾都有自己的节奏。没有死亡，也不用担心落下一天。", 13, MUTED))
 	if not access_message.is_empty():
@@ -494,7 +579,7 @@ func _render_adoption(parent: Node = null) -> void:
 		var art := ART_SCRIPT.new()
 		art.species = str(species_id)
 		art.show_habitat = false
-		art.custom_minimum_size = Vector2(70, 88)
+		art.custom_minimum_size = Vector2(70, 88 if small_layout else 140)
 		choice.add_child(art)
 		choice.add_child(_button(str(SPECIES[species_id]["name"]), _choose_species.bind(str(species_id)), selected_species == species_id))
 	intro.add_child(_label(str(SPECIES[selected_species]["description"]), 15))
@@ -599,18 +684,54 @@ func _care(action: String, choice: String = "") -> void:
 func _finish_care(result: Dictionary, key: String, action: String) -> void:
 	busy = false
 	if result.get("ok", false):
+		var old_form: String = str(current_pet().get("form", "seed"))
 		pending_actions.erase(key)
 		_upsert_pet(result["data"]["pet"])
 		var event: Dictionary = result["data"].get("event", {})
+		var next_at: float = TravelView.iso_ms(str(event.get("next_allowed_at", "")))
+		var server_at: float = TravelView.iso_ms(str(event.get("server_time", "")))
+		var wait_ms: float = clampf(next_at - (server_at if server_at > 0 else Time.get_unix_time_from_system() * 1000.0), 0, 12000)
+		care_deadlines[str(result["data"]["pet"]["id"])] = Time.get_ticks_msec() + int(wait_ms)
 		_set_status(str(event.get("message_en" if L10n.lang == "en" else "message", event.get("message", "这次陪伴已经记住了。"))))
 		_render()
 		if is_instance_valid(pet_art) and event.get("applied", true):
 			pet_art.celebrate(action)
+			sounds.chime("care")
+		if old_form == "seed" and str(current_pet().get("form", "seed")) != "seed":
+			_show_growth()
 	else:
 		_set_status(API_SCRIPT.error_message(result))
 		if int(result.get("http_status", 0)) >= 400 and int(result.get("http_status", 0)) < 500:
 			pending_actions.erase(key)
 		_render()
+
+func _care_remaining() -> int:
+	return maxi(0, ceili(float(int(care_deadlines.get(selected_pet, 0)) - Time.get_ticks_msec()) / 1000.0))
+
+func _update_care_countdown() -> void:
+	if is_instance_valid(care_countdown):
+		var left: int = _care_remaining()
+		care_countdown.text = L10n.pick({"en": "Savouring that moment… %d s", "zh": "正在回味这份陪伴……%d 秒"}) % left if left > 0 else L10n.pick({"en": "Ready for a little company", "zh": "准备好一起度过小小的时光"})
+
+func _tick_care() -> void:
+	_update_care_countdown()
+	if care_deadlines.has(selected_pet) and _care_remaining() == 0:
+		care_deadlines.erase(selected_pet)
+		if page == "companion":
+			_render()
+
+func _show_growth() -> void:
+	sounds.chime("grow")
+	var body := _open_modal(L10n.pick({"en": "Look how we have grown!", "zh": "一起度过的时光，变成了新的模样！"}))
+	var pet: Dictionary = current_pet()
+	var art := ART_SCRIPT.new()
+	art.species = str(pet.get("species_id", "moss"))
+	art.form = str(pet.get("form", "sun"))
+	art.custom_minimum_size.y = 250
+	art.celebrate("grow")
+	body.add_child(art)
+	body.add_child(_label(_form_name(pet), 24))
+	body.add_child(_label(L10n.pick({"en": "The small moments you shared shaped this companion. There are more memories waiting outside.", "zh": "每一次点心、散步和安静的陪伴，都留下了成长的印记。接下来，一起收集更多回忆吧。"}), 15, MUTED))
 
 func _form_name(pet: Dictionary) -> String:
 	var info: Dictionary = SPECIES.get(str(pet.get("species_id", "moss")), SPECIES["moss"])
@@ -642,7 +763,7 @@ func _render_collection() -> void:
 			art.species = str(species_id)
 			art.form = form
 			art.show_habitat = false
-			art.custom_minimum_size = Vector2(110, 125)
+			art.custom_minimum_size = Vector2(96, 125)
 			if not owned:
 				art.modulate.a = 0.45
 			card.add_child(art)
@@ -690,7 +811,7 @@ func _render_codex() -> void:
 		chip.disabled = n == codex_family
 		families.add_child(chip)
 	var grid := GridContainer.new()
-	grid.columns = 3 if small_layout else 5
+	grid.columns = (2 if size.x < 380 else 3) if small_layout else 5
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 8)
 	content.add_child(grid)
@@ -740,7 +861,8 @@ func _render_journal() -> void:
 		for entry in journal.slice(0, 40):
 			var card := _panel(content)
 			card.add_child(_label(str(entry.get("created_at", "")).replace("T", " ").substr(0, 16) + " UTC", 12, MUTED))
-			card.add_child(_label(str(entry.get("message", "")), 16))
+			var message: Variant = entry.get("message_en") if L10n.lang == "en" else entry.get("message")
+			card.add_child(_label(str(message if message != null else entry.get("message", "")), 16))
 	var refresh := _button("翻开最新一页", _load_journal)
 	refresh.disabled = not online
 	content.add_child(refresh)
@@ -1051,6 +1173,7 @@ func _switch_profile() -> void:
 	journal.clear()
 	market_page.clear()
 	pending_actions.clear()
+	care_deadlines.clear()
 	travel.reset()
 	selected_pet = ""
 	adoption_draft = ""
@@ -1083,6 +1206,7 @@ func _open_modal(title: String) -> VBoxContainer:
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	modal.add_child(shade)
 	var margin := MarginContainer.new()
+	modal_margin = margin
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in ["left", "right"]:
 		margin.add_theme_constant_override("margin_" + side, 14 if small_layout else maxi(24, int(size.x * 0.2)))
@@ -1106,6 +1230,7 @@ func _close_modal() -> void:
 		remove_child(modal)
 		modal.queue_free()
 	modal = null
+	modal_margin = null
 
 func _open_rename() -> void:
 	if busy or not _pet_access_message(current_pet()).is_empty():
@@ -1153,7 +1278,7 @@ func _open_adventure() -> void:
 	if busy or not online or current_pet().is_empty() or not _pet_access_message(current_pet()).is_empty():
 		return
 	var body := _open_modal("今天，想走哪条小路？")
-	body.add_child(_label("找到三片记忆碎片，一起带回家。走过的路线会影响伙伴的日光或月色偏好。", 15, MUTED))
+	body.add_child(_label(L10n.pick({"en": "Find six memory lights together. The path you choose leaves a sunlight or moonlight growth mark.", "zh": "一起找到六束记忆微光，带回小屋。走过的路线会影响伙伴的日光或月色偏好。"}), 15, MUTED))
 	body.add_child(_button("沿着日光，去草地散步", _start_adventure.bind("sun"), true))
 	body.add_child(_button("循着月色，听风的声音", _start_adventure.bind("moon")))
 
@@ -1161,7 +1286,9 @@ func _start_adventure(choice: String) -> void:
 	adventure_choice = choice
 	adventure_count = 0
 	var body := _open_modal("日光草地" if choice == "sun" else "月色小径")
-	body.add_child(_label("轻点记忆碎片，把今晚的风声和星光一起带回家。" if choice == "moon" else "轻点记忆碎片，把今天的暖风和阳光一起带回家。", 14, MUTED))
+	body.add_child(_label(L10n.pick({"en": "Follow the twinkling light. Click or tap it, or press Enter / Space. Find all six at your own pace.", "zh": "跟着闪烁的微光，轻点它，也可以按回车或空格收集。慢慢找，六束微光都在等你。"}), 14, MUTED))
+	adventure_progress = _label("", 16)
+	body.add_child(adventure_progress)
 	adventure_field = Control.new()
 	adventure_field.custom_minimum_size.y = 300
 	body.add_child(adventure_field)
@@ -1176,15 +1303,22 @@ func _start_adventure(choice: String) -> void:
 func _add_memory_fragment() -> void:
 	if not is_instance_valid(adventure_field):
 		return
-	var fragment := _button(L10n.t("记忆 %d / 3") % (adventure_count + 1), _collect_memory, true)
+	adventure_progress.text = L10n.pick({"en": "Memory lights  %d / %d", "zh": "记忆微光  %d / %d"}) % [adventure_count, MEMORY_GOAL]
+	var fragment := _button("★", _collect_memory, true)
+	fragment.add_theme_font_size_override("font_size", 26)
+	fragment.tooltip_text = L10n.pick({"en": "Collect this memory light", "zh": "收集这束记忆微光"})
+	fragment.accessibility_name = fragment.tooltip_text
 	fragment.name = "MemoryFragment"
 	fragment.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	fragment.anchor_left = [0.08, 0.55, 0.30][adventure_count]
-	fragment.anchor_top = [0.12, 0.58, 0.23][adventure_count]
+	fragment.anchor_left = [0.08, 0.65, 0.30, 0.60, 0.10, 0.42][adventure_count]
+	fragment.anchor_top = [0.12, 0.58, 0.23, 0.08, 0.65, 0.52][adventure_count]
 	fragment.position = Vector2.ZERO
-	fragment.custom_minimum_size = Vector2(110, 48)
+	fragment.custom_minimum_size = Vector2(54, 54)
 	adventure_field.add_child(fragment)
 	fragment.grab_focus()
+	var shimmer := fragment.create_tween().set_loops()
+	shimmer.tween_property(fragment, "modulate", Color("f1d395"), 0.65)
+	shimmer.tween_property(fragment, "modulate", Color.WHITE, 0.65)
 
 func _collect_memory() -> void:
 	var fragment: Node = adventure_field.get_node_or_null("MemoryFragment")
@@ -1193,7 +1327,8 @@ func _collect_memory() -> void:
 	adventure_field.remove_child(fragment)
 	fragment.queue_free()
 	adventure_count += 1
-	if adventure_count >= 3:
+	sounds.chime("pick")
+	if adventure_count >= MEMORY_GOAL:
 		_close_modal()
 		_care("explore", adventure_choice)
 	else:

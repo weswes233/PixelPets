@@ -40,6 +40,7 @@ export class Repository {
       CREATE TABLE IF NOT EXISTS events (user_id TEXT NOT NULL REFERENCES users(id), event_id TEXT NOT NULL, request_hash TEXT NOT NULL, response TEXT NOT NULL, PRIMARY KEY(user_id,event_id));
       CREATE TABLE IF NOT EXISTS journal (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), pet_id TEXT NOT NULL REFERENCES pets(id), message TEXT NOT NULL, created_at TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS journal_user ON journal(user_id,created_at);
+      CREATE TABLE IF NOT EXISTS journal_translations (journal_id TEXT PRIMARY KEY REFERENCES journal(id), message_en TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS wallets (address TEXT PRIMARY KEY, user_id TEXT UNIQUE NOT NULL REFERENCES users(id), created_at TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS challenges (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), address TEXT NOT NULL, message TEXT NOT NULL, expires_at INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0);
       CREATE INDEX IF NOT EXISTS challenge_expiry ON challenges(expires_at);
@@ -90,8 +91,10 @@ export class Repository {
   private remember(userId: string, id: string, digest: string, response: unknown): void {
     this.db.prepare('INSERT INTO events VALUES (?,?,?,?)').run(userId, id, digest, JSON.stringify(response));
   }
-  private entry(userId: string, petId: string, message: string, now: number): void {
-    this.db.prepare('INSERT INTO journal VALUES (?,?,?,?,?)').run(randomUUID(), userId, petId, message, iso(now));
+  entry(userId: string, petId: string, message: string, now: number, messageEn?: string): void {
+    const id = randomUUID();
+    this.db.prepare('INSERT INTO journal VALUES (?,?,?,?,?)').run(id, userId, petId, message, iso(now));
+    if (messageEn) this.db.prepare('INSERT INTO journal_translations VALUES (?,?)').run(id, messageEn);
   }
   adopt(userId: string, input: unknown): unknown {
     const body = objectBody(input, ['species_id', 'nickname', 'event_id']);
@@ -114,7 +117,7 @@ export class Repository {
         // Individual temperament: species base is twice as likely as each other template (CSPRNG).
         temperament: (() => { const base = speciesTemperament[species.id]; const pool = [base, base, ...(['cautious', 'curious', 'greedy'] as const).filter(t => t !== base)]; return pool[randomInt(0, pool.length)]; })() };
       this.db.prepare('INSERT INTO pets VALUES (?,?,?,NULL)').run(pet.id, userId, JSON.stringify(pet));
-      this.entry(userId, pet.id, `${name} 来到了你身边。你们的故事从今天开始。`, now);
+      this.entry(userId, pet.id, `${name} 来到了你身边。你们的故事从今天开始。`, now, `${nicknameForEnglish(name)} came home. Your story starts today.`);
       const response = { pet }; this.remember(userId, id, digest, response); return response;
     });
   }
@@ -130,7 +133,7 @@ export class Repository {
       const pet = JSON.parse(String(row.data)) as Pet;
       const now = this.clock(); const next = Number(row.last_care_at) + 12000;
       if (row.last_care_at !== null && now < next) {
-        const response = { pet, event: { id, message: '伙伴正在回味刚才的陪伴，稍等一小会儿。', message_en: 'Your companion is still savouring that moment. Try again in a few seconds.', applied: false, next_allowed_at: iso(next) } };
+        const response = { pet, event: { id, message: '伙伴正在回味刚才的陪伴，稍等一小会儿。', message_en: 'Your companion is still savouring that moment. Try again in a few seconds.', applied: false, next_allowed_at: iso(next), server_time: iso(now) } };
         this.remember(userId, id, digest, response); return response;
       }
       const action = body.action as Action;
@@ -150,8 +153,8 @@ export class Repository {
         messageEn += ` Your time together helped it grow into its ${pet.form === 'sun' ? 'sunny' : 'moonlit'} form!`;
       }
       this.db.prepare('UPDATE pets SET data=?,last_care_at=? WHERE id=? AND user_id=?').run(JSON.stringify(pet), now, petId, userId);
-      this.entry(userId, petId, message, now);
-      const response = { pet, event: { id, message, message_en: messageEn, applied: true, next_allowed_at: iso(now + 12000) } };
+      this.entry(userId, petId, message, now, messageEn);
+      const response = { pet, event: { id, message, message_en: messageEn, applied: true, next_allowed_at: iso(now + 12000), server_time: iso(now) } };
       this.remember(userId, id, digest, response); return response;
     });
   }
@@ -166,7 +169,8 @@ export class Repository {
     });
   }
   journal(userId: string): { entries: Row[] } {
-    return { entries: this.db.prepare('SELECT id,pet_id,message,created_at FROM journal WHERE user_id=? ORDER BY created_at DESC,rowid DESC LIMIT 100').all(userId) as Row[] };
+    return { entries: this.db.prepare(`SELECT j.id,j.pet_id,j.message,j.created_at,t.message_en FROM journal j
+      LEFT JOIN journal_translations t ON t.journal_id=j.id WHERE j.user_id=? ORDER BY j.created_at DESC,j.rowid DESC LIMIT 100`).all(userId) as Row[] };
   }
   challenge(userId: string, input: unknown): { challenge_id: string; message: string; expires_at: string } {
     const body = objectBody(input, ['address']); addressBytes(body.address);

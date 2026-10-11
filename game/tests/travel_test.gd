@@ -89,7 +89,9 @@ func run() -> void:
 	view.trips[pet["id"]] = revealed
 	client._render()
 	check(has_text(client, "A trip to Moonlit Lantern Lane") and has_text(client, "The Last Lantern"), "Postcard shows story and keepsake")
-	check(has_text(client, "Rewards are drawn by the server"), "Postcard carries the server-draw disclosure")
+	check(has_text(client, "Saved in your postcard album") and not has_text(client, "Claim on Devnet"), "Reward reveal leads to the album with optional receipt details collapsed")
+	view.receipt_open = true
+	client._render()
 	check(has_text(client, "Claim on Devnet"), "Unclaimed pets are offered Claim on Devnet before saving a receipt")
 	check(not has_text(client, "Provably fair") and not has_text(client, "Fully on-chain"), "No forbidden fairness claims")
 	pet["chain"] = {"status": "registered"}

@@ -145,18 +145,23 @@ application/modify_resources=false
 Set-Content -LiteralPath (Join-Path $gamePath 'export_presets.cfg') -Value $presets -Encoding utf8
 & node (Join-Path $PSScriptRoot 'build-codex.mjs')
 if ($LASTEXITCODE -ne 0) { throw 'Codex generation failed.' }
-& $godotPath --headless --path $gamePath --editor --import
-if ($LASTEXITCODE -ne 0) { throw 'Godot import failed.' }
+function Invoke-GodotChecked([string[]]$GodotArguments) {
+    $diagnostics = & $godotPath @GodotArguments 2>&1
+    $engineExit = $LASTEXITCODE
+    $diagnostics | ForEach-Object { Write-Host $_ }
+    if ($engineExit -ne 0 -or ($diagnostics | Out-String) -match '(?m)^(SCRIPT ERROR|ERROR):') {
+        throw 'Godot reported a build error. The export is not ready to release.'
+    }
+}
+Invoke-GodotChecked -GodotArguments @('--headless', '--path', $gamePath, '--editor', '--import')
 if ($Target -in @('All','Web')) {
     New-Item -ItemType Directory -Force -Path (Join-Path $projectRoot 'dist\web') | Out-Null
-    & $godotPath --headless --path $gamePath --export-release Web (Join-Path $projectRoot 'dist\web\index.html')
-    if ($LASTEXITCODE -ne 0) { throw 'Godot Web export failed.' }
+    Invoke-GodotChecked -GodotArguments @('--headless', '--path', $gamePath, '--export-release', 'Web', (Join-Path $projectRoot 'dist\web\index.html'))
     & node (Join-Path $PSScriptRoot 'build-web.mjs')
     if ($LASTEXITCODE -ne 0) { throw 'Wallet bundle failed.' }
 }
 if ($Target -in @('All','Windows')) {
     New-Item -ItemType Directory -Force -Path (Join-Path $projectRoot 'dist\windows') | Out-Null
-    & $godotPath --headless --path $gamePath --export-release 'Windows Desktop' (Join-Path $projectRoot 'dist\windows\PixelPets.exe')
-    if ($LASTEXITCODE -ne 0) { throw 'Godot Windows export failed.' }
+    Invoke-GodotChecked -GodotArguments @('--headless', '--path', $gamePath, '--export-release', 'Windows Desktop', (Join-Path $projectRoot 'dist\windows\PixelPets.exe'))
 }
 Write-Host 'PixelPets build completed. Run tools/start.ps1 for the local services.'

@@ -48,9 +48,11 @@ const server = createServer((req, res) => {
   if (pathname.split(/[\\/]/).some(segment => segment.startsWith('.')) || pathname.includes('\0')) { res.writeHead(403); res.end(); return; }
   const file = resolve(root, `.${pathname === '/' ? '/index.html' : pathname}`);
   if (!file.startsWith(root + sep) || !existsSync(file) || !statSync(file).isFile()) { res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end('游戏文件尚未生成，或该页面不存在。'); return; }
-  res.writeHead(200, { 'Content-Type': mime[extname(file)] || 'application/octet-stream', 'Content-Length': statSync(file).size, 'Cache-Control': 'no-cache' });
+  const gzip = /\bgzip\b/.test(String(req.headers['accept-encoding'] ?? '')) && existsSync(file + '.gz');
+  const served = gzip ? file + '.gz' : file;
+  res.writeHead(200, { 'Content-Type': mime[extname(file)] || 'application/octet-stream', 'Content-Length': statSync(served).size, 'Cache-Control': 'no-cache', Vary: 'Accept-Encoding', ...(gzip ? { 'Content-Encoding': 'gzip' } : {}) });
   if (req.method === 'HEAD') { res.end(); return; }
-  createReadStream(file).on('error', () => res.destroy()).pipe(res);
+  createReadStream(served).on('error', () => res.destroy()).pipe(res);
 });
-server.listen(port, '127.0.0.1', () => console.log(`PixelPets web: http://127.0.0.1:${port}`));
+server.listen(port, '127.0.0.1', () => console.log(`PixelPets web: http://127.0.0.1:${(server.address() as { port: number }).port}`));
 for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => server.close(() => process.exit(0)));

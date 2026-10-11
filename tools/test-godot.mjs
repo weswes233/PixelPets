@@ -8,7 +8,7 @@ const godot = process.env.PIXELPETS_GODOT_PATH ?? (process.platform === 'win32' 
 const options = { cwd: root, stdio: 'inherit', windowsHide: true, timeout: 120000 };
 execFileSync(process.execPath, ['tools/build-codex.mjs'], options);
 execFileSync(godot, ['--headless', '--path', game, '--editor', '--import'], options);
-for (const suite of ['client_test', 'travel_test', 'travel_recovery_test', 'ui_polish_test']) {
+for (const suite of ['client_test', 'travel_test', 'travel_recovery_test', 'ui_polish_test', 'product_test']) {
   execFileSync(godot, ['--headless', '--path', game, '--script', `tests/${suite}.gd`, '--', '--client-test'], options);
 }
 execFileSync(godot, ['--headless', '--path', game, '--script', 'tests/session_storage_test.gd', '--', '--session-storage-test'], options);

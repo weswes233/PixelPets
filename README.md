@@ -3,6 +3,8 @@
 **A tiny companion. A world of stories. Collect the journey.**  
 会替你出门的像素伙伴，以及可以交换的旅途收藏。
 
+**Playable local release / 本地可玩版本（2026-10-11）**：原创像素小屋与旅行场景、六束微光小游戏、成长庆祝、可静音音效、8 件纪念物插画、明信片相册、双语日记和一键启动便携包。玩法与存档说明见 [docs/PLAY.md](docs/PLAY.md)，本轮完整验证见 [docs/playable-release-2026-10-11.md](docs/playable-release-2026-10-11.md)。这批界面改动尚未替换下方旧版公网演示。
+
 Free-to-play pixel companions (Moss / Puddle / Wisp): adopt and care without a wallet, send them on short trips for postcards & keepsakes, then optionally claim a **Solana Devnet** Metaplex Core identity and save a verifiable journey receipt.
 
 > **Honest status (2026-10-10):** travel loop + Devnet program/collection/editions are live; scripted Wallet Standard claim → trip → receipt → gift PASS. **Public demo:** [https://175.178.27.231/](https://175.178.27.231/) (self-signed TLS — browser warning expected; Phantom → Devnet). Real Phantom/Backpack QA still on Wes. No project token.

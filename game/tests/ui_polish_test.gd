@@ -45,6 +45,7 @@ func run() -> void:
 				await process_frame
 				check(client.content.get_combined_minimum_size().x <= dimensions.x - 36,
 					"%s %s fits %d px; got %f" % [language, next_page, dimensions.x, client.content.get_combined_minimum_size().x])
+				check(client.shell_margin.get_combined_minimum_size().x <= dimensions.x, "%s %s shell fits %d px; got %f" % [language, next_page, dimensions.x, client.shell_margin.get_combined_minimum_size().x])
 				if next_page in ["companion", "travel", "trade"]:
 					check(client.content.find_children("CompanionSelector", "OptionButton", true, false).size() == 1,
 						"%s offers exactly one companion selector" % next_page)
