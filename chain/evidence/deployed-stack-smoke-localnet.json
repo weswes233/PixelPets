@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "kind": "deployed-stack-smoke",
+  "network": "localnet",
+  "genesis": "xJhco3qdtajDKm5wE1bCSxfMfDae3vra99wr7ZgHMNe",
+  "program": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT",
+  "collection": "8uQPDvvJRNEsKZzGnnWaiRcTnNpE4cg8y8eEqK1PkBfP",
+  "editions": {
+    "moss": "1001",
+    "puddle": "1002",
+    "wisp": "1003"
+  },
+  "localFundsHaveNoValue": true,
+  "startedAt": "2026-10-09T18:06:59.486Z",
+  "checks": [
+    "Real server entrypoint boots from the deploy-script env file with chain enabled",
+    "Wallet-signed claim mints a real Core asset in the deploy-script collection/edition",
+    "Trip settled by the server is saved as a checkpoint v2 receipt",
+    "Public proof verified independently (10 checks)"
+  ],
+  "transactions": [
+    {
+      "label": "claim",
+      "signature": "5QrbD2LjRFQqHq5oNVtLZYR1w2sRbg3YQcFYtixtZpcnbiGH2hbaRAfXSWwPpwQSyujiwQgeAURfqKWkfrz6gfZZ",
+      "asset": "Aww3qCdXyFHpySRXSZiSCQcGb1CLfwQLWgb34iKh3wtA"
+    },
+    {
+      "label": "journey_receipt",
+      "signature": "QCvFT4fpFkyGYHkxNTFGyt8JoSCYm7iYWfFTzJFQzEw6nYDP33ZFsgSDxX6cPaiyF1PvVGyNBLpofTi9D1Stfvi",
+      "public_receipt_id": "jr_mXgVBNg8OiY_HVieluHhEA",
+      "event_hash": "c5d51aeddf0b19572da9ea584ec3a523b9f46b8bec32ca42604a22230e762dac"
+    }
+  ],
+  "finishedAt": "2026-10-09T18:07:30.792Z"
+}

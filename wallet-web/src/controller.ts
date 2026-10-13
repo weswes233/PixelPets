@@ -1,7 +1,7 @@
 import type { Wallet, WalletAccount } from '@wallet-standard/base';
 import type { StandardConnectFeature, StandardDisconnectFeature, StandardEventsFeature } from '@wallet-standard/features';
 import type { SolanaSignMessageFeature } from '@solana/wallet-standard-features';
-import { runPetTransaction, TransactionFlowError } from './transactions.ts';
+import { runGiftTransaction, runPetTransaction, TransactionFlowError } from './transactions.ts';
 import type { DeploymentConfig, TransactionReview, IntentKind } from './transactions.ts';
 
 export class BridgeError extends Error {
@@ -163,6 +163,32 @@ export class WalletController {
 
   async checkpoint(petId: unknown): Promise<unknown> { return this.petTransaction(petId, 'checkpoint'); }
 
+  /** Saves one revealed trip as a checkpoint v2 journey receipt. The wallet review shows the trip commitment. */
+  async journeyReceipt(petId: unknown, tripId: unknown, resultHash: unknown): Promise<unknown> {
+    if (typeof tripId !== 'string' || !/^[a-f0-9-]{36}$/.test(tripId) || typeof resultHash !== 'string' || !/^[a-f0-9]{64}$/.test(resultHash))
+      throw new BridgeError('INVALID_REQUEST', 'This journey receipt request is invalid. Refresh the trip and try again.');
+    return this.petTransaction(petId, 'checkpoint', { tripId, resultHash });
+  }
+
+  /** Trips of wallet-registered pets use the wallet session (ownership fence); the guest token is never upgraded. */
+  async travel(op: unknown, petId: unknown, tripId?: unknown, body?: unknown): Promise<unknown> {
+    this.requirePetId(petId);
+    const event = (value: unknown) => typeof value === 'string' && /^[a-f0-9-]{32,36}$/.test(value);
+    const input = (body && typeof body === 'object' && !Array.isArray(body) ? body : {}) as Record<string, unknown>;
+    if (op === 'current') return this.walletOperation(`/pets/${encodeURIComponent(String(petId))}/trips/current`, 'GET', undefined);
+    if (op === 'start') {
+      if (Object.keys(input).some(key => !['event_id', 'route_id', 'packing_id'].includes(key)) || !event(input.event_id)
+        || typeof input.route_id !== 'string' || typeof input.packing_id !== 'string') throw new BridgeError('INVALID_REQUEST', 'This trip request is invalid.');
+      return this.walletOperation(`/pets/${encodeURIComponent(String(petId))}/trips`, 'POST', input);
+    }
+    if (op === 'reveal') {
+      if (typeof tripId !== 'string' || !/^[a-f0-9-]{36}$/.test(tripId) || Object.keys(input).some(key => key !== 'event_id') || !event(input.event_id))
+        throw new BridgeError('INVALID_REQUEST', 'This postcard request is invalid.');
+      return this.walletOperation(`/trips/${encodeURIComponent(tripId)}/reveal`, 'POST', input);
+    }
+    throw new BridgeError('METHOD_UNSUPPORTED', 'This travel action is not supported.');
+  }
+
   async syncAssets(): Promise<unknown> { return this.walletOperation('/wallet/assets/sync', 'POST', {}); }
 
   async care(petId: unknown, payload: unknown): Promise<unknown> {
@@ -206,7 +232,7 @@ export class WalletController {
     } finally { this.busy = false; }
   }
 
-  private async petTransaction(petId: unknown, kind: IntentKind): Promise<unknown> {
+  private async petTransaction(petId: unknown, kind: IntentKind, options?: { tripId: string; resultHash: string }): Promise<unknown> {
     const startingVersion = this.version;
     await this.refresh();
     if (startingVersion !== this.version) throw new BridgeError('ACCOUNT_CHANGED', '钱包或档案已变化，请重新连接后核对伙伴。');
@@ -219,11 +245,36 @@ export class WalletController {
     const version = this.version;
     try {
       return await runPetTransaction({ api: this.api, token: this.walletSessionToken, wallet: this.wallet, account: this.account, config: this.config, review: this.review,
-        assertCurrent: () => { if (this.version !== version) throw new BridgeError('ACCOUNT_CHANGED', '钱包或档案已变化，请重新连接后核对交易。'); } }, petId, kind);
+        assertCurrent: () => { if (this.version !== version) throw new BridgeError('ACCOUNT_CHANGED', '钱包或档案已变化，请重新连接后核对交易。'); } }, petId, kind, options);
     } catch (error) {
       if (error instanceof TransactionFlowError) throw new BridgeError(error.code, error.message);
       if (error instanceof BridgeError) throw error;
+      // Diagnostic only: the error class and message (no keys, tokens or transaction bytes).
+      console.warn('[PixelPets] transaction flow stopped:', (error as Error)?.name, String((error as Error)?.message ?? error).slice(0, 300));
       throw new BridgeError('TRANSACTION_NOT_COMPLETED', '交易尚未完成，请核对钱包提示与网络状态后重试。');
+    } finally { this.busy = false; }
+  }
+
+  /** P1 gift: owner-signed Core transfer; the service only observes ownership afterwards. */
+  async gift(petId: unknown, recipient: unknown): Promise<unknown> {
+    this.requirePetId(petId);
+    if (typeof recipient !== 'string' || !/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(recipient.trim())) throw new BridgeError('RECIPIENT_INVALID', 'Enter the recipient\'s Solana wallet address.');
+    const startingVersion = this.version;
+    await this.refresh();
+    if (startingVersion !== this.version) throw new BridgeError('ACCOUNT_CHANGED', 'Wallet or profile changed. Reconnect and check again.');
+    if (!this.config.enabled) throw new BridgeError('CHAIN_NOT_DEPLOYED', 'On-chain gifting is not open yet.');
+    if (!this.walletSessionToken || !this.wallet || !this.account) throw new BridgeError('WALLET_AUTH_REQUIRED', 'Connect and verify your wallet first.');
+    if (this.busy) throw new BridgeError('WALLET_BUSY', 'The wallet is still handling the previous request.');
+    this.busy = true;
+    const version = this.version;
+    try {
+      return await runGiftTransaction({ api: this.api, token: this.walletSessionToken, wallet: this.wallet, account: this.account, config: this.config, review: this.review,
+        assertCurrent: () => { if (this.version !== version) throw new BridgeError('ACCOUNT_CHANGED', 'Wallet or profile changed. Reconnect and check the gift.'); } }, String(petId), recipient.trim());
+    } catch (error) {
+      if (error instanceof TransactionFlowError) throw new BridgeError(error.code, error.message);
+      if (error instanceof BridgeError) throw error;
+      console.warn('[PixelPets] gift flow stopped:', (error as Error)?.name, String((error as Error)?.message ?? error).slice(0, 300));
+      throw new BridgeError('TRANSACTION_NOT_COMPLETED', 'The gift did not finish. Check the wallet prompt and network, then retry.');
     } finally { this.busy = false; }
   }
 

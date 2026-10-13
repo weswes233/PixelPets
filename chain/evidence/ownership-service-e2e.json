@@ -1,11 +1,11 @@
 {
   "schema": 1,
-  "runId": "5dda399b-1084-4ec7-b80b-c3225e830fba",
-  "startedAt": "2026-10-09T08:41:46.771Z",
-  "rpc": "http://127.0.0.1:8899",
-  "genesis": "7RE8XZ7KncKA1onUw5mdSvoA9c5T4LyySsekpiNsQFAK",
+  "runId": "f70a3d97-9eaf-440b-8248-dbe9bf6f7bf5",
+  "startedAt": "2026-10-09T16:54:37.921Z",
+  "rpc": "http://127.0.0.1:8999",
+  "genesis": "HBf34QNpjNpMvLkCnVFbQYnvX8TJxyTG4R5HzYpaEwE",
   "scenario": "ownership",
-  "program": "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR",
+  "program": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT",
   "actualSbf": true,
   "actualHttp": true,
   "simulatedBrowserWallet": true,
@@ -39,19 +39,19 @@
   "transactions": [
     {
       "label": "configure_disposable_service_issuer_and_fund_test_player",
-      "signature": "2qekmbDf1XUak472S8mt7KPYSuQujZgK5PCZttF3BhEANcjZmmsqpMWV1hNvexPqncJWdPvUd6GVBJaJ2uwTTAbS"
+      "signature": "64p4du7MfCM1V9YsERjrpgdECRFPgF4wY8Wx9GPPaQ5cCYeStZcmeTM9vmpA6CazKY15jTz14hSqQ2LW8iGJMJLC"
     },
     {
       "label": "claim_after_restart",
-      "signature": "uLNz5ngVFMKC9Yo5gucW7AFwoST21uf4qyQcHGp91orYnuguNBdUmErVvKZ4gm3eUeLs5fXRu8aG3QudhbegTHQ",
-      "slot": 37,
-      "computeUnitsConsumed": 47325,
-      "wireSha256": "435396c821511d27ac814bcc380d798e619c7e2f011e4f88878324dd2c6c0bca",
-      "asset": "7GHMWGqiCm2m7sy8Rawg5xWj5pWoBrj4uHTcmZcebZBu"
+      "signature": "6FhhskC4dnnnwsTBiURspCrdfDcHajNVdUnS2AVqJLBZv3qoWXaBKGu8GqVBSovQDPcvHPszz5QkCGT2NDEwVxW",
+      "slot": 68,
+      "computeUnitsConsumed": 50325,
+      "wireSha256": "cb8bdeb9d64496a155151b363ba7ef524df93406db4b5ec2faf6f197ea480871",
+      "asset": "7wSgbRx4bZcTuJpS4otampcsvs8cCXDDBRJxp4dfnci9"
     },
     {
       "label": "owner_signed_core_gift_to_another_bound_wallet",
-      "signature": "EH3QynH8rHhzqneUuJ9YnwyQiQjUx9PxeqQ6yz7Nq2wpDyMPXEBwG2sS6ttb3ic5PexuKMMrHUtf4ZngQX7C1E4"
+      "signature": "41kBKAZCYUmEjQvmppfCkP5yvJrzDWjjrApBXPzp4LvRyjmP2koVVCypH8H6PFnN65NjnBEimipf7tJkGUL979BP"
     }
   ],
   "reviewEstimates": [
@@ -59,13 +59,13 @@
       "title": "给伙伴一份链上身份",
       "petName": "链上验收苔苔",
       "network": "localnet",
-      "address": "C3n7vVS146SmrFaZm91bXvvsGhhyapfs1qZrmanmi54G",
-      "asset": "7GHMWGqiCm2m7sy8Rawg5xWj5pWoBrj4uHTcmZcebZBu",
+      "address": "HTPCo6xGcX8i3bTrg22YUpwwpi5DyDEEf3oTZSvqBHgW",
+      "asset": "7wSgbRx4bZcTuJpS4otampcsvs8cCXDDBRJxp4dfnci9",
       "estimatedDebitSol": "0.00818964",
       "networkFeeSol": "0.000015",
       "message": "预计支出包括网络费、账户租金和 Core 协议费用。资产将归当前钱包所有。"
     }
   ],
   "result": "passed",
-  "completedAt": "2026-10-09T08:43:25.300Z"
+  "completedAt": "2026-10-09T16:55:22.127Z"
 }

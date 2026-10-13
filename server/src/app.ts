@@ -9,12 +9,17 @@ import { createRequestPolicy, RequestPolicyError } from './request-policy.ts';
 import type { MarketRpc, MarketOfferCard } from './market-reader.ts';
 import { OwnershipService } from './ownership-service.ts';
 import type { OwnershipRpc } from './ownership-service.ts';
+import { TravelService } from './travel.ts';
+import { publicTravelCatalog } from './travel-content.ts';
 
 export type AppOptions = {
   repository: Repository;
   chainService?: ChainService;
   marketReader?: MarketReader;
   ownershipService?: OwnershipService;
+  travelService?: TravelService;
+  /** Demo trips default to 45 seconds and are always labelled accelerated. */
+  travelDurationMs?: number;
   rateLimit?: { requests: number; guestCreations: number; windowMs: number };
   trustedProxies?: readonly string[];
 };
@@ -47,6 +52,17 @@ export function createApp(options: AppOptions): Server {
   const market = options.marketReader ?? new MarketReader(deployment && typeof marketRpc?.getProgramAccounts === 'function'
     && typeof marketRpc.getMultipleAccountsInfoAndContext === 'function' ? { rpc: marketRpc, network: deployment.network,
       programId: deployment.programId, collectionAddress: deployment.collectionAddress, expectedGenesisHash: deployment.expectedGenesisHash } : undefined);
+  const travel = options.travelService ?? new TravelService(repository, { durationMs: options.travelDurationMs });
+  chain.travel = travel;
+  /** Registered pets travel only through the ownership fence; a moved pet cancels its trip once and refunds the starter. */
+  async function ownedTripOperation<T>(auth: { user_id: string; kind: string }, petId: string, tripId: string | null, operation: (fence: () => void) => T): Promise<T | { trip: unknown; pet: null; cancelled: true }> {
+    try { return await ownership.withOwnedPet(auth, petId, operation); }
+    catch (error) {
+      if (tripId && error instanceof ApiError && ['PET_OWNER_CHANGED', 'PET_NOT_FOUND', 'PET_ESCROWED'].includes(error.code)
+        && travel.cancelIfOwnershipChanged(auth.user_id, tripId)) return { ...travel.trip(auth.user_id, tripId), pet: null, cancelled: true };
+      throw error;
+    }
+  }
   const displayOffer = (offer: MarketOfferCard) => ({ ...offer, price_sol: lamportsToSol(offer.price_lamports),
     fee_sol: lamportsToSol(offer.fee_lamports), seller_sol: lamportsToSol(offer.seller_lamports) });
   const limits = options.rateLimit ?? { requests: 180, guestCreations: 12, windowMs: 60000 };
@@ -76,6 +92,9 @@ export function createApp(options: AppOptions): Server {
         return reply(response, 200, { ok: true, data: { service: 'pixel-pets', storage: 'sqlite', chain: { network: config.network, configured: config.enabled, program_id: config.program_id }, ai: { configured: false } } });
       }
       if (method === 'GET' && pathname === '/api/v1/catalog') return reply(response, 200, { ok: true, data: catalog });
+      if (method === 'GET' && pathname === '/api/v1/travel/catalog') return reply(response, 200, { ok: true, data: publicTravelCatalog(travel.durationMs) });
+      const proofMatch = pathname.match(/^\/api\/v1\/trips\/(jr_[A-Za-z0-9_-]{22})\/proof$/);
+      if (method === 'GET' && proofMatch) return reply(response, 200, { ok: true, data: travel.proof(proofMatch[1]) });
       if (method === 'GET' && pathname === '/api/v1/chain/config') {
         const config = await chain.publicConfig();
         return reply(response, 200, { ok: true, data: { ...config,
@@ -100,6 +119,9 @@ export function createApp(options: AppOptions): Server {
       if (method === 'GET' && pathname === '/api/v1/pets') result = ownership.listPets(auth.user_id);
       else if (method === 'POST' && pathname === '/api/v1/pets') { result = repository.adopt(auth.user_id, await body(request)); status = 201; }
       else if (method === 'GET' && pathname === '/api/v1/journal') result = repository.journal(auth.user_id);
+      else if (method === 'GET' && pathname === '/api/v1/collections') result = travel.collections(auth.user_id);
+      else if (method === 'GET' && pathname === '/api/v1/supplies') result = travel.supplies(auth.user_id);
+      else if (method === 'GET' && pathname === '/api/v1/trips') result = travel.list(auth.user_id);
       else if (method === 'GET' && pathname === '/api/v1/offers') {
         if ([...url.searchParams.keys()].some(key => !['limit', 'cursor'].includes(key))
           || ['limit', 'cursor'].some(key => url.searchParams.getAll(key).length > 1)) throw new ApiError(400, 'INVALID_QUERY', '报价查询参数无效。');
@@ -119,8 +141,29 @@ export function createApp(options: AppOptions): Server {
         const petMatch = pathname.match(/^\/api\/v1\/pets\/([a-f0-9-]{36})$/);
         const prepareMatch = pathname.match(/^\/api\/v1\/pets\/([a-f0-9-]{36})\/(claim|checkpoint)-intent$/);
         const intentMatch = pathname.match(/^\/api\/v1\/chain\/intents\/([a-f0-9-]{36})(\/confirm)?$/);
+        const tripStartMatch = pathname.match(/^\/api\/v1\/pets\/([a-f0-9-]{36})\/trips$/);
+        const tripCurrentMatch = pathname.match(/^\/api\/v1\/pets\/([a-f0-9-]{36})\/trips\/current$/);
+        const tripMatch = pathname.match(/^\/api\/v1\/trips\/([a-f0-9-]{36})(\/reveal|\/checkpoint-intent)?$/);
         const offerMatch = pathname.match(/^\/api\/v1\/offers\/([1-9A-HJ-NP-Za-km-z]{32,44})\/(0|[1-9]\d{0,19})$/);
-        if (method === 'GET' && offerMatch) {
+        if (method === 'POST' && tripStartMatch) {
+          const input = await body(request); const petId = tripStartMatch[1];
+          result = await ownedTripOperation(auth, petId, null, fence => {
+            const asset = repository.db.prepare("SELECT o.asset_address, o.owner_address, o.slot FROM ownership_assets o WHERE o.pet_id=?").get(petId) as Record<string, string | number> | undefined;
+            return travel.start(auth.user_id, petId, input, fence, asset ? { wallet: String(asset.owner_address), asset: String(asset.asset_address), version: Number(asset.slot) } : undefined);
+          });
+          status = 201;
+        }
+        else if (method === 'GET' && tripCurrentMatch) result = travel.current(auth.user_id, tripCurrentMatch[1]);
+        else if (method === 'GET' && tripMatch && !tripMatch[2]) result = travel.trip(auth.user_id, tripMatch[1]);
+        else if (method === 'POST' && tripMatch?.[2] === '/reveal') {
+          const input = await body(request); const petId = travel.tripPetId(auth.user_id, tripMatch[1]);
+          result = await ownedTripOperation(auth, petId, tripMatch[1], fence => travel.reveal(auth.user_id, tripMatch[1], input, fence));
+        }
+        else if (method === 'POST' && tripMatch?.[2] === '/checkpoint-intent') {
+          const input = await body(request); const source = travel.checkpointSource(auth.user_id, tripMatch[1]);
+          result = await ownership.withOwnedPet(auth, source.pet_id, fence => chain.prepare(auth, source.pet_id, 'checkpoint', input, fence, source));
+        }
+        else if (method === 'GET' && offerMatch) {
           const page = await market.detail(offerMatch[1], offerMatch[2]); result = { ...page, offer: displayOffer(page.offer) };
         }
         else if (method === 'POST' && prepareMatch) {

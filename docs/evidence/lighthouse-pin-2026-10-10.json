@@ -1,0 +1,56 @@
+{
+  "provider": "lighthouse",
+  "ethAddress": "0x7d520eaEc97913138eC021F0bd639f3207883165",
+  "note": "Same CIDv1 raw hashes as deploy/metadata/manifest.json. Uploaded+pin-requested without Wes account via ephemeral ETH wallet signature. Lighthouse shared gateway returns 402 (premium). Public Protocol Labs gateways currently bot/SW-challenge curl clients.",
+  "files": [
+    {
+      "path": "images/moss-seed.png",
+      "cid": "bafkreid6whvuf4rs74srb7s7rygxvj2q44ecku3epty5aghqrmfohuknee",
+      "expectedCid": "bafkreid6whvuf4rs74srb7s7rygxvj2q44ecku3epty5aghqrmfohuknee",
+      "match": true,
+      "sha256": "7eb1eb42f232ff2510fe5f8e0d7aa750e7082553647cf1d018f08b0ae3d14d21"
+    },
+    {
+      "path": "images/puddle-seed.png",
+      "cid": "bafkreieskhf7warrqnnp5kxok7d2llccyjv3v7e3vkb45vsrmf5sygdaoa",
+      "expectedCid": "bafkreieskhf7warrqnnp5kxok7d2llccyjv3v7e3vkb45vsrmf5sygdaoa",
+      "match": true,
+      "sha256": "9251cbfb0231835afeaaee57c7a5ac42c26bbafc9baa83ced651617b2c186070"
+    },
+    {
+      "path": "images/wisp-seed.png",
+      "cid": "bafkreia2dgvzqc3r6zpe52pnfbg7vyx7vave26pf3z3e2tsn7oxvsyor34",
+      "expectedCid": "bafkreia2dgvzqc3r6zpe52pnfbg7vyx7vave26pf3z3e2tsn7oxvsyor34",
+      "match": true,
+      "sha256": "1a19ab980b71f65e4ee9ed284dfae2ffa82a4d79e5de764d4e4dfbaf5961d1df"
+    },
+    {
+      "path": "json/moss.json",
+      "cid": "bafkreia32h5aktcj2ia3bpldar2embtmvxu3onn5nti6kvdfq4gzky7h3u",
+      "expectedCid": "bafkreia32h5aktcj2ia3bpldar2embtmvxu3onn5nti6kvdfq4gzky7h3u",
+      "match": true,
+      "sha256": "1bd1fa054c49d201b0bd63047446066cade9b735bd6cd1e55465870d9563e7dd"
+    },
+    {
+      "path": "json/puddle.json",
+      "cid": "bafkreibscbjvqhbrojyk64dpibwe4747qu6wvfn7fvsqkz4cpfw7q24lqa",
+      "expectedCid": "bafkreibscbjvqhbrojyk64dpibwe4747qu6wvfn7fvsqkz4cpfw7q24lqa",
+      "match": true,
+      "sha256": "321053581c317270af706f406c4e7f9f853d6a95bf2d65056782796df86b8b80"
+    },
+    {
+      "path": "json/wisp.json",
+      "cid": "bafkreicfhv2s2awy3hp56ib3yrdwe7ytqimcrh6dwkbtqbarfqy4p2ia2y",
+      "expectedCid": "bafkreicfhv2s2awy3hp56ib3yrdwe7ytqimcrh6dwkbtqbarfqy4p2ia2y",
+      "match": true,
+      "sha256": "453d752d02d8d9dfdf203bc447627f138218289fc3b2833804112c31c7e900d6"
+    },
+    {
+      "path": "json/collection.json",
+      "cid": "bafkreidlapaczocd4zvg6hb62ov26f6wow27extrwdgwtfykbwhfq5u2ki",
+      "expectedCid": "bafkreidlapaczocd4zvg6hb62ov26f6wow27extrwdgwtfykbwhfq5u2ki",
+      "match": true,
+      "sha256": "6b03c02cb843e66a6f1c3ed3abaf17d675b5f25e71b0cd69970a0d8e58769a52"
+    }
+  ]
+}

@@ -8,6 +8,8 @@ export type Pet = {
   created_at: string; updated_at: string; revision: number;
   traits: { sun: number; moon: number };
   chain: { status: 'unregistered' | 'pending' | 'registered'; network?: string; program_id?: string; asset_address?: string; intent_id?: string; checkpoint?: string; received?: boolean }; favorite: 'sun' | 'moon';
+  /** Added for travel; older pets omit it and use their species' base temperament. */
+  temperament?: 'cautious' | 'curious' | 'greedy';
 };
 
 export const catalog = {

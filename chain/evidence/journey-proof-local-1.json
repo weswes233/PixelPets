@@ -1,0 +1,49 @@
+{
+  "schema": "pixel-pets:journey-proof:v1",
+  "public_receipt_id": "jr_BoDDocnfbfJomkH4n1eP7w",
+  "statement": "Rewards are drawn by the server. The result is recorded on Solana.",
+  "trip_result": {
+    "canonical": "[\"pixel-pets:trip-result:v1\",\"jr_BoDDocnfbfJomkH4n1eP7w\",\"moonlit_lane\",\"tiny_lantern\",1,\"6e04fbc4235fc0139b81fc133c2aa2f45b0fecfff99843f08c2f93f9731d3512\",1,\"greedy\",\"1791565341465\",\"1791565343465\",\"1791565343810\",\"moonlit_lane.greedy.tiny_lantern.common\",[[\"night_map\",1]]]",
+    "sha256": "7870f905ed6a6aa1c9a8871b73409061237fa12d86b2a6dc559674a0f86b2162"
+  },
+  "story": {
+    "en": {
+      "title": "A trip to Moonlit Lantern Lane",
+      "lines": [
+        "Your companion packed a second lunch \"just in case\" and left.",
+        "It traded a cookie for a moon-shaped rice cake. Fair trade, it says.",
+        "The tiny lantern still had a little light left.",
+        "It brought back a postcard and a small keepsake."
+      ]
+    },
+    "zh": {
+      "title": "去月灯小径的旅行",
+      "lines": [
+        "你的伙伴“以防万一”多带了一份午饭才出门。",
+        "它用一块饼干换了一个月亮形的年糕，它说这很公平。",
+        "小提灯里还剩一点点光。",
+        "它带回了一张明信片和一件小纪念物。"
+      ]
+    }
+  },
+  "items": [
+    {
+      "id": "night_map",
+      "quantity": 1,
+      "name": "Night Map Scrap"
+    }
+  ],
+  "checkpoints": [
+    {
+      "canonical": "[\"pixel-pets:checkpoint:v2\",\"EKygz4JkCbErr8ZE2PA9V9Pj7ndFTYFTTn8kZAmTAr5Y\",\"2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT\",\"ANipZ2qbdJZZesaKHhghJNVnUXXVf3V9mh499a5fHBKC\",\"b78cac1b-6e60-4f3c-939c-208930ca42d0\",\"0\",6,0,2,1,0,2,\"jr_BoDDocnfbfJomkH4n1eP7w\",\"7870f905ed6a6aa1c9a8871b73409061237fa12d86b2a6dc559674a0f86b2162\"]",
+      "sha256": "49db1ff79b9b058c76cc7edb16c2a2ac2305d820fea0acedb5076801198ee1bf",
+      "network_genesis": "EKygz4JkCbErr8ZE2PA9V9Pj7ndFTYFTTn8kZAmTAr5Y",
+      "program_id": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT",
+      "asset_address": "ANipZ2qbdJZZesaKHhghJNVnUXXVf3V9mh499a5fHBKC",
+      "expected_checkpoint": "0",
+      "signature": "3DiDnizqFwdfBQ613GjqGF2GTJ9r8jkUvLYrAWMqQFoBQEQpN89p7PuQrFYfzVHD3q91SYA3N7EPsLLvTheRYKY3",
+      "finalized_slot": 106
+    }
+  ],
+  "note": "PetRecord keeps only the latest event_hash; later checkpoints overwrite it. Verify each receipt against its own transaction."
+}

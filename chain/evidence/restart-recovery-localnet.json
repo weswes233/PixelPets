@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "kind": "restart-recovery-drill",
+  "network": "localnet",
+  "program": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT",
+  "localFundsHaveNoValue": true,
+  "startedAt": "2026-10-09T18:17:30.272Z",
+  "checks": [
+    "Server killed mid-trip (SIGKILL); after restart the same trip is still travelling with the same server return time",
+    "Reveal succeeds after restart; server settles the result once",
+    "Pending (unsigned) journey receipt survives a second restart; re-requesting returns the same intent",
+    "The surviving intent is signed and confirmed after restart"
+  ],
+  "transactions": [
+    {
+      "label": "claim",
+      "signature": "5n4ykh4cpDAQnkU7HmDjBFqsmTpK5Se7h1gzu7z2ApHCi7yS4nkzk1WRJcxtH47wLCie7WEgDqdjUWVtZ2dbbtfB"
+    },
+    {
+      "label": "journey_receipt",
+      "signature": "mx3USPVAAEG9JErxNi3CEHkkF875eP2GKKrqhqWPhM1DQrJSFxfh4vM8adjcVAC3vAr8SWw12wXz23mcPXszw41",
+      "intent_id": "a400992d-b672-477e-bd0b-cbd9b02f3f15"
+    }
+  ],
+  "asset": "6EcTkDhQ7YJcp6mw2vn1SuKfnPM7V8K1Z8ZxdTAXtHRq",
+  "public_receipt_id": "jr_8v4VesX9_cMPFZxgj7YQRw",
+  "result_hash": "095d8a481a57b55c19d2adb843b36f56e7f32fd9b582c5ba49e8058fc2c84dd5",
+  "finishedAt": "2026-10-09T18:18:21.172Z"
+}

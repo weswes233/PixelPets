@@ -1,0 +1,87 @@
+{
+  "schema": "pixel-pets:metadata-manifest:v1",
+  "network": "devnet",
+  "note": "Devnet test assets. No cash value. Growth forms are shown in the game; the asset image is the immutable base form.",
+  "files": [
+    {
+      "path": "images/moss-seed.png",
+      "kind": "image/png",
+      "bytes": 2261,
+      "sha256": "7eb1eb42f232ff2510fe5f8e0d7aa750e7082553647cf1d018f08b0ae3d14d21",
+      "cid": "bafkreid6whvuf4rs74srb7s7rygxvj2q44ecku3epty5aghqrmfohuknee",
+      "uri": "ipfs://bafkreid6whvuf4rs74srb7s7rygxvj2q44ecku3epty5aghqrmfohuknee"
+    },
+    {
+      "path": "json/moss.json",
+      "kind": "application/json",
+      "bytes": 967,
+      "sha256": "1bd1fa054c49d201b0bd63047446066cade9b735bd6cd1e55465870d9563e7dd",
+      "cid": "bafkreia32h5aktcj2ia3bpldar2embtmvxu3onn5nti6kvdfq4gzky7h3u",
+      "uri": "ipfs://bafkreia32h5aktcj2ia3bpldar2embtmvxu3onn5nti6kvdfq4gzky7h3u"
+    },
+    {
+      "path": "images/puddle-seed.png",
+      "kind": "image/png",
+      "bytes": 2244,
+      "sha256": "9251cbfb0231835afeaaee57c7a5ac42c26bbafc9baa83ced651617b2c186070",
+      "cid": "bafkreieskhf7warrqnnp5kxok7d2llccyjv3v7e3vkb45vsrmf5sygdaoa",
+      "uri": "ipfs://bafkreieskhf7warrqnnp5kxok7d2llccyjv3v7e3vkb45vsrmf5sygdaoa"
+    },
+    {
+      "path": "json/puddle.json",
+      "kind": "application/json",
+      "bytes": 980,
+      "sha256": "321053581c317270af706f406c4e7f9f853d6a95bf2d65056782796df86b8b80",
+      "cid": "bafkreibscbjvqhbrojyk64dpibwe4747qu6wvfn7fvsqkz4cpfw7q24lqa",
+      "uri": "ipfs://bafkreibscbjvqhbrojyk64dpibwe4747qu6wvfn7fvsqkz4cpfw7q24lqa"
+    },
+    {
+      "path": "images/wisp-seed.png",
+      "kind": "image/png",
+      "bytes": 2252,
+      "sha256": "1a19ab980b71f65e4ee9ed284dfae2ffa82a4d79e5de764d4e4dfbaf5961d1df",
+      "cid": "bafkreia2dgvzqc3r6zpe52pnfbg7vyx7vave26pf3z3e2tsn7oxvsyor34",
+      "uri": "ipfs://bafkreia2dgvzqc3r6zpe52pnfbg7vyx7vave26pf3z3e2tsn7oxvsyor34"
+    },
+    {
+      "path": "json/wisp.json",
+      "kind": "application/json",
+      "bytes": 966,
+      "sha256": "453d752d02d8d9dfdf203bc447627f138218289fc3b2833804112c31c7e900d6",
+      "cid": "bafkreicfhv2s2awy3hp56ib3yrdwe7ytqimcrh6dwkbtqbarfqy4p2ia2y",
+      "uri": "ipfs://bafkreicfhv2s2awy3hp56ib3yrdwe7ytqimcrh6dwkbtqbarfqy4p2ia2y"
+    },
+    {
+      "path": "json/collection.json",
+      "kind": "application/json",
+      "bytes": 465,
+      "sha256": "6b03c02cb843e66a6f1c3ed3abaf17d675b5f25e71b0cd69970a0d8e58769a52",
+      "cid": "bafkreidlapaczocd4zvg6hb62ov26f6wow27extrwdgwtfykbwhfq5u2ki",
+      "uri": "ipfs://bafkreidlapaczocd4zvg6hb62ov26f6wow27extrwdgwtfykbwhfq5u2ki"
+    }
+  ],
+  "collection": {
+    "name": "PixelPets Devnet Companions",
+    "uri": "ipfs://bafkreidlapaczocd4zvg6hb62ov26f6wow27extrwdgwtfykbwhfq5u2ki"
+  },
+  "editions": {
+    "moss": {
+      "species": 0,
+      "name": "PixelPets Moss",
+      "uri": "ipfs://bafkreia32h5aktcj2ia3bpldar2embtmvxu3onn5nti6kvdfq4gzky7h3u",
+      "image": "ipfs://bafkreid6whvuf4rs74srb7s7rygxvj2q44ecku3epty5aghqrmfohuknee"
+    },
+    "puddle": {
+      "species": 1,
+      "name": "PixelPets Puddle",
+      "uri": "ipfs://bafkreibscbjvqhbrojyk64dpibwe4747qu6wvfn7fvsqkz4cpfw7q24lqa",
+      "image": "ipfs://bafkreieskhf7warrqnnp5kxok7d2llccyjv3v7e3vkb45vsrmf5sygdaoa"
+    },
+    "wisp": {
+      "species": 2,
+      "name": "PixelPets Wisp",
+      "uri": "ipfs://bafkreicfhv2s2awy3hp56ib3yrdwe7ytqimcrh6dwkbtqbarfqy4p2ia2y",
+      "image": "ipfs://bafkreia2dgvzqc3r6zpe52pnfbg7vyx7vave26pf3z3e2tsn7oxvsyor34"
+    }
+  }
+}

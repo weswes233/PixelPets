@@ -15,7 +15,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const trustedProxies = parseTrustedProxies(process.env.TRUSTED_PROXY_IPS);
   const repository = new Repository(path, { publicOrigin: process.env.PUBLIC_ORIGIN, network });
   const chainService = chainServiceFromEnvironment(repository);
-  const server = await start({ repository, chainService, trustedProxies, port: Number(process.env.PORT ?? 9782), host: process.env.HOST ?? '127.0.0.1' });
+  const travelDurationMs = process.env.TRAVEL_DURATION_MS ? Number(process.env.TRAVEL_DURATION_MS) : undefined;
+  const server = await start({ repository, chainService, trustedProxies, travelDurationMs, port: Number(process.env.PORT ?? 9782), host: process.env.HOST ?? '127.0.0.1' });
   console.log(`PixelPets API ready on port ${(server.address() as { port: number }).port}; chain ${chainService.configuration ? 'configured; deployment is verified before use' : 'disabled'}.`);
   const stop = (): void => { server.close(() => { repository.close(); process.exit(0); }); };
   process.once('SIGINT', stop); process.once('SIGTERM', stop);

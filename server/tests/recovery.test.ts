@@ -211,7 +211,7 @@ test('additive migration preserves legacy profiles and higher schema versions; r
     const pet = (await f.request('POST', '/pets', { species_id: 'moss', nickname: '旧档案', event_id: 'migrated_0001' }, a.token)).body.data.pet;
     f.repo.db.exec('DROP TABLE wallet_recovery_challenges; PRAGMA user_version=1');
     await f.close(); f = await fixture(path);
-    assert.equal(f.repo.db.prepare('PRAGMA user_version').get()!.user_version, 2);
+    assert.equal(f.repo.db.prepare('PRAGMA user_version').get()!.user_version, 3); // v3 adds additive travel tables
     assert.equal((await f.request('GET', '/pets', undefined, a.token)).body.data.pets[0].id, pet.id);
     assert.equal((await f.request('GET', '/journal', undefined, a.token)).body.data.entries.length, 1);
     const challenge = await f.challenge(key); f.repo.db.exec('PRAGMA user_version=19');

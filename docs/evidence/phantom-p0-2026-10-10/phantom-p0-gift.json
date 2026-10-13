@@ -1,0 +1,122 @@
+{
+  "url": "https://175.178.27.231/",
+  "when": "2026-10-10T09:02:44Z",
+  "network": "solana:devnet",
+  "success": {
+    "gift": false,
+    "player_b_owns": false,
+    "player_a_released": false,
+    "phantom_gift_confirm": false
+  },
+  "wallet": {
+    "provider": "Phantom",
+    "account_at_start": "player-a",
+    "address": "5wpnLLhKQhaLE5zYouZHQYmrrcwN3s2u9uPWLbFvjdow",
+    "address_shown": "5wpnLLhK…Fvjdow",
+    "ui": "Wallet tab: Wallet connected. Did not disconnect or switch to player-b because no gift was submitted.",
+    "password_typed": false,
+    "switched_to_player_b": false
+  },
+  "pet": {
+    "species": "Moss",
+    "ui_line": "First meeting · Moss / Claimed on Devnet",
+    "bond": "1/6",
+    "energy": 75,
+    "mood": 76,
+    "asset": "BbJDvrJYN6MR5Xtf1xBBe9FmqQCFANEPLZCu1sRW5mF9",
+    "on_chain_owner": "5wpnLLhKQhaLE5zYouZHQYmrrcwN3s2u9uPWLbFvjdow",
+    "on_chain_owner_is_player_a": true,
+    "on_chain_program": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+    "intended_recipient": "9WFW2Avm7qYmiMNuH78ftAbFct7ptgdFUmNZTGFyGX1P"
+  },
+  "gift": {
+    "ok": false,
+    "ui_found": false,
+    "tx_signature": null,
+    "explorer_url": null,
+    "reason": "No Gift control exists in the running Godot client. Home, Wallet, and Album were scrolled through. Home actions are Feed, Play, Rest, Short walk, Pack & Travel, Rename, and Adopt another companion. Wallet actions are Disconnect wallet, Sync wallet companions, Recover companions / switch profile, Save growth checkpoint, and View offers (Coming later). None starts a transfer.",
+    "client_evidence": {
+      "index_pck_last_modified": "Fri, 09 Oct 2026 18:05:12 GMT",
+      "bridge_js_last_modified": "Fri, 09 Oct 2026 18:15:28 GMT",
+      "main_gdc_has_gift_string": false,
+      "main_gdc_bridge_methods": [
+        "connect",
+        "recover",
+        "disconnect",
+        "register",
+        "checkpoint",
+        "sync_assets",
+        "rename",
+        "offers"
+      ],
+      "bridge_js_implements_method_gift": true,
+      "bridge_review_title_if_called": "Send as a gift",
+      "note": "bridge.js PetChainBridge.request handles method \"gift\" (prepareGift, review dialog, Phantom signTransaction, sendRawTransaction, then /wallet/assets/sync). The exported game (scripts/main.gdc and i18n) never references that method, so the review dialog cannot be opened from the UI.",
+      "rebuild_note": "Stale pck was the root cause. After 2026-10-10 17:17 CST redeploy, live index.pck includes gift UI strings in scripts/main.gdc (zstd GDSC). Re-test Phantom gift against the new build.",
+      "index_pck_last_modified_after_rebuild": "Sat, 10 Oct 2026 09:17:05 GMT",
+      "main_gdc_has_gift_string_after_rebuild": true
+    }
+  },
+  "chain_check": {
+    "rpc": "https://175.178.27.231/solana-rpc",
+    "method": "getAccountInfo",
+    "asset": "BbJDvrJYN6MR5Xtf1xBBe9FmqQCFANEPLZCu1sRW5mF9",
+    "data_len": 195,
+    "key_byte": 1,
+    "owner_field": "5wpnLLhKQhaLE5zYouZHQYmrrcwN3s2u9uPWLbFvjdow",
+    "update_authority_type_byte": 2,
+    "collection": "5BnUfTQ249v4v7sVAuohBEstsWF9JdzmaHwSbK7cuoiS",
+    "gift_tx": null,
+    "player_b_did_not_receive_asset": true
+  },
+  "not_done": [
+    "No Phantom Confirm Transaction for a gift (popup never appeared).",
+    "Did not switch Phantom active account to player-b.",
+    "Did not reconnect or SIWS as player-b.",
+    "Did not verify player-b can care.",
+    "player-a is still the Core asset owner and the Home care buttons are still available."
+  ],
+  "screenshots": [
+    "/workspace/p0-qa/screens/gift-01-home-claimed-moss.png",
+    "/workspace/p0-qa/screens/gift-02-home-actions.png",
+    "/workspace/p0-qa/screens/gift-03-wallet-connected.png",
+    "/workspace/p0-qa/screens/gift-04-wallet-no-gift.png",
+    "/workspace/p0-qa/screens/gift-05-album.png"
+  ],
+  "rebuild": {
+    "required": true,
+    "reason": "Deployed index.pck (02:05 UTC+8 / Last-Modified Fri, 09 Oct 2026 18:05:12 GMT) predated gift UI in game/scripts/main.gd (02:19). Bridge already implemented method gift; Godot export did not call it.",
+    "rebuilt_at": "2026-10-10T17:03:34+08:00",
+    "redeployed_at": "2026-10-10T17:17:50+08:00",
+    "godot": "4.5.2.stable headless --export-release Web",
+    "branch": "feature/travel-devnet-demo",
+    "new_index_pck": {
+      "content_length": 7798332,
+      "sha256": "2cf6ce36f0d7101953151a28f1b81b1b5c8c38fd63b7911aedd5016006af7bf9",
+      "last_modified_http": "Sat, 10 Oct 2026 09:17:05 GMT",
+      "mtime_server_utc8": "2026-10-10 17:17:05 CST"
+    },
+    "old_index_pck_content_length": 7750836,
+    "gift_strings_in_main_gdc": [
+      "作为礼物送出",
+      "接收者钱包地址",
+      "送给朋友",
+      "gifted"
+    ],
+    "gift_strings_in_i18n_gdc": [
+      "作为礼物送出",
+      "接收者钱包地址",
+      "Send as a gift",
+      "送给朋友",
+      "gifted"
+    ],
+    "verify": {
+      "curl_index_pck_content_length": 7798332,
+      "sha256_matches_local_dist": true,
+      "homepage_http": 200,
+      "solana_rpc_http": 200,
+      "caddyfile_bind_mount_kept": true
+    },
+    "note": "Godot Web rebuild + node tools/build-web.mjs + docker compose rebuild/recreate web on 175.178.27.231. Phantom gift flow not re-run here; parent will verify UI."
+  }
+}

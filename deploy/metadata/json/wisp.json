@@ -1,0 +1,38 @@
+{
+  "name": "PixelPets Wisp",
+  "symbol": "PXPET",
+  "description": "A shy little ghost who lights the way for friends. Original code-drawn pixel companion from PixelPets. Solana Devnet test asset with no cash value; growth and journeys are shown in the game and recorded in its PetRecord.",
+  "image": "ipfs://bafkreia2dgvzqc3r6zpe52pnfbg7vyx7vave26pf3z3e2tsn7oxvsyor34",
+  "external_url": "",
+  "attributes": [
+    {
+      "trait_type": "Species",
+      "value": "Wisp"
+    },
+    {
+      "trait_type": "Species ID",
+      "value": "wisp"
+    },
+    {
+      "trait_type": "Base temperament",
+      "value": "Cautious"
+    },
+    {
+      "trait_type": "Base form",
+      "value": "seed"
+    },
+    {
+      "trait_type": "Network",
+      "value": "devnet"
+    }
+  ],
+  "properties": {
+    "category": "image",
+    "files": [
+      {
+        "uri": "ipfs://bafkreia2dgvzqc3r6zpe52pnfbg7vyx7vave26pf3z3e2tsn7oxvsyor34",
+        "type": "image/png"
+      }
+    ]
+  }
+}

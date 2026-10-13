@@ -1,0 +1,38 @@
+{
+  "name": "PixelPets Moss",
+  "symbol": "PXPET",
+  "description": "A curious little cat who collects sun-warmed stones. Original code-drawn pixel companion from PixelPets. Solana Devnet test asset with no cash value; growth and journeys are shown in the game and recorded in its PetRecord.",
+  "image": "ipfs://bafkreid6whvuf4rs74srb7s7rygxvj2q44ecku3epty5aghqrmfohuknee",
+  "external_url": "",
+  "attributes": [
+    {
+      "trait_type": "Species",
+      "value": "Moss"
+    },
+    {
+      "trait_type": "Species ID",
+      "value": "moss"
+    },
+    {
+      "trait_type": "Base temperament",
+      "value": "Curious"
+    },
+    {
+      "trait_type": "Base form",
+      "value": "seed"
+    },
+    {
+      "trait_type": "Network",
+      "value": "devnet"
+    }
+  ],
+  "properties": {
+    "category": "image",
+    "files": [
+      {
+        "uri": "ipfs://bafkreid6whvuf4rs74srb7s7rygxvj2q44ecku3epty5aghqrmfohuknee",
+        "type": "image/png"
+      }
+    ]
+  }
+}

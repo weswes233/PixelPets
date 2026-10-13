@@ -1,0 +1,57 @@
+{
+  "schema": "pixel-pets:deploy-evidence:v1",
+  "network": "localnet",
+  "genesis": "xJhco3qdtajDKm5wE1bCSxfMfDae3vra99wr7ZgHMNe",
+  "rpc": "http://127.0.0.1:8999",
+  "program": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT",
+  "soSha256": "3db1e8e79371be89a66a52a1fc3c48a77e96a0422fe68b83d609afe3c0562846",
+  "soBytes": 569888,
+  "deployer": "294hmkx17KS7ww6CzA6ZeDx2F3o7zybo8txRYRvhW9BU",
+  "issuer": "Cf6QfJVbeVPdzLJCShJozFuFtyjuSGAUtRJzrvwKoTxX",
+  "core": "CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d",
+  "startedAt": "2026-10-09T17:13:23.397Z",
+  "executed": true,
+  "steps": [
+    {
+      "label": "program_deploy",
+      "signature": "3QyHU6qZjanfB3wf7fBeqe6xgxywD3Ue6mRGakSUPwYKqhCjLNhk493p1Y9mdtnLbEs839gKEHCHkmLL9v9MLSTc",
+      "programId": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT"
+    },
+    {
+      "label": "initialize_config_and_collection",
+      "signature": "Dyd71ASoxasqM979m38wRHwB6qKSmFuH68RvBosgGSV7R5Brp2qmo98mscedVXKynNvXeq8PtH7j3JcGPEpJ4g8"
+    },
+    {
+      "label": "create_edition_moss",
+      "signature": "3hYSZFNyt76TeS2Zt5AY27Qybf2bqgrDGQKgt4ELL5yT3Wn9RU8LQZ2zF3Hkwm3dYnKehTvVFi5se84vd1VCNWBz"
+    },
+    {
+      "label": "create_edition_puddle",
+      "signature": "57X3kdLzbAFKbi4QgZ24YnW2Dckf3cmhPoT2hpfjP36tDqNX8iypJByZhnq3j1K8evyGZsowkzyQyEFrn6wNqtsv"
+    },
+    {
+      "label": "create_edition_wisp",
+      "signature": "3khwSuiaKh7Aao7GtGkTJF5mgnMFANhYxAJreSiMxdUCDasFoybfycfGmput4Mbi8GM98p5GrFGagdYqXBNc9qrP"
+    }
+  ],
+  "deployerBalanceBefore": 10000000000,
+  "estimatedLamports": 4068766000,
+  "programDataRent": 3967624560,
+  "programVerified": {
+    "executable": true,
+    "upgradeAuthority": "294hmkx17KS7ww6CzA6ZeDx2F3o7zybo8txRYRvhW9BU",
+    "programData": "9cQHHSo78z77ffrormwDZTdnf62kiP5ebMwkCG3ZhjMN",
+    "bytesSha256": "3db1e8e79371be89a66a52a1fc3c48a77e96a0422fe68b83d609afe3c0562846"
+  },
+  "collection": "8uQPDvvJRNEsKZzGnnWaiRcTnNpE4cg8y8eEqK1PkBfP",
+  "collectionUri": "ipfs://bafkreidlapaczocd4zvg6hb62ov26f6wow27extrwdgwtfykbwhfq5u2ki",
+  "editions": {
+    "moss": "1001",
+    "puddle": "1002",
+    "wisp": "1003"
+  },
+  "maxSupply": 20,
+  "feeBps": 250,
+  "deployerBalanceAfter": 6015764440,
+  "finishedAt": "2026-10-09T17:13:32.264Z"
+}

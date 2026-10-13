@@ -8,6 +8,8 @@ import type { ClaimInput, CheckpointInput, RpcClient } from '../../chain-client/
 import { ApiError, hash, iso, objectBody } from './domain.ts';
 import type { Pet } from './domain.ts';
 import type { Repository } from './repository.ts';
+import { canonicalJson, sha256Hex } from './canonical.ts';
+import type { TravelService, TripCheckpointSource } from './travel.ts';
 
 export type ChainNetwork = 'localnet' | 'devnet' | 'mainnet-beta';
 export type ChainRpc = RpcClient & Pick<Connection, 'getTransaction'>;
@@ -33,8 +35,19 @@ type Intent = {
   kind: Kind; state: AttemptState; network: ChainNetwork; program_id: string; collection_address: string;
   claim_id: string; edition_id: string; source_revision: number; source: {
     form: number; bond: number; event_hash: string; species: number;
+    /** Absent on v1 intents created before journey receipts; those keep their original recovery path. */
+    schema?: 'v2'; trip_id?: string; public_receipt_id?: string; result_hash?: string;
+    canonical_checkpoint?: string; expected_checkpoint?: string; asset_address?: string; network_genesis?: string;
   }; attempts: Attempt[]; created_at: string; updated_at: string;
 };
+/** Checkpoint v2 C array (plan 02 §6.2). Integers are small; u64 checkpoint is a decimal string. */
+export function checkpointV2Array(input: { network_genesis: string; program_id: string; asset_address: string; chain_intent_id: string;
+  expected_checkpoint: string; pet_revision: number; form: number; bond: number; care_count: number; traits_sun: number; traits_moon: number;
+  public_receipt_id: string; result_hash: string }) {
+  return ['pixel-pets:checkpoint:v2', input.network_genesis, input.program_id, input.asset_address, input.chain_intent_id,
+    input.expected_checkpoint, input.pet_revision, input.form, input.bond, input.care_count, input.traits_sun, input.traits_moon,
+    input.public_receipt_id, input.result_hash];
+}
 const speciesIds = ['moss', 'puddle', 'wisp'] as const;
 const formIds = ['seed', 'sun', 'moon'] as const;
 const ensure = (condition: unknown, code: string, message: string, status = 409): void => {
@@ -84,6 +97,8 @@ export class ChainService {
   readonly client?: PixelPetsClient;
   private readonly queue = new Map<string, Promise<unknown>>();
   private readonly leases = new Map<string, { scope: string; token: string; lost: boolean; ownershipFence?: () => void }>();
+  /** Optional sink for long-lived journey receipt evidence. */
+  travel?: TravelService;
   constructor(repository: Repository, configuration?: ChainConfiguration) {
     this.repository = repository;
     if (configuration) {
@@ -145,6 +160,14 @@ export class ChainService {
       ON CONFLICT(id) DO UPDATE SET data=excluded.data`)
       .run(intent.intent_id, intent.scope, intent.user_id, intent.pet_id, JSON.stringify(intent), lease.scope, lease.token, this.repository.clock());
     ensure(result.changes === 1, 'CHAIN_LEASE_LOST', '这笔请求已由新的恢复请求接管，请重新查询。');
+    if (intent.source.schema === 'v2' && this.travel) {
+      const landed = intent.attempts.find(a => a.state === 'confirmed') ?? [...intent.attempts].reverse().find(a => a.signature);
+      this.travel.recordReceipt({ trip_id: intent.source.trip_id!, chain_intent_id: intent.intent_id,
+        canonical_checkpoint: intent.source.canonical_checkpoint!, event_hash: intent.source.event_hash,
+        network_genesis: intent.source.network_genesis!, program_id: intent.program_id, asset_address: intent.source.asset_address!,
+        expected_checkpoint: intent.source.expected_checkpoint!, signature: landed?.signature ?? null,
+        finalized_slot: landed?.finalized_slot ?? null, status: intent.state });
+    }
     };
     // Keep the ownership fence and write atomic across server processes as well.
     if (this.repository.db.isTransaction) write(); else this.repository.transaction(write);
@@ -163,7 +186,10 @@ export class ChainService {
     // This response is restricted to the same authenticated wallet. Exact signed bytes
     // allow retry after an uncertain RPC submission without creating another transaction.
     const packet: Partial<Attempt> = selected ?? {};
-    return { ...visible, ...packet, state: intent.state,
+    const journey = intent.source.schema === 'v2' ? { schema: 'pixel-pets:checkpoint:v2', trip_id: intent.source.trip_id,
+      public_receipt_id: intent.source.public_receipt_id, result_hash: intent.source.result_hash,
+      canonical_checkpoint: intent.source.canonical_checkpoint, event_hash: intent.source.event_hash } : null;
+    return { ...visible, ...packet, state: intent.state, journey,
       pet: this.pet(intent.user_id, intent.pet_id),
       attempts: attempts.map(a => ({ attempt: a.attempt, state: a.state, signature: a.signature ?? null,
         asset_address: a.asset_address, expires_at: a.expires_at, finalized_slot: a.finalized_slot ?? null })) };
@@ -230,8 +256,26 @@ export class ChainService {
       return { ...result, reason: error instanceof ApiError || error instanceof ChainClientError ? error.code : 'RPC_UNAVAILABLE' };
     }
   }
-  private newIntent(userId: string, wallet: string, pet: Pet, kind: Kind, scope: string): Intent {
+  private newIntent(userId: string, wallet: string, pet: Pet, kind: Kind, scope: string, trip?: TripCheckpointSource): Intent {
     const config = this.config(); const now = iso(this.repository.clock()); const claimId = this.canonicalClaimId(pet.id);
+    if (trip) {
+      // v2 source is frozen here, including the expected checkpoint the transaction must advance.
+      const intentId = randomUUID(); const expected = pet.chain.checkpoint ?? '0';
+      ensure(/^(0|[1-9]\d{0,19})$/.test(expected), 'PROGRESSION_CONFLICT', '链上成长序号无效，请先同步伙伴。');
+      const values = { network_genesis: this.client!.expectedGenesisHash, program_id: this.client!.instructions.programId.toBase58(),
+        asset_address: pet.chain.asset_address!, chain_intent_id: intentId, expected_checkpoint: expected, pet_revision: pet.revision,
+        form: formIds.indexOf(pet.form), bond: pet.bond, care_count: pet.care_count, traits_sun: pet.traits.sun, traits_moon: pet.traits.moon,
+        public_receipt_id: trip.public_receipt_id, result_hash: trip.result_hash };
+      const canonical = canonicalJson(checkpointV2Array(values));
+      return { intent_id: intentId, scope, user_id: userId, pet_id: pet.id, wallet_address: wallet, kind, state: 'prepared',
+        network: config.network, program_id: values.program_id, collection_address: config.collectionAddress, claim_id: claimId,
+        edition_id: config.editions[pet.species_id as typeof speciesIds[number]], source_revision: pet.revision,
+        source: { form: values.form, bond: pet.bond, species: speciesIds.indexOf(pet.species_id as typeof speciesIds[number]),
+          event_hash: sha256Hex(canonical), schema: 'v2', trip_id: trip.trip_id, public_receipt_id: trip.public_receipt_id,
+          result_hash: trip.result_hash, canonical_checkpoint: canonical, expected_checkpoint: expected,
+          asset_address: values.asset_address, network_genesis: values.network_genesis },
+        attempts: [], created_at: now, updated_at: now };
+    }
     return { intent_id: randomUUID(), scope, user_id: userId, pet_id: pet.id, wallet_address: wallet, kind, state: 'prepared',
       network: config.network, program_id: this.client!.instructions.programId.toBase58(), collection_address: config.collectionAddress,
       claim_id: claimId, edition_id: config.editions[pet.species_id as typeof speciesIds[number]], source_revision: pet.revision,
@@ -239,12 +283,13 @@ export class ChainService {
         event_hash: hash(JSON.stringify(['pixel-pets:checkpoint:v1', claimId, pet.revision, pet.form, pet.bond, pet.care_count, pet.traits.sun, pet.traits.moon])) },
       attempts: [], created_at: now, updated_at: now };
   }
-  async prepare(auth: WalletAuth, petId: string, kind: Kind, input: unknown, ownershipFence?: () => void) {
+  async prepare(auth: WalletAuth, petId: string, kind: Kind, input: unknown, ownershipFence?: () => void, trip?: TripCheckpointSource) {
     const wallet = this.wallet(auth); objectBody(input, []); this.config(); this.pet(auth.user_id, petId);
+    ensure(!trip || (kind === 'checkpoint' && trip.pet_id === petId), 'TRIP_PET_MISMATCH', '旅程与伙伴不一致。', 400);
     return this.exclusive(petId, async () => {
       await this.ready();
       const pet = this.pet(auth.user_id, petId);
-      const scope = `${this.chainScope()}:${petId}:${kind}${kind === 'checkpoint' ? `:${pet.revision}` : ''}`;
+      const scope = `${this.chainScope()}:${petId}:${kind}${trip ? `:trip:${trip.trip_id}` : kind === 'checkpoint' ? `:${pet.revision}` : ''}`;
       let intent = this.find(scope);
       if (intent) {
         await this.reconcile(intent);
@@ -254,7 +299,8 @@ export class ChainService {
         // Even a server-clock expiry cannot retire a still-valid blockhash.
         if (latest && await this.config().rpc.getBlockHeight('finalized') <= latest.last_valid_block_height && latest.state !== 'failed') return this.response(intent);
       } else {
-        intent = this.newIntent(auth.user_id, wallet, pet, kind, scope);
+        if (trip) ensure(pet.chain.status === 'registered' && !!pet.chain.asset_address, 'PET_NOT_REGISTERED', '请先完成这位伙伴的链上领取。');
+        intent = this.newIntent(auth.user_id, wallet, pet, kind, scope, trip);
       }
       ensure(intent.wallet_address === wallet, 'WALLET_MISMATCH', '请使用创建此请求的钱包。', 403);
       if (kind === 'claim') {
@@ -306,6 +352,9 @@ export class ChainService {
         'PET_IDENTITY_MISMATCH', '链上伙伴与养成记录不一致。');
       ensure(verified.record.bond <= intent.source.bond && (verified.record.form === 0 || verified.record.form === intent.source.form),
         'PROGRESSION_CONFLICT', '链上成长记录与服务端不同，需要先恢复记录。');
+      // The v2 commitment names the checkpoint it advances; never sign it against a different sequence.
+      ensure(intent.source.schema !== 'v2' || (verified.record.checkpoint.toString() === intent.source.expected_checkpoint
+        && pet.chain.asset_address === intent.source.asset_address), 'PROGRESSION_CONFLICT', 'Another growth record landed first. Save this journey again after syncing.');
       inputs = { owner: intent.wallet_address, issuer: config.issuer.publicKey.toBase58(), collection: config.collectionAddress,
         asset: pet.chain.asset_address!, expectedCheckpoint: verified.record.checkpoint.toString(),
         form: intent.source.form, bond: intent.source.bond, eventHash: intent.source.event_hash };

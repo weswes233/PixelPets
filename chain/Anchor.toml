@@ -6,10 +6,10 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-pixel_pets = "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR"
+pixel_pets = "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT"
 
 [programs.devnet]
-pixel_pets = "2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR"
+pixel_pets = "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT"
 
 [provider]
 cluster = "Localnet"

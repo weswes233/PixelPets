@@ -1,0 +1,65 @@
+[
+  {
+    "path": "images/moss-seed.png",
+    "id": "GSP2HBYmaaKZTN3nFW8rWTKbHtUiw8JbK242E35t9BrJ",
+    "http": 200,
+    "bytes": 2261,
+    "sha256_match": true,
+    "gateway": "https://gateway.irys.xyz/GSP2HBYmaaKZTN3nFW8rWTKbHtUiw8JbK242E35t9BrJ",
+    "note": "Irys L1/devnet ID — NOT valid ar:// per chain-client isImmutableMetadataUri (base58-ish, not 43-char base64url)"
+  },
+  {
+    "path": "images/puddle-seed.png",
+    "id": "Qn3MP3JfpU7QrQ92spU897rd6M8yTX227TqUkyKaaBf",
+    "http": 200,
+    "bytes": 2244,
+    "sha256_match": true,
+    "gateway": "https://gateway.irys.xyz/Qn3MP3JfpU7QrQ92spU897rd6M8yTX227TqUkyKaaBf",
+    "note": "Irys L1/devnet ID — NOT valid ar:// per chain-client isImmutableMetadataUri (base58-ish, not 43-char base64url)"
+  },
+  {
+    "path": "images/wisp-seed.png",
+    "id": "B7Cw2Ww1nZiWrDcJcK6LBZZvQ98agEJAdawmwqtnQpB1",
+    "http": 200,
+    "bytes": 2252,
+    "sha256_match": true,
+    "gateway": "https://gateway.irys.xyz/B7Cw2Ww1nZiWrDcJcK6LBZZvQ98agEJAdawmwqtnQpB1",
+    "note": "Irys L1/devnet ID — NOT valid ar:// per chain-client isImmutableMetadataUri (base58-ish, not 43-char base64url)"
+  },
+  {
+    "path": "json/moss.json",
+    "id": "97w6hRAEk9TFe9whjfQdfzVWhGtGmajJGC1mah3GGb5p",
+    "http": 200,
+    "bytes": 967,
+    "sha256_match": true,
+    "gateway": "https://gateway.irys.xyz/97w6hRAEk9TFe9whjfQdfzVWhGtGmajJGC1mah3GGb5p",
+    "note": "Irys L1/devnet ID — NOT valid ar:// per chain-client isImmutableMetadataUri (base58-ish, not 43-char base64url)"
+  },
+  {
+    "path": "json/puddle.json",
+    "id": "5DkrV1PAChEXfJRTivNAnsKb7J3D6t7jSV1othD3XN8G",
+    "http": 200,
+    "bytes": 980,
+    "sha256_match": true,
+    "gateway": "https://gateway.irys.xyz/5DkrV1PAChEXfJRTivNAnsKb7J3D6t7jSV1othD3XN8G",
+    "note": "Irys L1/devnet ID — NOT valid ar:// per chain-client isImmutableMetadataUri (base58-ish, not 43-char base64url)"
+  },
+  {
+    "path": "json/wisp.json",
+    "id": "4TWNzufL9kbrfa4kBeo4tyi17gPJgrVX99WhnXh6dMAB",
+    "http": 200,
+    "bytes": 966,
+    "sha256_match": true,
+    "gateway": "https://gateway.irys.xyz/4TWNzufL9kbrfa4kBeo4tyi17gPJgrVX99WhnXh6dMAB",
+    "note": "Irys L1/devnet ID — NOT valid ar:// per chain-client isImmutableMetadataUri (base58-ish, not 43-char base64url)"
+  },
+  {
+    "path": "json/collection.json",
+    "id": "DF5VwjfkripCJexXAeiFPk2bcjwZE1d8UXftByAfNYWM",
+    "http": 200,
+    "bytes": 465,
+    "sha256_match": true,
+    "gateway": "https://gateway.irys.xyz/DF5VwjfkripCJexXAeiFPk2bcjwZE1d8UXftByAfNYWM",
+    "note": "Irys L1/devnet ID — NOT valid ar:// per chain-client isImmutableMetadataUri (base58-ish, not 43-char base64url)"
+  }
+]

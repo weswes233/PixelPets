@@ -27,6 +27,22 @@ export interface PetIntent {
   transaction_base64: string; expected_message_base64: string; blockhash: string;
   last_valid_block_height: number; instruction_inputs: ClaimInput | CheckpointInput;
   signature?: string; signed_transaction_base64?: string; pet?: any;
+  journey?: { schema: string; trip_id: string; public_receipt_id: string; result_hash: string; canonical_checkpoint: string; event_hash: string } | null;
+}
+async function sha256Hex(text: string): Promise<string> {
+  return Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))).toString('hex');
+}
+/** Journey receipt (checkpoint v2): the wallet side recomputes the commitment it is about to sign. */
+export async function validateJourneyCommitment(intent: PetIntent, config: DeploymentConfig, tripId: string, resultHash?: string): Promise<void> {
+  const journey = intent.journey; const input = intent.instruction_inputs as CheckpointInput;
+  check(journey && journey.schema === 'pixel-pets:checkpoint:v2' && journey.trip_id === tripId, 'JOURNEY_MISMATCH', 'This receipt does not belong to the selected trip.');
+  check(await sha256Hex(journey.canonical_checkpoint) === journey.event_hash && String(input.eventHash) === journey.event_hash,
+    'JOURNEY_MISMATCH', 'The journey commitment does not match the transaction.');
+  const c = JSON.parse(journey.canonical_checkpoint) as unknown[];
+  check(Array.isArray(c) && c.length === 14 && c[0] === 'pixel-pets:checkpoint:v2' && c[1] === config.genesis_hash && c[2] === config.program_id
+    && c[3] === intent.asset_address && c[4] === intent.intent_id && c[5] === String(input.expectedCheckpoint)
+    && c[7] === input.form && c[8] === input.bond && c[12] === journey.public_receipt_id && c[13] === journey.result_hash
+    && (!resultHash || resultHash === journey.result_hash), 'JOURNEY_MISMATCH', 'The journey commitment fields do not match this pet and trip.');
 }
 export type FlowApi = (path: string, method: string, token?: string, body?: unknown) => Promise<any>;
 export function rawNetwork(value: string): SupportedNetwork {
@@ -83,7 +99,7 @@ export const boundedRpcFetch: typeof fetch = (input, init = {}) => {
     : AbortSignal.timeout(15000);
   return fetch(input, { ...init, signal });
 };
-export async function runPetTransaction(context: FlowContext, petId: string, kind: IntentKind): Promise<any> {
+export async function runPetTransaction(context: FlowContext, petId: string, kind: IntentKind, options: { tripId?: string; resultHash?: string } = {}): Promise<any> {
   const { api, token, wallet, account, config } = context;
   check(config.enabled && config.rpc_url && config.program_id && config.collection_address, 'CHAIN_NOT_DEPLOYED', '链上服务尚未开放。');
   const feature = wallet.features['solana:signTransaction'] as SolanaSignTransactionFeature['solana:signTransaction'] | undefined;
@@ -97,7 +113,9 @@ export async function runPetTransaction(context: FlowContext, petId: string, kin
   const pets = await api('/pets', 'GET', token);
   const pet = pets.pets?.find((item: any) => item.id === petId);
   check(pet, 'PET_NOT_FOUND', '找不到这只宠物，请刷新档案。');
-  let intent: PetIntent = await api(`/pets/${encodeURIComponent(petId)}/${kind}-intent`, 'POST', token, {});
+  check(!options.tripId || kind === 'checkpoint', 'INTENT_MISMATCH', 'Only a checkpoint can carry a journey receipt.');
+  let intent: PetIntent = await api(options.tripId ? `/trips/${encodeURIComponent(options.tripId)}/checkpoint-intent`
+    : `/pets/${encodeURIComponent(petId)}/${kind}-intent`, 'POST', token, {});
   context.assertCurrent();
   if (intent.state === 'confirmed') return { ...intent, message: '链上记录已经确认。' };
   if (intent.signature) {
@@ -118,6 +136,7 @@ export async function runPetTransaction(context: FlowContext, petId: string, kin
     return { ...intent, message: '上一笔交易正在核对，请稍后再次查看。' };
   }
   const transaction = await validatePetIntent(intent, config, account.address, petId, kind);
+  if (options.tripId) await validateJourneyCommitment(intent, config, options.tripId, options.resultHash);
   const onchainConfig = await client.fetchConfig();
   check(onchainConfig.issuer.toBase58() === config.issuer_address, 'ISSUER_CHANGED', '发行签名者已变化，请刷新后重试。');
   if (kind === 'checkpoint') {
@@ -140,8 +159,8 @@ export async function runPetTransaction(context: FlowContext, petId: string, kin
   // Simulation post-balance includes the network fee. Clamp only a net credit, never conceal a debit.
   const debit = Math.max(fee.value!, before - after!);
   context.assertCurrent();
-  const approved = await context.review({ title: kind === 'claim' ? '给伙伴一份链上身份' : '保存这段成长', petName: pet.nickname, network: rawNetwork(config.network), address: account.address, asset: intent.asset_address,
-    estimatedDebitSol: lamportsToSol(String(debit)), networkFeeSol: lamportsToSol(String(fee.value)), message: kind === 'claim' ? '预计支出包括网络费、账户租金和 Core 协议费用。资产将归当前钱包所有。' : '本次只登记成长记录，宠物所有权保持在当前钱包。' });
+  const approved = await context.review({ title: kind === 'claim' ? 'Claim on Devnet · 给伙伴一份链上身份' : options.tripId ? 'Save journey receipt · 保存旅程凭证' : 'Save growth · 保存这段成长', petName: pet.nickname, network: rawNetwork(config.network), address: account.address, asset: intent.asset_address,
+    estimatedDebitSol: lamportsToSol(String(debit)), networkFeeSol: lamportsToSol(String(fee.value)), message: kind === 'claim' ? 'Includes the network fee, account rent and the Core protocol fee. The asset will be owned by this wallet. Devnet test asset, no cash value. · 预计支出包括网络费、账户租金和 Core 协议费用。' : options.tripId ? 'Records this trip result (hash) on your pet record. Ownership stays in this wallet. · 只登记旅程结果摘要，所有权不变。' : 'Records a growth checkpoint only. Ownership stays in this wallet. · 本次只登记成长记录。' });
   check(approved, 'USER_CANCELLED', '已取消，本次没有提交交易。');
   context.assertCurrent(); await client.assertNetwork();
   check(await rpc.getBlockHeight('confirmed') <= intent.last_valid_block_height && Date.parse(intent.expires_at) > Date.now(), 'INTENT_EXPIRED', '确认期间交易已过期，请重新准备。');
@@ -163,7 +182,8 @@ export async function runPetTransaction(context: FlowContext, petId: string, kin
   } catch {
     return { intent_id: intent.intent_id, signature, state: 'pending', message: '提交结果尚未确定，记录已保存。请稍后核对这笔交易，避免重复操作。' };
   }
-  for (let attempt = 0; attempt < 8; attempt++) {
+  // Finalization usually takes ~13–20 s on Devnet/localnet; poll for up to ~36 s before handing back a resumable pending state.
+  for (let attempt = 0; attempt < 24; attempt++) {
     await new Promise(resolve => setTimeout(resolve, 1500));
     context.assertCurrent();
     status = await api(`/chain/intents/${intent.intent_id}/confirm`, 'POST', token, receipt);
@@ -178,4 +198,95 @@ function encodeBase58(bytes: Uint8Array): string {
   let result = ''; while (value > 0n) { result = alphabet[Number(value % 58n)] + result; value /= 58n; }
   for (const byte of bytes) { if (byte !== 0) break; result = '1' + result; }
   return result;
+}
+
+
+const COMPUTE_BUDGET_PROGRAM = new PublicKey('ComputeBudget111111111111111111111111111111');
+/** Phantom may prepend ComputeBudget ixs; compare compiled messages, not decompiled metas. */
+function acceptWalletComputeBudget(expected: Transaction, returnedWire: Uint8Array | string, owner: string): Transaction {
+  let returned: Transaction;
+  try { returned = Transaction.from(typeof returnedWire === 'string' ? Buffer.from(returnedWire, 'base64') : returnedWire); }
+  catch { throw new TransactionFlowError('INVALID_TRANSACTION', 'Expected a serialized legacy transaction.'); }
+  check(!!expected.feePayer && returned.feePayer?.equals(expected.feePayer), 'TRANSACTION_REPLACED', 'Fee payer changed. Do not submit this gift.');
+  check(returned.recentBlockhash === expected.recentBlockhash, 'TRANSACTION_REPLACED', 'Blockhash changed. Prepare the gift again.');
+  const budget: typeof returned.instructions = [];
+  for (const ix of returned.instructions) {
+    if (!ix.programId.equals(COMPUTE_BUDGET_PROGRAM)) break;
+    budget.push(ix);
+  }
+  check(budget.length < returned.instructions.length, 'TRANSACTION_REPLACED', 'Wallet returned only compute-budget instructions.');
+  const rebuilt = new Transaction();
+  rebuilt.feePayer = expected.feePayer;
+  rebuilt.recentBlockhash = expected.recentBlockhash;
+  for (const ix of budget) rebuilt.add(ix);
+  for (const ix of expected.instructions) rebuilt.add(ix);
+  check(Buffer.from(rebuilt.serializeMessage()).equals(returned.serializeMessage()), 'TRANSACTION_REPLACED', 'Gift message changed beyond compute-budget. Do not submit.');
+  check(returned.verifySignatures(true), 'INVALID_SIGNATURE', 'Gift transaction signatures are invalid.');
+  check(returned.signatures.some(s => s.publicKey.toBase58() === owner && s.signature !== null), 'MISSING_COSIGNATURE', 'Missing owner signature on gift.');
+  return returned;
+}
+
+/**
+ * P1 gift (Astra §9): owner-signed Core TransferV1 built locally with chain-client prepareGift().
+ * No server custody. Blocked while the pet is travelling. Success is only reported after the
+ * transfer is finalized AND the service's ownership sync no longer lists the pet for this wallet.
+ */
+export async function runGiftTransaction(context: FlowContext, petId: string, recipient: string): Promise<any> {
+  const { api, token, wallet, account, config } = context;
+  check(config.enabled && config.rpc_url && config.program_id && config.collection_address, 'CHAIN_NOT_DEPLOYED', 'On-chain gifting is not open yet.');
+  let recipientKey: PublicKey;
+  try { recipientKey = new PublicKey(recipient); } catch { throw new TransactionFlowError('RECIPIENT_INVALID', 'That is not a valid Solana address.'); }
+  check(recipientKey.toBase58() === recipient && PublicKey.isOnCurve(recipientKey.toBytes()), 'RECIPIENT_INVALID', 'Send gifts to a wallet address (not a program account).');
+  check(recipient !== account.address, 'SELF_TRANSFER', 'You already own this companion.');
+  const feature = wallet.features['solana:signTransaction'] as SolanaSignTransactionFeature['solana:signTransaction'] | undefined;
+  check(feature && account.features.includes('solana:signTransaction') && feature.supportedTransactionVersions.includes('legacy'), 'SIGN_TRANSACTION_UNSUPPORTED', 'Use a wallet that can sign Solana transactions.');
+  const rpc = context.connection ?? new Connection(config.rpc_url, { commitment: 'confirmed', disableRetryOnRateLimit: true, fetch: boundedRpcFetch });
+  const client = new PixelPetsClient({ rpc, network: rawNetwork(config.network), programId: config.program_id, expectedGenesisHash: config.genesis_hash, expectedCollection: config.collection_address });
+  await client.assertDeployment(); context.assertCurrent();
+  const pets = await api('/pets', 'GET', token);
+  const pet = pets.pets?.find((item: any) => item.id === petId);
+  check(pet, 'PET_NOT_FOUND', 'Companion not found. Refresh your profile.');
+  check(pet.chain?.status === 'registered' && pet.chain.asset_address, 'GIFT_NOT_REGISTERED', 'Only companions claimed on Solana can be gifted.');
+  check(pet.ownership?.can_interact !== false, 'OWNERSHIP_UNVERIFIED', 'Sync your wallet first; ownership of this companion is not confirmed.');
+  const current = await api(`/pets/${encodeURIComponent(petId)}/trips/current`, 'GET', token);
+  check(current?.trip?.state !== 'travelling', 'GIFT_BLOCKED_TRAVELLING', 'Your companion is travelling. Gifting opens again after it is back.');
+  context.assertCurrent();
+  const prepared = await client.prepareGift({ owner: account.address, recipient, asset: pet.chain.asset_address });
+  const approved = await context.review({ title: 'Send as a gift', petName: String(pet.nickname ?? pet.id), network: config.network,
+    address: `${account.address} → ${recipient}`, asset: pet.chain.asset_address, estimatedDebitSol: lamportsToSol(prepared.networkFeeLamports),
+    networkFeeSol: lamportsToSol(prepared.networkFeeLamports),
+    message: `This transfers the companion to ${recipient}. Your private journal and other companions stay with you. This cannot be undone by the game.` });
+  check(approved, 'USER_CANCELLED', 'Gift cancelled. Nothing was sent.');
+  context.assertCurrent();
+  const [signed] = await feature.signTransaction({ account, transaction: prepared.transaction.serialize({ requireAllSignatures: false }), chain: config.network as `${string}:${string}` });
+  context.assertCurrent();
+  check(signed?.signedTransaction, 'SIGNATURE_MISSING', 'The wallet did not return a signature.');
+  // Phantom (and some Wallet Standard wallets) may prepend ComputeBudget ixs. Keep gift transfer
+  // bytes identical, but allow those leading budget instructions before verify/simulate/send.
+  const signedTx = acceptWalletComputeBudget(prepared.transaction, signed.signedTransaction, account.address);
+  await client.assertNetwork();
+  check(await rpc.getBlockHeight('confirmed') <= prepared.lastValidBlockHeight, 'TRANSACTION_EXPIRED', 'Gift transaction expired. Try again.');
+  const simulation = await rpc.simulateTransaction(VersionedTransaction.deserialize(signedTx.serialize()), { commitment: 'confirmed', sigVerify: true, replaceRecentBlockhash: false });
+  check(!simulation.value.err, 'SIMULATION_FAILED', 'Gift simulation failed. Your companion was not transferred.');
+  const signature = encodeBase58(signedTx.signature!);
+  try {
+    const returned = await rpc.sendRawTransaction(signedTx.serialize(), { skipPreflight: false, preflightCommitment: 'confirmed', maxRetries: 3 });
+    check(returned === signature, 'SIGNATURE_MISMATCH', 'The node returned a different signature.');
+  } catch (error) {
+    if (error instanceof TransactionFlowError) throw error;
+    return { state: 'pending', signature, recipient, message: 'Gift submission is uncertain. Check this signature before trying again.' };
+  }
+  for (let attempt = 0; attempt < 30; attempt++) {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    const status = await client.queryFinalized(signature, prepared.lastValidBlockHeight);
+    if (status.state === 'failed') throw new TransactionFlowError('TRANSACTION_FAILED', 'The gift did not go through. Your companion is still yours.');
+    if (status.state === 'finalized') {
+      context.assertCurrent();
+      const synced = await api('/wallet/assets/sync', 'POST', token, {});
+      const still = synced.pets?.find((item: any) => item.id === petId);
+      if (still && still.ownership?.can_interact) return { state: 'pending', signature, recipient, message: 'Gift finalized; the service has not caught up yet. Sync again shortly.' };
+      return { state: 'gifted', signature, slot: status.slot, recipient, pets: synced.pets, ownership: synced.ownership, message: 'Gift confirmed on Solana. The recipient can sync their wallet to continue care.' };
+    }
+  }
+  return { state: 'pending', signature, recipient, message: 'Gift submitted · checking confirmation. Sync your wallet later.' };
 }

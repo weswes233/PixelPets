@@ -1,0 +1,122 @@
+{
+  "url": "https://175.178.27.231/",
+  "network": "solana:devnet",
+  "wallet": {
+    "provider": "Phantom",
+    "account": "player-a",
+    "address_shown": "5wpnLLhK…Fvjdow",
+    "stayed_on_player_a": true
+  },
+  "pet": {
+    "species": "Moss",
+    "nickname": "Moss",
+    "status_after_refresh": "House companion (not claimed on-chain)",
+    "bond_after_trip": "1/6",
+    "energy_after_trip": 75,
+    "mood_after_trip": 76
+  },
+  "success": {
+    "connect": true,
+    "claim": false,
+    "trip": true,
+    "receipt": false,
+    "refresh": true
+  },
+  "connect": {
+    "ok": true,
+    "method": "In-game Wallet Standard picker → Phantom",
+    "popups_approved": [
+      "Phantom Connect for 175.178.27.231 (player-a)",
+      "Phantom Sign In (SIWS), Chain ID solana:devnet"
+    ],
+    "reconnect_after_refresh": true,
+    "note": "Wallet was unlocked already; password was not typed and is not in screenshots. After F5 the wallet UI showed Connect wallet again; SIWS Confirm reconnected the same player-a address. Footer then read 'Ownership synced. Carry on!'"
+  },
+  "claim": {
+    "ok": false,
+    "attempts": 2,
+    "phantom_review_popup": false,
+    "tx_signature": null,
+    "explorer_url": null,
+    "ui_error": "The transaction didn't finish. Check your wallet and network, then retry — it is safe to retry.",
+    "console": [
+      "Failed to load resource: 401 https://devnet.helius-rpc.com/",
+      "[PixelPets] transaction flow stopped: Error 401 : Unauthorized"
+    ],
+    "note": "Claim on Devnet was clicked on the Wallet tab (twice). The bridge stops before the review/sign dialog because the configured RPC (https://devnet.helius-rpc.com/, no query string) returns 401. A bare POST getHealth to that host returns 401; https://api.devnet.solana.com returns 200. The client rejects RPC URLs that contain a query string, so a Helius ?api-key= URL would be rejected as RPC_INVALID. Pet stayed a house companion."
+  },
+  "trip": {
+    "ok": true,
+    "destination": "Sunny Market",
+    "pack": "Snack tin",
+    "timer": "Demo trip · 45 seconds (UI counted down from ~42s)",
+    "result": "Arrived home; postcard opened",
+    "postcard_lines": [
+      "Your companion packed a second lunch \"just in case\" and left.",
+      "It tasted three kinds of honey buns and rated them all \"best\".",
+      "The snack tin came back lighter.",
+      "It came home with something rare and glowing."
+    ],
+    "keepsake": "Golden Awning Bell",
+    "rarity": "Special",
+    "keepsake_flavor": "Rings only when someone is kind."
+  },
+  "receipt": {
+    "ok": false,
+    "proof_id_shown": "jr_UdRHkunr7zDblzK8Ae1dZg",
+    "hash_prefix_shown": "0423e773621099b7...",
+    "truncated_in_ui": true,
+    "explorer_url": null,
+    "tx_signature": null,
+    "phantom_sign_popup": false,
+    "ui_text": "Claim this companion on Devnet to save the trip result on Solana. Optional — the postcard is already yours.",
+    "note": "Postcard screen offered Claim on Devnet (not a separate Save receipt button). Clicking it jumped to the Wallet claim section and did not open a Phantom sign popup. On-chain receipt was not submitted. Album still recorded the keepsake locally."
+  },
+  "refresh": {
+    "ok": true,
+    "pet_recovered": true,
+    "album_recovered": true,
+    "wallet_auto_reconnected": false,
+    "details": "After F5, Home showed Moss / House companion with bond 1/6 before reconnecting. Reconnecting Phantom restored 'Ownership synced'. Album showed Keepsakes 1/8, Golden Awning Bell (Sunny Market) still unlocked."
+  },
+  "screenshots": [
+    "/workspace/p0-qa/screens/01-loaded-home.png",
+    "/workspace/p0-qa/screens/02-after-connect.png",
+    "/workspace/p0-qa/screens/03-claim-error.png",
+    "/workspace/p0-qa/screens/04-mid-travel.png",
+    "/workspace/p0-qa/screens/05-postcard.png",
+    "/workspace/p0-qa/screens/06-after-refresh.png",
+    "/workspace/p0-qa/screens/06b-after-refresh-album.png",
+    "/workspace/p0-qa/screens/07-claim-retry-timeout.png"
+  ],
+  "claim_retry": {
+    "ok": false,
+    "when": "2026-10-10T08:10:00Z",
+    "after_refresh": true,
+    "wallet_reconnected": true,
+    "account": "player-a",
+    "address_shown": "5wpnLLhK…Fvjdow",
+    "chain_id_siws": "solana:devnet",
+    "attempts": 2,
+    "phantom_review_or_sign_popup": false,
+    "tx_signature": null,
+    "explorer_url": null,
+    "ui_error": "The transaction didn't finish. Check your wallet and network, then retry — it is safe to retry.",
+    "console": [
+      "[PixelPets] transaction flow stopped: TimeoutError signal timed out",
+      "[PixelPets] transaction flow stopped: TimeoutError signal timed out"
+    ],
+    "rpc_http_status": null,
+    "chain_config_rpc_url": "https://api.devnet.solana.com/",
+    "csp_connect_src": "connect-src 'self' https://api.devnet.solana.com",
+    "note": "Hard refresh picked up the new CSP (no Helius). SIWS Confirm reconnected player-a. Both Claim on Devnet clicks disabled the button then failed before any Phantom transaction popup. Console shows TimeoutError (AbortSignal), not a 401. From this environment, direct HTTPS to https://api.devnet.solana.com/ succeeds in about 1.5s (getHealth ok), but the browser egress proxy 127.0.0.1:8791 times out connecting to that host (curl via proxy: connection timed out after 20s). A browser navigation to https://api.devnet.solana.com/ also timed out at 20s. No transaction was submitted."
+  },
+  "receipt_retry": {
+    "ok": false,
+    "attempted": false,
+    "reason": "Claim did not succeed, so the journey receipt was not submitted. No new travel was started.",
+    "tx_signature": null,
+    "explorer_url": null,
+    "proof_id_shown": null
+  }
+}

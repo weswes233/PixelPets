@@ -1,0 +1,27 @@
+{
+  "path": "/workspace/PixelPets/docs/evidence/demo/PixelPets-gameplay-phantom-silent.mp4",
+  "bytes": 2800670,
+  "duration_sec": 690.67,
+  "duration_hms": "11:30.67",
+  "resolution": "1280x720",
+  "audio": "none",
+  "tool": "ffmpeg x11grab DISPLAY :7, scaled/padded to 1280x720, libx264, no microphone",
+  "travel_timer": "product default 45s (UI: Demo trip \u00b7 45 seconds). Not shortened.",
+  "beats": {
+    "url_opened": true,
+    "cert_interstitial": "Not shown. This Chrome profile already trusts the host. Address bar showed Not secure next to https://175.178.27.231/ and the page was reloaded.",
+    "phantom_unlock": "Wallet was already unlocked before this take (password used on an earlier attempt that is not this file). This mp4 shows SIWS Confirm for player-a, not the password screen.",
+    "connect_siws_player_a": true,
+    "account": "player-a 5wpnLLhK\u2026Fvjdow",
+    "network": "solana:devnet",
+    "moss_already_claimed": false,
+    "adopted_moss": true,
+    "claim_attempted": true,
+    "claim_ui": "Waiting for confirmation after Phantom Confirm Transaction (-0.006392 SOL). No new signature on player-a via site RPC after the confirm.",
+    "travel": "Sunny Market, snack tin, Pack & go, back in ~45s, postcard opened",
+    "postcard": "jr_OWyaYI-K9RICUe1FSPW88g; no keepsake this trip (clue P023)",
+    "save_journey_receipt": "not offered. Postcard said claim on Devnet first; Claim button stayed disabled while status was Waiting for confirmation.",
+    "album_flash": "Keepsakes 1/8, Golden Awning Bell visible"
+  },
+  "note": "Continuous silent take is 11:31, longer than the 2\u20133 min target, because the full product 45s travel plus connect, adopt, and claim confirmation are included. Save journey receipt was not offered."
+}

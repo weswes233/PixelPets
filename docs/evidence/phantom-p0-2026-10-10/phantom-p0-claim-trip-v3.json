@@ -1,0 +1,166 @@
+{
+  "url": "https://175.178.27.231/",
+  "when": "2026-10-10T08:49:14Z",
+  "network": "solana:devnet",
+  "rpc": {
+    "config_endpoint": "https://175.178.27.231/api/v1/chain/config",
+    "config_http_status": 200,
+    "rpc_url": "https://175.178.27.231/solana-rpc",
+    "rpc_url_ends_with_solana_rpc": true,
+    "network": "devnet",
+    "program_id": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT",
+    "collection_address": "5BnUfTQ249v4v7sVAuohBEstsWF9JdzmaHwSbK7cuoiS",
+    "issuer_address": "Cf6QfJVbeVPdzLJCShJozFuFtyjuSGAUtRJzrvwKoTxX",
+    "enabled": true,
+    "genesis_hash": "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG",
+    "csp_connect_src": "connect-src 'self' https://175.178.27.231",
+    "csp_full": "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://175.178.27.231; worker-src 'self' blob:; frame-ancestors 'self'; object-src 'none'; base-uri 'self'",
+    "csp_source": "Content-Security-Policy response header on https://175.178.27.231/ (HTTP 200) after reload",
+    "console_csp_violation_this_run": false,
+    "note": "Hard reload showed the Godot splash, then the game. Chain config was read in the browser from /api/v1/chain/config. No new Helius 401 or transaction-flow-stopped log on this run. Older helius 401 / TimeoutError lines remain in the tab console from earlier loads."
+  },
+  "wallet": {
+    "provider": "Phantom",
+    "account": "player-a",
+    "address": "5wpnLLhKQhaLE5zYouZHQYmrrcwN3s2u9uPWLbFvjdow",
+    "address_shown": "5wpnLLhK\u2026Fvjdow",
+    "stayed_on_player_a": true,
+    "unlocked_without_typing_password": true,
+    "network_shown": "Devnet. SIWS Chain ID solana:devnet. Phantom tx popup Network: Solana."
+  },
+  "pet": {
+    "species": "Moss",
+    "status_after_claim": "Claimed on Devnet",
+    "ui_line": "First meeting \u00b7 Moss / Claimed on Devnet",
+    "bond": "1/6",
+    "energy": 75,
+    "mood": 76,
+    "asset": "BbJDvrJYN6MR5Xtf1xBBe9FmqQCFANEPLZCu1sRW5mF9"
+  },
+  "success": {
+    "connect": true,
+    "claim": true,
+    "receipt": true
+  },
+  "connect": {
+    "ok": true,
+    "method": "Wallet tab \u2192 Connect wallet \u2192 Phantom \u2192 SIWS Confirm",
+    "popups_approved": [
+      "Phantom Sign In (SIWS) for 175.178.27.231, account player-a, Chain ID solana:devnet, Confirm clicked"
+    ],
+    "ui_after": "Wallet connected, address 5wpnLLhK\u2026Fvjdow, footer 'Ownership synced. Carry on!'"
+  },
+  "claim": {
+    "ok": true,
+    "phantom_review_popup": true,
+    "attempts": [
+      {
+        "n": 1,
+        "result": "Review dialog appeared (Moss, asset Cw5cu3NUGbu2pggDmLcXwn1hMW5wfUkgs6eDJ2UPPwFQ, debit 0.00640704 SOL) but continue was late. Footer: 'That request expired. Start again.' No Phantom tx popup on this attempt."
+      },
+      {
+        "n": 2,
+        "result": "Fresh Claim on Devnet. Review continued immediately. Real Phantom Confirm Transaction approved. Chain finalized ClaimPet. UI left pending and showed Claimed on Devnet."
+      }
+    ],
+    "review_dialog_success": {
+      "title": "Claim on Devnet \u00b7 \u7ed9\u4f19\u4f34\u4e00\u4efd\u94fe\u4e0a\u8eab\u4efd",
+      "companion": "Moss",
+      "network": "devnet",
+      "wallet": "5wpnLLhKQhaLE5zYouZHQYmrrcwN3s2u9uPWLbFvjdow",
+      "asset": "BbJDvrJYN6MR5Xtf1xBBe9FmqQCFANEPLZCu1sRW5mF9",
+      "estimated_total_debit_sol": "0.00640704",
+      "network_fee_included_sol": "0.000015"
+    },
+    "phantom_popup": {
+      "title": "Confirm Transaction",
+      "site": "175.178.27.231",
+      "account": "player-a",
+      "balance_change_shown": "-0.006392 SOL",
+      "network": "Solana",
+      "network_fee_shown": "0.00002 SOL",
+      "warning": "This domain is new. Only proceed if you trust this site.",
+      "confirm_clicked": true,
+      "confirm_was_enabled": true
+    },
+    "tx_signature": "547q8DdRfxtyV7R5qV259Ar8gysruYDdyRB5m7mNqnMpDKSPziyWsLmM9XFSCXajXgp6LoahfWtcpspVeSe8q6iv",
+    "signature_source": "getSignaturesForAddress on https://175.178.27.231/solana-rpc; logs say Instruction: ClaimPet and mpl-core CreateV2. Asset account is the review asset.",
+    "explorer_urls": [
+      "https://explorer.solana.com/tx/547q8DdRfxtyV7R5qV259Ar8gysruYDdyRB5m7mNqnMpDKSPziyWsLmM9XFSCXajXgp6LoahfWtcpspVeSe8q6iv?cluster=devnet",
+      "https://solscan.io/tx/547q8DdRfxtyV7R5qV259Ar8gysruYDdyRB5m7mNqnMpDKSPziyWsLmM9XFSCXajXgp6LoahfWtcpspVeSe8q6iv?cluster=devnet"
+    ],
+    "chain_check": {
+      "rpc": "https://175.178.27.231/solana-rpc",
+      "slot": 509484612,
+      "block_time": "2026-10-10T08:45:00Z",
+      "confirmationStatus": "finalized",
+      "err": null,
+      "getSignatureStatuses": "finalized",
+      "instruction": "ClaimPet",
+      "inner": "mpl-core CreateV2",
+      "fee_lamports": 15000,
+      "player_a_balance_before_lamports": 337160760,
+      "player_a_balance_after_lamports": 330753720,
+      "debit_lamports": 6407040,
+      "debit_sol": "0.00640704",
+      "checked_at": "2026-10-10T08:49:14Z"
+    },
+    "ui_status_at_stop": "Claimed on Devnet. Wallet action replaced by 'Save growth checkpoint'. Footer 'Ownership synced. Carry on!'",
+    "ui_error": "First attempt only: 'That request expired. Start again.' Not showing after the successful claim."
+  },
+  "receipt": {
+    "ok": true,
+    "attempted": true,
+    "trip_id_shown": "jr_UdRHkunr7zDblzK8Ae1dZg",
+    "result_hash_prefix_shown": "0423e773621099b7",
+    "keepsake": "Golden Awning Bell \u00b7 Special",
+    "destination": "A trip to Sunny Market",
+    "review_dialog": {
+      "title": "Save journey receipt \u00b7 \u4fdd\u5b58\u65c5\u7a0b\u51ed\u8bc1",
+      "companion": "Moss",
+      "network": "devnet",
+      "wallet": "5wpnLLhKQhaLE5zYouZHQYmrrcwN3s2u9uPWLbFvjdow",
+      "asset": "BbJDvrJYN6MR5Xtf1xBBe9FmqQCFANEPLZCu1sRW5mF9",
+      "estimated_total_debit_sol": "0.00001",
+      "network_fee_included_sol": "0.00001"
+    },
+    "phantom_popup": {
+      "title": "Confirm Transaction",
+      "account": "player-a",
+      "network": "Solana",
+      "network_fee_shown": "0.00001 SOL",
+      "confirm_clicked": true
+    },
+    "tx_signature": "5gYhD9c4h2EKLM11H4x5HifmvRvxDg2Pp98jQeDzQ3fX5EpqGbQRBEofby5VoZZe4xxGNRorB4Sj7X64BmxonsfZ",
+    "explorer_url": "https://explorer.solana.com/tx/5gYhD9c4h2EKLM11H4x5HifmvRvxDg2Pp98jQeDzQ3fX5EpqGbQRBEofby5VoZZe4xxGNRorB4Sj7X64BmxonsfZ?cluster=devnet",
+    "explorer_url_source": "In-app 'View transaction in Solana Explorer' opened that URL (tab title). The explorer page itself did not finish loading in this browser (chrome-error / about:blank).",
+    "chain_check": {
+      "rpc": "https://175.178.27.231/solana-rpc",
+      "slot": 509485309,
+      "block_time": "2026-10-10T08:47:49Z",
+      "confirmationStatus": "finalized",
+      "err": null,
+      "instruction": "Checkpoint",
+      "fee_lamports": 10000,
+      "player_a_balance_before_lamports": 330753720,
+      "player_a_balance_after_lamports": 330743720,
+      "asset": "BbJDvrJYN6MR5Xtf1xBBe9FmqQCFANEPLZCu1sRW5mF9"
+    },
+    "ui_status": "Confirmed on Solana Devnet. Tx 5gYhD9c4h2\u2026BmxonsfZ. Footer: 'Confirmed on Solana. Your journey receipt is saved.'"
+  },
+  "screenshots": [
+    "/workspace/p0-qa/screens/v3-01-siws-confirm.png",
+    "/workspace/p0-qa/screens/v3-02-wallet-connected.png",
+    "/workspace/p0-qa/screens/v3-03-claim-review.png",
+    "/workspace/p0-qa/screens/v3-04-phantom-confirm.png",
+    "/workspace/p0-qa/screens/v3-05-claimed-on-devnet.png",
+    "/workspace/p0-qa/screens/v3-06-journey-receipt-ready.png",
+    "/workspace/p0-qa/screens/v3-07-phantom-receipt-confirm.png",
+    "/workspace/p0-qa/screens/v3-08-receipt-confirmed.png"
+  ],
+  "screenshot_notes": {
+    "v3-03-claim-review.png": "First review dialog, which then expired (asset Cw5cu3NUGbu2pggDmLcXwn1hMW5wfUkgs6eDJ2UPPwFQ). Successful review was the same dialog with asset BbJDvrJYN6MR5Xtf1xBBe9FmqQCFANEPLZCu1sRW5mF9; continue was clicked immediately so that dialog was not screenshotted.",
+    "v3-04-phantom-confirm.png": "Successful claim Confirm Transaction, captured just before Confirm was clicked.",
+    "v3-07-phantom-receipt-confirm.png": "Journey receipt Confirm Transaction, captured just before Confirm was clicked."
+  }
+}

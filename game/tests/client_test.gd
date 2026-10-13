@@ -25,6 +25,7 @@ func run() -> void:
 	viewport.add_child(client)
 	await process_frame
 	await process_frame
+	L10n.lang = "zh"
 	check(client.api.test_mode, "Test cannot call a live service")
 	check(client.pets.is_empty(), "An offline visitor has no invented owned pets")
 	var first_event: String = client._event_for("pet:feed")
@@ -41,6 +42,11 @@ func run() -> void:
 	check(client.pets.size() == 1, "A care response replaces the pet and does not duplicate ownership")
 	check(client.current_pet()["bond"] == 6, "Care UI reads the server response")
 	check(client._form_name(client.current_pet()) == "月影苔苔", "The confirmed moon branch is displayed")
+	L10n.lang = "en"
+	check(client._form_name(client.current_pet()) == "Moonshade Moss", "English UI names the moon branch in English")
+	check(L10n.error_text({"error": {"code": "NO_SUPPLIES", "message": "补给不足"}}).begins_with("No travel supplies"), "Server error codes are shown in English")
+	check(not L10n._has_cjk(L10n.error_text({"error": {"code": "SOMETHING_NEW", "message": "中文错误"}})), "Unknown Chinese server errors never leak into the English UI")
+	L10n.lang = "zh"
 	client.chain_config["market_enabled"] = true
 	client.bridge_requests["market-response"] = {"method": "offers", "generation": client.account_generation}
 	client._on_bridge([JSON.stringify({"id": "market-response", "ok": true, "data": {"offers": [{"kind": "sale", "price_sol": "9007199.254740993", "fee_sol": "225179.981368524", "can_settle": true, "pet": {"asset_address": "market-pet-address", "species_id": "wisp", "form": "sun", "bond": 6, "checkpoint": "1"}}], "rejected": [], "has_more": false}})])

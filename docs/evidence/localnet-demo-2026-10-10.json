@@ -1,0 +1,126 @@
+{
+  "schema": 1,
+  "date": "2026-10-10",
+  "network": "localnet",
+  "devnet_reached": false,
+  "devnet_status": "NOT DEPLOYED. Deployer 294hmkx17KS7ww6CzA6ZeDx2F3o7zybo8txRYRvhW9BU balance 0 SOL (checked 2026-10-10 ~03:00 UTC+8). Public/Helius airdrops rate-limited; every devnet-pow faucet (difficulty 3-8, 20) has 0 SOL balance. Nothing below is on Devnet.",
+  "commit": "1f654566832091ed5c66f9ace825a76855fe6d7a",
+  "genesis_localnet": "xJhco3qdtajDKm5wE1bCSxfMfDae3vra99wr7ZgHMNe",
+  "program_id": "2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT",
+  "program_id_note": "2SCKfWsz… replaces declared 2R4P5J6r…3iQR (original key not on this box). Needs Wes approval before any mainnet/merge.",
+  "collection": "8uQPDvvJRNEsKZzGnnWaiRcTnNpE4cg8y8eEqK1PkBfP",
+  "editions": {
+    "moss": "1001",
+    "puddle": "1002",
+    "wisp": "1003"
+  },
+  "localFundsHaveNoValue": true,
+  "flows": {
+    "deployed_stack_smoke": {
+      "source": "chain/evidence/deployed-stack-smoke-localnet.json",
+      "checks": [
+        "Real server entrypoint boots from the deploy-script env file with chain enabled",
+        "Wallet-signed claim mints a real Core asset in the deploy-script collection/edition",
+        "Trip settled by the server is saved as a checkpoint v2 receipt",
+        "Public proof verified independently (10 checks)"
+      ],
+      "transactions": [
+        {
+          "label": "claim",
+          "signature": "5QrbD2LjRFQqHq5oNVtLZYR1w2sRbg3YQcFYtixtZpcnbiGH2hbaRAfXSWwPpwQSyujiwQgeAURfqKWkfrz6gfZZ",
+          "asset": "Aww3qCdXyFHpySRXSZiSCQcGb1CLfwQLWgb34iKh3wtA"
+        },
+        {
+          "label": "journey_receipt",
+          "signature": "QCvFT4fpFkyGYHkxNTFGyt8JoSCYm7iYWfFTzJFQzEw6nYDP33ZFsgSDxX6cPaiyF1PvVGyNBLpofTi9D1Stfvi",
+          "public_receipt_id": "jr_mXgVBNg8OiY_HVieluHhEA",
+          "event_hash": "c5d51aeddf0b19572da9ea584ec3a523b9f46b8bec32ca42604a22230e762dac"
+        }
+      ]
+    },
+    "gift_two_wallet": {
+      "source": "chain/evidence/gift-two-wallet-localnet.json",
+      "wallets": {
+        "A": "5sjT2Ta8ez8igiVpytp3Qn4KWpFxmVvZ792QBDCEqy5A",
+        "B": "FRjuaKsrZLNVKGvXVZZs81Pd884cgUvq3vFcWRG6LwHC"
+      },
+      "asset": "8WRG6YDfqEmRbgyQWVxA3a47DD8N5ZyhTSRq4Az81LnX",
+      "checks": [
+        "A claims the companion on localnet",
+        "Gift is refused while the companion is travelling (no transaction prepared)",
+        "Self-gift, invalid address and cancelled review all stop before signing",
+        "A gifts via owner-signed Core transfer; review showed network, asset, recipient and fee; finalized",
+        "A can no longer care after the gift (PET_NOT_FOUND)",
+        "B signs in, syncs, sees the same asset and continues care"
+      ],
+      "transactions": [
+        {
+          "label": "claim",
+          "signature": "3YiYpyju75441jrmGkKMKqrLbDmK2ucKnsngYW14WRvKf1HhxKZUEHpjszVUDhybHtsh6cb1KqDHEEGM9vjpQAD6",
+          "asset": "8WRG6YDfqEmRbgyQWVxA3a47DD8N5ZyhTSRq4Az81LnX"
+        },
+        {
+          "label": "gift",
+          "signature": "2HKvJS4TEomF6fjxyxhvD3pwkuknAKSxgPBMwVb6oevk4HA6WUDweVcXWVvrWb9VB89UgjRLbCespjhQfMB6Ykok",
+          "slot": 6498,
+          "from": "5sjT2Ta8ez8igiVpytp3Qn4KWpFxmVvZ792QBDCEqy5A",
+          "to": "FRjuaKsrZLNVKGvXVZZs81Pd884cgUvq3vFcWRG6LwHC",
+          "asset": "8WRG6YDfqEmRbgyQWVxA3a47DD8N5ZyhTSRq4Az81LnX"
+        }
+      ]
+    },
+    "restart_recovery": {
+      "source": "chain/evidence/restart-recovery-localnet.json",
+      "asset": "6EcTkDhQ7YJcp6mw2vn1SuKfnPM7V8K1Z8ZxdTAXtHRq",
+      "public_receipt_id": "jr_8v4VesX9_cMPFZxgj7YQRw",
+      "result_hash": "095d8a481a57b55c19d2adb843b36f56e7f32fd9b582c5ba49e8058fc2c84dd5",
+      "checks": [
+        "Server killed mid-trip (SIGKILL); after restart the same trip is still travelling with the same server return time",
+        "Reveal succeeds after restart; server settles the result once",
+        "Pending (unsigned) journey receipt survives a second restart; re-requesting returns the same intent",
+        "The surviving intent is signed and confirmed after restart"
+      ],
+      "transactions": [
+        {
+          "label": "claim",
+          "signature": "5n4ykh4cpDAQnkU7HmDjBFqsmTpK5Se7h1gzu7z2ApHCi7yS4nkzk1WRJcxtH47wLCie7WEgDqdjUWVtZ2dbbtfB"
+        },
+        {
+          "label": "journey_receipt",
+          "signature": "mx3USPVAAEG9JErxNi3CEHkkF875eP2GKKrqhqWPhM1DQrJSFxfh4vM8adjcVAC3vAr8SWw12wXz23mcPXszw41",
+          "intent_id": "a400992d-b672-477e-bd0b-cbd9b02f3f15"
+        }
+      ]
+    }
+  },
+  "tests": {
+    "npm": "146/146",
+    "godot_client": "52/52",
+    "godot_travel": "43/43",
+    "godot_session_storage": "26/26",
+    "godot_http": "11/11",
+    "deployed_stack_smoke": "4 PASS",
+    "gift_two_wallet_localnet": "6 PASS",
+    "restart_recovery_localnet": "4 PASS"
+  },
+  "screenshots": [
+    "docs/evidence/ui-smoke/06-travel.png",
+    "docs/evidence/ui-smoke/07-away.png",
+    "docs/evidence/ui-smoke/08-back.png",
+    "docs/evidence/ui-smoke/09-postcard.png",
+    "docs/evidence/ui-smoke/10-postcard-after-reload.png",
+    "docs/evidence/ui-smoke/12-wallet.png",
+    "docs/evidence/ui-smoke/13-album.png",
+    "docs/evidence/ui-smoke/14-zh.png",
+    "docs/evidence/ui-smoke/35-before.png",
+    "docs/evidence/ui-smoke/36-review.png",
+    "docs/evidence/ui-smoke/37-after.png"
+  ],
+  "not_done": [
+    "Devnet deploy/claim/receipt/gift (no SOL)",
+    "Public HTTPS (egress 7844/22 blocked)",
+    "Public metadata pinning (local kubo only)",
+    "Real extension-wallet (Phantom/Backpack) recording",
+    "Gift UI not exercised in a real browser wallet (scripted Wallet Standard signer only)"
+  ]
+}

@@ -1,76 +1,177 @@
-# 掌心伙伴 · PixelPets
+# PixelPets · 掌心伙伴
 
-原创代码像素宠物：先免费领养、照顾与收集，再由玩家选择是否领取链上身份，赠送、交换或出售。Godot 4.5.2 客户端 + TypeScript 持久化服务 + Solana / Metaplex Core 合约。
+**A tiny companion. A world of stories. Collect the journey.**  
+会替你出门的像素伙伴，以及可以交换的旅途收藏。
 
-## 现在开始游玩
+Free-to-play pixel companions (Moss / Puddle / Wisp): adopt and care without a wallet, send them on short trips for postcards & keepsakes, then optionally claim a **Solana Devnet** Metaplex Core identity and save a verifiable journey receipt.
 
-Windows 双击项目里的 **开始游玩.cmd**。它会启动本机服务并打开 <http://127.0.0.1:9783/>。已有档案保存在 `runtime/pets.sqlite`，不要删除这个文件来重启服务。
+> **Honest status (2026-10-10):** travel loop + Devnet program/collection/editions are live; scripted Wallet Standard claim → trip → receipt → gift PASS. **Public demo:** [https://175.178.27.231/](https://175.178.27.231/) (self-signed TLS — browser warning expected; Phantom → Devnet). Real Phantom/Backpack QA still on Wes. No project token.
 
-- 选择苔苔、啵啵或微光，为它取名。
-- 喂食、陪玩、休息、出游增加亲密度；照顾间隔由服务端计算。
-- 出游选日光或月色，收集三片记忆。累计 6 点亲密后，根据照顾偏好长成不同形态。
-- 在卡册查看收集目标，在日记查看已完成的互动。
-- 在交换页用原来绑定的钱包「找回已有伙伴」，并可切回上一份本机档案。恢复不会合并或删除游客伙伴。
-- 已登记宠物通过钱包验证身份后可以免费照顾；同步归属会接收转入的本游戏伙伴、移除已转出的伙伴，托管中的伙伴只读。
-- 链上服务没有配置或未通过部署检查时，养成仍可使用，交易入口保持关闭。
+## Play online / 在线游玩
 
-Windows 客户端在 `dist/windows/PixelPets.exe`，同样需要养成服务运行。当前钱包操作在网页版进行。
+| | |
+| --- | --- |
+| **Public HTTPS demo** | [https://175.178.27.231/](https://175.178.27.231/) |
+| Notes | Self-signed certificate — click through the browser warning. Use **Phantom (Devnet)**. Deploy notes: [docs/plan/cloud-deploy-2026-10-10.md](docs/plan/cloud-deploy-2026-10-10.md) |
+| Local | `./tools/demo-up.sh local` → http://127.0.0.1:9783/ |
 
-## 开发与构建
+Draft PR: https://github.com/weswes233/PixelPets/pull/1 · Product preview: [docs/plan/PRODUCT-PREVIEW.md](docs/plan/PRODUCT-PREVIEW.md) · Evidence: [docs/evidence/devnet-demo-2026-10-10.json](docs/evidence/devnet-demo-2026-10-10.json)
 
-需要 Node.js 24、Godot 4.5.2，合约构建另需 Rust 与 Agave SBF 工具。JS 依赖在根目录统一锁定；项目提供 `tools/npm.ps1` 调用本地 npm。
+---
 
-### 首次从 GitHub 获取项目
+## Why play / 为什么玩
 
-仓库保存源码、依赖锁文件、字体及许可、开发文档和验收记录。`runtime/`、`dist/`、`node_modules/`、Godot 导入缓存、数据库、环境变量文件和本地钱包密钥不进入版本控制。因此刚克隆的仓库需要先安装依赖并构建，之后再使用「开始游玩」。
+| English | 中文 |
+| --- | --- |
+| Cute original pixel pets with stable personalities | 原创像素伙伴，性格稳定可读 |
+| Prepare → wait → postcard surprise (Travel Frog energy, without cash gambling) | 准备 → 等待 → 明信片惊喜（旅行青蛙式期待，不做真钱赌） |
+| Keepsakes are collection records, not tokens | 纪念物是收藏记录，不是代币 |
+| Optional on-chain identity + journey receipt you can open on Explorer | 可选链上身份 + 可在 Explorer 核验的旅程收据 |
+| Gift a companion; the new owner continues care | 赠送后新主人可继续照顾 |
 
-1. 安装 Node.js 24（包含 npm），将 Godot 4.5.2 的命令行程序加入 PATH。
-2. 在仓库根目录运行 `npm.cmd ci --ignore-scripts`。如果只安装了 Node、没有 npm，可先运行 `python tools/bootstrap_npm.py`，再使用下方的 `tools/npm.ps1`。
-3. 从 Godot 官方安装 **4.5.2 对应的导出模板**。Web 只需 `web_nothreads_release.zip`，Windows 只需 `windows_release_x86_64.exe`，不需要 debug 模板。构建脚本会查找项目 `runtime/` 和标准模板目录；也可用 `PIXELPETS_GODOT_PATH` 与 `PIXELPETS_GODOT_TEMPLATES` 明确指定。运行 `./tools/build.ps1 -Target All -ValidateOnly` 可只检查环境。
-4. 运行 `./tools/build.ps1 -Target All`，然后运行 `./tools/start.ps1 -OpenBrowser`。
+---
 
-只检查 TypeScript 部分时，安装 JS 依赖后即可运行 `npm.cmd test` 与对应的 `npm.cmd run typecheck:...`，不需要导出模板或链上钱包。链上密钥需要在自己的开发环境生成，不应通过 Git 共享。
+## Key features done / 已完成要点
 
-### 当前工作区命令
+- **Care loop:** feed / play / rest / short walk; bond → sun/moon forms (3 species × 3 forms).
+- **Travel (server-authoritative):** 2 routes, packing items, free supplies (3/day UTC), demo timer labelled in UI (default 45s; recording used 10s).
+- **Postcard + keepsakes + Album** (8 collectibles as server records, not NFTs).
+- **Solana Devnet:** Metaplex Core collection + 3 editions; claim; checkpoint **v2** journey receipt; two-wallet gift (scripted).
+- **Wallet Standard** bridge (SIWS, review dialog, register / receipt / gift).
+- **Restart recovery** (localnet evidence): mid-trip SIGKILL keeps `ready_at`; unsigned receipt intent survives restart.
+- **Bilingual UI** (English-first) + 120-codex silhouette browser (concepts only).
 
-```powershell
-./tools/npm.ps1 ci --ignore-scripts
-./tools/build.ps1 -Target All
-./tools/start.ps1
+**Not done / 未完成:** real extension-wallet popup QA on the public URL; shop checkout; project token (intentionally none). Public HTTPS demo is up (self-signed).
+
+---
+
+## Architecture / 架构
+
+```mermaid
+flowchart LR
+  subgraph Client
+    G[Godot 4.5.2 Web]
+    B[Wallet Standard bridge]
+  end
+  subgraph Server
+    API[Node 24 API + SQLite]
+    T[Travel / supplies / album]
+    C[Chain service + intents]
+  end
+  subgraph Solana["Solana Devnet"]
+    P[pixel_pets program]
+    Core[Metaplex Core assets]
+  end
+  G -->|HTTP care/travel| API
+  G --> B
+  B -->|SIWS / sign tx| API
+  API --> T
+  API --> C
+  C --> P
+  P --> Core
 ```
 
-`tools/stop.ps1` 只停止记录中且进程路径仍匹配本项目的服务。`tools/build.ps1` 导出 Web 与 Windows，并把钱包桥接代码打包到网页。
+| Layer | Role |
+| --- | --- |
+| Godot client | Pixel art, care UI, travel planner/postcard, album |
+| TypeScript server | Authoritative care, CSPRNG travel results, supplies ledger, session auth |
+| Anchor program + Core | Limited editions, claim co-sign, PetRecord checkpoint hashes, gift/transfer |
+| Wallet bridge | Wallet Standard connect, SIWS, reviewed transactions |
 
-```powershell
-./tools/npm.ps1 test
-./tools/npm.ps1 run typecheck:wallet
-./tools/npm.ps1 run typecheck:server
-./tools/npm.ps1 run typecheck:sdk
-Godot_v4.5.2-stable_win64_console.exe --headless --path game --script tests/client_test.gd -- --client-test
-Godot_v4.5.2-stable_win64_console.exe --headless --path game --script tests/session_storage_test.gd -- --session-storage-test
-node tools/test-godot-http.mjs
+Feeding is **not** on-chain every time. Chain is for **identity, receipts, and ownership**.
+
+---
+
+## Devnet links / Devnet 链接
+
+| Item | Link |
+| --- | --- |
+| Program `2SCKfWsz…Qm2nT` | https://explorer.solana.com/address/2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT?cluster=devnet |
+| Collection `5BnUfTQ…cuoiS` | https://explorer.solana.com/address/5BnUfTQ249v4v7sVAuohBEstsWF9JdzmaHwSbK7cuoiS?cluster=devnet |
+| Sample claim tx | https://explorer.solana.com/tx/5RX2AWhvE3g1iWQZ8XxusRZExdbew9VqhVG4ivMMS6NwaUgEmbTzdXj63Jtiz67SSMBMuPAz677shUHz77pu7NcT?cluster=devnet |
+| Sample journey receipt tx | https://explorer.solana.com/tx/2WtTemMxoS1jSFmQ6by5BE3jBmXNWdFsmezTEMqzuPS7qrPknbsCnu9WB5i2FTsjdvDcki8nbrANdGocYKZC5mix?cluster=devnet |
+| Public proof id | `jr_eIE4lv-XhPMvy0bgFLcUTw` (independent verifier 10/10 in evidence) |
+| Gift tx (scripted) | https://explorer.solana.com/tx/5ZNrPvAMSG7GxoXTQMTZc7AnerHSG4Ca5p9eXoTZHE9wBFnqbVFYpUWxFB4NtT3g7PxdZApvRUGXsW9XqHEe9UW2?cluster=devnet |
+
+Program id replaces the old declare_id key (not on this machine). **Wes must approve** before merge/mainnet. Editions: moss=1001, puddle=1002, wisp=1003.
+
+---
+
+## How to run locally / 本机运行
+
+### Linux / macOS (box)
+
+```bash
+export PATH="$HOME/.grok/bin:$HOME/.cargo/bin:$HOME/.local/share/solana/install/active_release/bin:$HOME/.local/node/bin:$PATH"
+npm ci --ignore-scripts
+# Web export must already exist in dist/web (or build with Godot 4.5.2 + tools/build.ps1)
+./tools/demo-up.sh local          # http://127.0.0.1:9783/
+# With Devnet chain (needs runtime/devnet-chain.env + issuer key; optional Helius override):
+CHAIN_ENV=runtime/devnet-chain.env TRAVEL_DURATION_MS=45000 ./tools/demo-up.sh local
+./tools/demo-up.sh stop
 ```
 
-## 链上操作如何衔接
+### Windows
 
-1. 钱包签署登录消息；服务端验证真实 Ed25519 签名并创建独立钱包会话。
-2. 服务端依据已保存的宠物档案准备领取或成长登记，保存唯一请求与共同签名。
-3. 网页重新构造允许的指令，核对宠物、领取地址、发行方、合约、网络及消息字节；费用预览包含账户余额预计变化。
-4. 玩家在钱包中逐笔签名。返回的消息必须与原消息完全一致，所有必需签名必须有效。
-5. 服务保存已签交易以供恢复，再提交给 RPC；只有最终确认和对应链上账户数据都一致才更新档案为已登记。
+```powershell
+# Care-only (no CHAIN_*):
+.\tools\start.ps1 -OpenBrowser
+# Devnet travel stack (loads runtime\devnet-chain.env + helius.local.env):
+powershell -ExecutionPolicy Bypass -File tools\start-devnet.ps1 -OpenBrowser
+# Or double-click 开始游玩.cmd for the simple local start
+.\tools\stop.ps1
+```
 
-合约包含限量 Edition、领取、成长记录、托管交换、固定价买卖与取消；SDK 还支持 Core 所有者直接赠送。接口和合约约束见 `docs/integration.md`、`chain/INTERFACE.md`；服务部署配置见 `server/README.md`。
+See [docs/plan/windows-play.md](docs/plan/windows-play.md). Save file: `runtime/pets.sqlite` (do not delete to “restart” casually). Demo DB: `PIXELPETS_DB=runtime/demo/pets-demo-devnet.sqlite`.
 
-签发服务默认关闭。开发测试密钥与本地账本仅位于被 Git 忽略的 `runtime/` 或 `target/`，不会读取玩家的私钥。默认命令不会部署或提交主网交易。
+**RPC note:** on some CN networks `api.devnet.solana.com` is hijacked; `start-devnet.ps1` prefers Helius server-side and a keyless public RPC for the browser. On this Linux box, public Devnet RPC is fine.
 
-## 验证边界
+---
 
-最新进展见 [钱包恢复、归属同步与发布基础验收](docs/release-progress-2026-10-09.md)。[2026-10-08 完整 Review](docs/review-2026-10-08.md) 保留为历史基线，不代表其中待办仍全部未完成。
+## Tests / 测试
 
-查看 [实现状态](docs/implementation_status.md) 和 [2026-10-09 验收记录](docs/acceptance-2026-10-09.json) 获取验证结果。钱包恢复、接收与转出、受控重试、备份恢复、身份来源及本机档案保存均有回归检查；真实本地链另外验证 Core 转手后的归属、找回和新主人养成。自动测试、SBF 编译、实际测试链执行、浏览器钱包扩展及主网部署是不同的验收项。
+```bash
+npm test                          # JS unit tests
+npm run typecheck:server && npm run typecheck:sdk && npm run typecheck:wallet
+# Godot (needs Godot 4.5.2 on PATH):
+# godot --headless --path game --script tests/client_test.gd -- --client-test
+node chain/tests/devnet-stack-smoke.mjs   # Devnet claim→trip→receipt (scripted keys)
+node chain/tests/gift-two-wallet-devnet.mjs
+```
 
-只读市场报价已接入交换页，按实际托管、成长记录、手续费快照和链上时间核验。未配置链服务时入口关闭；游戏内上架和成交流程尚未开放。复现真实链测试见 [本地链验收说明](docs/local-chain-testing.md)。
+Checklist: [docs/plan/00-today-checklist.md](docs/plan/00-today-checklist.md).
 
-最终发布目标仍包含实际资产发行与交易、公开 HTTPS 服务及主网验收。AI 表达和只读硬件展示可沿现有宠物档案扩展；当前不宣称硬件或冷钱包集成已经完成。
+---
 
-公开免费试玩的单机 HTTPS、持久数据库与备份部署模板见 [部署说明](docs/deployment.md)。模板已准备；当前机器未运行 Docker/Caddy 容器，也尚未发布公共网址。
+## No-token rationale / 为什么不发币
+
+Issuing a tradeable token does **not** create demand, a prize pool, or retention. Day-one economy uses **non-redeemable free supplies** and collectible keepsakes with **no cash value**. Future paid paths (if any) should be **fixed cosmetic / theme packs** and later peer trades with clear value — not “bring cash, maybe win more cash.” Full analysis: [docs/plan/01-product-and-economy.md](docs/plan/01-product-and-economy.md) §7–8.
+
+---
+
+## Roadmap / 路线图
+
+| Stage | Focus |
+| --- | --- |
+| Now | Wes: approve program id, Phantom claim+receipt, public HTTPS host |
+| Next | More routes/stories, keepsake exchange intent, polish EN/ZH |
+| Later | Fixed-price cosmetics, mainnet only after security + legal review |
+| Explicitly out | Project token, cash random-return travel, VRF prize vaults, 120 finished art in one day |
+
+---
+
+## Important caveats / 重要边界
+
+- Devnet assets have **no cash value** and are not a mainnet promise.
+- Travel RNG is **server-side** (labelled); the on-chain receipt hashes the settled result, it does not prove VRF fairness.
+- Metadata URIs are immutable `ipfs://…`; Lighthouse/Irys hold matching bytes; public ipfs gateways may challenge bots.
+- Issuer co-signs claims; program is upgradeable — trust boundary disclosed.
+- Scripted Wallet Standard tests ≠ extension popup / mobile deep-link QA.
+
+---
+
+## Team / 团队
+
+**Wes** ([weswes233](https://github.com/weswes233)) — product & repo owner. Built with Grok agents on the one-day travel/Devnet track.
+
+Submission pack: [docs/submission/SUBMISSION.md](docs/submission/SUBMISSION.md) · Pitch: [docs/submission/PITCH.md](docs/submission/PITCH.md)

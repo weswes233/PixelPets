@@ -116,7 +116,4 @@ func request(path: String, method: HTTPClient.Method = HTTPClient.METHOD_GET, pa
 	return result
 
 static func error_message(result: Dictionary) -> String:
-	var error: Variant = result.get("error", {})
-	if error is Dictionary:
-		return str(error.get("message", "这次操作没有完成，请重试。"))
-	return str(error)
+	return L10n.error_text(result)

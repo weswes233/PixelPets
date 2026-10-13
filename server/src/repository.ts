@@ -1,5 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
+import { speciesTemperament } from './travel-content.ts';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { ApiError, addressBytes, catalog, eventId, hash, iso, nickname, objectBody, requestHash, secret, verifyWalletSignature } from './domain.ts';
@@ -11,6 +12,16 @@ export type RecoveredSession = {
   expires_at: string; game_expires_at: string;
 };
 type Row = Record<string, string | number | null>;
+
+const NICKNAME_EN: Record<string, string> = {
+  '苔苔': 'Moss', '向阳苔苔': 'Sunny Moss', '月影苔苔': 'Moonshade Moss',
+  '啵啵': 'Puddle', '晴天啵啵': 'Sunny Puddle', '夜露啵啵': 'Night-dew Puddle',
+  '微光': 'Wisp', '晨曦微光': 'Dawn Wisp', '星夜微光': 'Starlit Wisp',
+};
+function nicknameForEnglish(name: string): string {
+  return NICKNAME_EN[name] ?? name;
+}
+
 export class Repository {
   db: DatabaseSync; clock: () => number; publicOrigin: string; network: 'localnet' | 'devnet' | 'mainnet-beta';
   constructor(path: string, options: RepositoryOptions = {}) {
@@ -99,7 +110,9 @@ export class Repository {
         : this.db.prepare("SELECT COUNT(*) AS total FROM pets WHERE user_id=? AND COALESCE(json_extract(data,'$.chain.received'),0)<>1").get(userId)) as Row;
       if (Number(count.total) >= 3) throw new ApiError(409, 'PET_LIMIT', '目前最多免费领养 3 位伙伴；收到的链上伙伴不占用领养名额。');
       const now = this.clock();
-      const pet: Pet = { id: randomUUID(), species_id: species.id, nickname: name, form: 'seed', bond: 0, energy: 80, mood: 70, care_count: 0, created_at: iso(now), updated_at: iso(now), revision: 1, traits: { sun: 0, moon: 0 }, chain: { status: 'unregistered' }, favorite: species.id === 'moss' ? 'sun' : 'moon' };
+      const pet: Pet = { id: randomUUID(), species_id: species.id, nickname: name, form: 'seed', bond: 0, energy: 80, mood: 70, care_count: 0, created_at: iso(now), updated_at: iso(now), revision: 1, traits: { sun: 0, moon: 0 }, chain: { status: 'unregistered' }, favorite: species.id === 'moss' ? 'sun' : 'moon',
+        // Individual temperament: species base is twice as likely as each other template (CSPRNG).
+        temperament: (() => { const base = speciesTemperament[species.id]; const pool = [base, base, ...(['cautious', 'curious', 'greedy'] as const).filter(t => t !== base)]; return pool[randomInt(0, pool.length)]; })() };
       this.db.prepare('INSERT INTO pets VALUES (?,?,?,NULL)').run(pet.id, userId, JSON.stringify(pet));
       this.entry(userId, pet.id, `${name} 来到了你身边。你们的故事从今天开始。`, now);
       const response = { pet }; this.remember(userId, id, digest, response); return response;
@@ -117,7 +130,7 @@ export class Repository {
       const pet = JSON.parse(String(row.data)) as Pet;
       const now = this.clock(); const next = Number(row.last_care_at) + 12000;
       if (row.last_care_at !== null && now < next) {
-        const response = { pet, event: { id, message: '伙伴正在回味刚才的陪伴，稍等一小会儿。', applied: false, next_allowed_at: iso(next) } };
+        const response = { pet, event: { id, message: '伙伴正在回味刚才的陪伴，稍等一小会儿。', message_en: 'Your companion is still savouring that moment. Try again in a few seconds.', applied: false, next_allowed_at: iso(next) } };
         this.remember(userId, id, digest, response); return response;
       }
       const action = body.action as Action;
@@ -127,14 +140,18 @@ export class Repository {
       pet.energy = Math.max(0, Math.min(100, pet.energy + ({ feed: 5, play: -8, rest: 15, explore: -5 }[action])));
       pet.mood = Math.min(100, pet.mood + ({ feed: 4, play: 8, rest: 3, explore: 6 }[action]));
       pet.updated_at = iso(now);
-      let message = ({ feed: `${pet.nickname} 开心地吃光了点心，还悄悄蹭了蹭你。`, play: `${pet.nickname} 和你追逐了一小束光，玩得很开心。`, rest: `${pet.nickname} 在你身旁安心地打了个盹。`, explore: preference === 'sun' ? `${pet.nickname} 和你发现了一处暖洋洋的角落。` : `${pet.nickname} 和你收藏了一点安静的月光。` }[action]);
+      const nameZh = pet.nickname;
+      const nameEn = nicknameForEnglish(pet.nickname);
+      let message = ({ feed: `${nameZh} 开心地吃光了点心，还悄悄蹭了蹭你。`, play: `${nameZh} 和你追逐了一小束光，玩得很开心。`, rest: `${nameZh} 在你身旁安心地打了个盹。`, explore: preference === 'sun' ? `${nameZh} 和你发现了一处暖洋洋的角落。` : `${nameZh} 和你收藏了一点安静的月光。` }[action]);
+      let messageEn = ({ feed: `${nameEn} finished the snack and gave you a little nuzzle.`, play: `${nameEn} chased a tiny beam of light with you.`, rest: `${nameEn} took a calm nap beside you.`, explore: preference === 'sun' ? `${nameEn} found a warm, sunny corner with you.` : `${nameEn} gathered a little quiet moonlight with you.` }[action]);
       if (pet.form === 'seed' && pet.bond >= 6) {
         pet.form = pet.traits.sun === pet.traits.moon ? pet.favorite : pet.traits.sun > pet.traits.moon ? 'sun' : 'moon';
         message += ` 你们的陪伴让它成长为${pet.form === 'sun' ? '阳光' : '月色'}形态！`;
+        messageEn += ` Your time together helped it grow into its ${pet.form === 'sun' ? 'sunny' : 'moonlit'} form!`;
       }
       this.db.prepare('UPDATE pets SET data=?,last_care_at=? WHERE id=? AND user_id=?').run(JSON.stringify(pet), now, petId, userId);
       this.entry(userId, petId, message, now);
-      const response = { pet, event: { id, message, applied: true, next_allowed_at: iso(now + 12000) } };
+      const response = { pet, event: { id, message, message_en: messageEn, applied: true, next_allowed_at: iso(now + 12000) } };
       this.remember(userId, id, digest, response); return response;
     });
   }

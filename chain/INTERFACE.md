@@ -1,6 +1,6 @@
 # PixelPets chain interface v1 — implementation, not a deployment
 
-Development program ID: `2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR`. The built SBF has been loaded and exercised on isolated local validators; this ID has not been deployed by this project to a public cluster. The temporary deploy key is gitignored at `target/deploy/pixel_pets-keypair.json`; never serve this file. Core ID is `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`.
+Development program ID: `2SCKfWszFZuqsjcmRbtmctHwZTgQopYmGSofoEtQm2nT` (replaced `2R4P5J6rwE1F2R8fRRF1dvqV9JxwSTix4Qf6FGhc3iQR` on 2026-10-10 because that address's deploy key was not available to the Devnet build machine; the old ID remains only in historical local evidence files). Synced in `declare_id!`, `Anchor.toml`, `idl/pixel_pets.json`, `idl/pixel_pets.ts`; SDK, server and web read the IDL address. The deploy key is gitignored at `target/deploy/pixel_pets-keypair.json` (copy kept in gitignored `runtime/devnet-keys/`); never serve or commit it. Core ID is `CoREENxT6tW1HoK8ypY1SxRMZTcVPm7R94rH4PZNhX7d`.
 
 Exact account and argument order is in `programs/pixel-pets/src/lib.rs` and the generated `idl/pixel_pets.json`. The IDL and builders have been exercised by SDK tests and actual local execution. Rust names below use snake_case; Anchor TS exposes camelCase.
 
